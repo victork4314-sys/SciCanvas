@@ -63,6 +63,7 @@ jobs:
           test -f pinch-zoom.js
           test -f workspace-state.js
           test -f layout-stability.js
+          test -f layout-polish.js
           test -f object-quick-menu.js
           test -f pptx-export.js
           test -f app-bootstrap.js
