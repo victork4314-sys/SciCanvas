@@ -49,8 +49,12 @@
       importButton.setAttribute('aria-expanded', String(opening));
     }
 
-    importButton.onpointerup = toggleChooser;
-    importButton.onclick = toggleChooser;
+    importButton.onpointerdown = toggleChooser;
+    importButton.onpointerup = null;
+    importButton.onclick = event => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
 
     chooser.onclick = event => {
       const button = event.target.closest('button[data-import]');
