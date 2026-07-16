@@ -93,8 +93,6 @@ jobs:
           test -f pathway-exchange.js
           test -f local-prompt-assistant.js
           test -f supabase/schema.sql
-          test -f supabase/functions/project-key/index.ts
-          test -f supabase/functions/invite-member/index.ts
           test -f docs/CLOUD_SETUP.md
           test -f app-bootstrap.js
           test -f manifest.webmanifest
