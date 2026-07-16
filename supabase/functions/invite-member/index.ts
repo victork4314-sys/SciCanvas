@@ -10,6 +10,17 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers:{ ...corsHeaders, 'Content-Type':'application/json' } });
 }
 
+function adminKey() {
+  const direct = Deno.env.get('SUPABASE_SECRET_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (direct) return direct;
+  try {
+    const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}');
+    return keys.default || Object.values(keys)[0] || '';
+  } catch {
+    return '';
+  }
+}
+
 async function findUserByEmail(admin: ReturnType<typeof createClient>, email: string): Promise<User | null> {
   for (let page = 1; page <= 10; page += 1) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage:1000 });
@@ -28,10 +39,10 @@ Deno.serve(async request => {
     if (!authorization?.startsWith('Bearer ')) return json({ error:'Missing authenticated session.' }, 401);
     const token = authorization.slice(7);
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const secretKey = adminKey();
     const siteUrl = Deno.env.get('SITE_URL');
-    if (!supabaseUrl || !serviceRole) return json({ error:'Supabase service credentials are not configured.' }, 500);
-    const admin = createClient(supabaseUrl, serviceRole, { auth:{ persistSession:false, autoRefreshToken:false } });
+    if (!supabaseUrl || !secretKey) return json({ error:'Supabase server credentials are not configured.' }, 500);
+    const admin = createClient(supabaseUrl, secretKey, { auth:{ persistSession:false, autoRefreshToken:false } });
 
     const { data:userData, error:userError } = await admin.auth.getUser(token);
     if (userError || !userData.user) return json({ error:'Invalid or expired session.' }, 401);
