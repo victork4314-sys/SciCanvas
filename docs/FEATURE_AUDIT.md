@@ -19,6 +19,9 @@ This document maps the original product requirements to the current implementati
 
 - **Upload PNG, JPEG, WebP, and SVG:** Implemented.
 - **Reusable personal upload library:** Implemented with IndexedDB.
+- **Reusable editable SVG library:** Implemented with IndexedDB.
+- **Imported SVGs remain vector objects:** Implemented for resize, rotation, layering, opacity, original colors, whole-object recoloring, and SVG re-export.
+- **SVG path-node editing and breaking apart imported SVGs:** Not implemented.
 - **Project embeds selected external SVGs:** Implemented.
 - **Continuous autosave:** Implemented with IndexedDB and a localStorage fallback.
 - **Manual recovery snapshots:** Implemented.
@@ -42,12 +45,16 @@ This document maps the original product requirements to the current implementati
 - **Rotation:** Implemented.
 - **Opacity, fill, and stroke controls:** Implemented.
 - **Layer visibility and ordering:** Implemented.
+- **Layer drag-and-drop reordering:** Implemented for mouse and touch/pointer input.
+- **Keyboard layer reordering:** Implemented with arrow keys on the layer grip.
 - **Duplicate, rename, delete, and tidy:** Implemented.
 - **Undo and redo:** Implemented.
 - **Attached arrows and inhibition connectors:** Implemented.
 - **Multiple pages:** Implemented.
 - **Independent per-page solid, gradient, and transparent backgrounds:** Implemented.
 - **Background presets and randomized palette selection:** Implemented.
+- **Twelve full-project color themes:** Implemented.
+- **Theme-controlled editor chrome, page backgrounds, object palettes, text, arrows, and future-object defaults:** Implemented.
 - **Zoom and fit:** Implemented.
 - **Grouping and multi-selection:** Not implemented.
 - **Freeform vector node editing, masks, and Boolean operations:** Not implemented.
@@ -57,6 +64,11 @@ This document maps the original product requirements to the current implementati
 - **Text boxes:** Implemented.
 - **Editable text content:** Implemented.
 - **Font family, size, bold, and italic controls:** Implemented.
+- **Expanded searchable font catalogue:** Implemented with 38 bundled/open/system font choices.
+- **On-demand open web fonts:** Implemented.
+- **Local `.woff`, `.woff2`, `.ttf`, and `.otf` imports:** Implemented with IndexedDB storage.
+- **Project default font and apply-to-all-text:** Implemented.
+- **Embedding imported font binaries in project/PowerPoint exports:** Not implemented; imported fonts remain device-local.
 - **Species-name italic style helper:** Implemented.
 - **Scientific metadata fields:** Implemented.
 - **Equation editor, chemical notation, superscript/subscript, and automatic gene/protein rules:** Not implemented.
@@ -92,7 +104,7 @@ This document maps the original product requirements to the current implementati
 
 1. Browser-level interaction tests and automated deployment verification.
 2. Account-based encrypted cloud storage.
-3. Grouping, multi-selection, and richer vector editing.
+3. Grouping, multi-selection, SVG node editing, masks, Boolean operations, and richer vector editing.
 4. Native editable PowerPoint-object export.
 5. Equations, chemical notation, and scientific text rules.
 6. A normalized import pipeline for additional licensed packs.
