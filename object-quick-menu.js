@@ -8,6 +8,7 @@
   let lastPointer = null;
   let pointerStart = null;
   let longPressTimer = null;
+  let suppressClickUntil = 0;
 
   const menu = document.createElement('div');
   menu.id = 'objectQuickMenu';
@@ -70,10 +71,6 @@
   }
 
   function duplicateCurrent() {
-    if (typeof duplicateSelected === 'function') {
-      duplicateSelected();
-      return;
-    }
     const item = selectedObject();
     if (!item) return;
     const { width, height } = canvasSize();
@@ -81,6 +78,7 @@
     const copy = structuredClone(item);
     copy.id = uid();
     copy.name = `${item.name || 'Object'} copy`;
+    copy.locked = false;
     copy.x = Math.max(0, Math.min(width - copy.width, copy.x + 30));
     copy.y = Math.max(0, Math.min(height - copy.height, copy.y + 30));
     state.objects.push(copy);
@@ -210,6 +208,7 @@
     if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) {
       clearTimeout(longPressTimer);
       pointerStart = null;
+      suppressClickUntil = Date.now() + 300;
       closeMenu();
     }
   }, true);
@@ -221,6 +220,7 @@
   }, true);
 
   document.addEventListener('click', event => {
+    if (Date.now() < suppressClickUntil) return;
     if (menu.contains(event.target)) return;
     const object = event.target.closest?.('.canvas-object');
     if (!object) return closeMenu();
@@ -259,6 +259,7 @@
       const copy = structuredClone(copiedObject);
       copy.id = uid();
       copy.name = `${copy.name || 'Object'} copy`;
+      copy.locked = false;
       copy.x = Math.max(0, Math.min(width - copy.width, (copy.x || 0) + 30));
       copy.y = Math.max(0, Math.min(height - copy.height, (copy.y || 0) + 30));
       state.objects.push(copy);
@@ -295,7 +296,7 @@
     #objectQuickMenu{position:fixed;z-index:80;display:none;grid-template-columns:repeat(7,minmax(42px,auto));gap:4px;max-width:calc(100vw - 16px);padding:6px;border:1px solid #cbd6e4;border-radius:12px;background:rgba(255,255,255,.97);box-shadow:0 12px 36px rgba(27,42,66,.22);backdrop-filter:blur(10px)}
     #objectQuickMenu.open{display:grid}#objectQuickMenu button{min-width:42px;min-height:45px;display:grid;place-items:center;gap:1px;padding:5px 7px;border:1px solid transparent;border-radius:8px;background:transparent;color:#334155;white-space:normal;line-height:1.05}
     #objectQuickMenu button:hover,#objectQuickMenu button:focus-visible,#objectQuickMenu button.active{border-color:#b8caeb;background:#edf4ff;outline:none}#objectQuickMenu button.danger{color:#a83245}#objectQuickMenu button.danger:hover{border-color:#efb7c0;background:#fff0f2}
-    #objectQuickMenu button span{font-size:16px;line-height:1}#objectQuickMenu button small{font-size:8px;line-height:1.05;overflow-wrap:anywhere}.selection-lock-badge circle{fill:white;stroke:#2563eb;stroke-width:2;vector-effect:non-scaling-stroke}.selection-lock-badge{pointer-events:none}.layer-lock-mark{align-self:center;font-size:9px}.locked-layer{background:#f5f7fa!important;color:#6b7280}
+    #objectQuickMenu button span{font-size:16px;line-height:1}#objectQuickMenu button small{font-size:8px;line-height:1.05;overflow-wrap:anywhere}.selection-lock-badge circle{fill:white;stroke:#2563eb;stroke-width:2;vector-effect:non-scaling-stroke}.selection-lock-badge{pointer-events:none}.layer-lock-mark{align-self:center;font-size:9px}.locked-layer{background:#f5f7fa!important;color:#6b7280}.layer-item.locked-layer{grid-template-columns:22px 25px minmax(0,1fr) 18px!important}
     @media(max-width:620px){#objectQuickMenu{grid-template-columns:repeat(4,minmax(48px,1fr));width:min(330px,calc(100vw - 16px))}#objectQuickMenu button{min-height:48px}}
   `;
   document.head.appendChild(style);
