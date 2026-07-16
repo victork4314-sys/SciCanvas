@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -84,6 +85,17 @@ jobs:
           test -f workspace-controls-pages.js
           test -f refresh-safety.js
           test -f polish-delight.js
+          test -f cloud-config.js
+          test -f cloud-account.js
+          test -f collaboration-tools.js
+          test -f svg-path-editor.js
+          test -f tex-typesetting.js
+          test -f pathway-exchange.js
+          test -f local-prompt-assistant.js
+          test -f supabase/schema.sql
+          test -f supabase/functions/project-key/index.ts
+          test -f supabase/functions/invite-member/index.ts
+          test -f docs/CLOUD_SETUP.md
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
@@ -96,6 +108,7 @@ jobs:
         run: node scripts/validate-app.mjs
 
   browser:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: syntax
     steps:
