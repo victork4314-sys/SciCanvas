@@ -1,0 +1,1 @@
+Validates project-only recoloring, ISO poster formats, editable-SVG export placement, and the private no-API Figure Assistant.
