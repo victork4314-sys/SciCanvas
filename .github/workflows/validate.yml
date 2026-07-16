@@ -81,6 +81,8 @@ jobs:
           test -f stability-hardening.js
           test -f product-experience.js
           test -f advanced-science-tools.js
+          test -f workspace-controls-pages.js
+          test -f refresh-safety.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
