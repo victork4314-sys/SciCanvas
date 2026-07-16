@@ -1,0 +1,1 @@
+Validation marker for the exact current refresh-safe, movable-toolbar and page-deletion build.
