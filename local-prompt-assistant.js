@@ -78,6 +78,15 @@
     return { prompt:cleaned, layout:'auto' };
   }
 
+  async function runPrompt(session, request) {
+    if (typeof session.prompt === 'function') return session.prompt(request);
+    if (typeof session.promptStreaming !== 'function') throw new Error('This browser model does not expose a supported prompt method.');
+    const stream = await session.promptStreaming(request);
+    let response = '';
+    for await (const chunk of stream) response += typeof chunk === 'string' ? chunk : (chunk?.text || String(chunk || ''));
+    return response;
+  }
+
   async function interpret() {
     const source = promptInput.value.trim();
     if (!source) {
@@ -92,10 +101,7 @@
       status.dataset.kind = '';
       const session = await getModel();
       const request = `Rewrite the following request for an editable scientific figure. Return only JSON with keys "prompt" and "layout". "layout" must be one of "auto", "workflow", "comparison", or "cycle". Keep all user-supplied scientific meaning, make stages explicit with arrows when appropriate, remove filler, and do not add unsupported facts.\n\nREQUEST:\n${source}`;
-      const response = typeof session.prompt === 'function' ? await session.prompt(request) : await session.promptStreaming(request).then(async stream => {
-        let value = ''; for await (const chunk of stream) value += chunk; return value;
-      });
-      const parsed = parseResponse(response);
+      const parsed = parseResponse(await runPrompt(session, request));
       const nextPrompt = String(parsed.prompt || '').trim();
       if (!nextPrompt) throw new Error('The local model returned an empty interpretation.');
       promptInput.value = nextPrompt;
