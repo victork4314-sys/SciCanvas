@@ -1,0 +1,1 @@
+Final validation for project-only recoloring, poster formats, format-aware exports, Editable SVG placement, and the local Figure Assistant.
