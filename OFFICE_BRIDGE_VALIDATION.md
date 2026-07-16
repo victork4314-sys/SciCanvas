@@ -1,0 +1,1 @@
+Validation-only marker for the SciCanvas Office bridge build.
