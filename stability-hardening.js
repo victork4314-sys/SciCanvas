@@ -19,12 +19,8 @@
   function validateVectorObject(item) {
     if (!item || item.type !== 'svg') return item;
     const markup = String(item.svgMarkup || '');
-    if (!markup || markup.length > 1_500_000 || !SHAPE_MARKUP.test(markup)) {
-      throw new Error('The illustration was empty, excessively large, or contained no usable vector artwork.');
-    }
-    if (/<(?:script|foreignObject|iframe|object|embed|audio|video)\b/i.test(markup) || /(?:javascript:|@import|url\(\s*https?:)/i.test(markup)) {
-      throw new Error('The illustration contained blocked active or external content.');
-    }
+    if (!markup || markup.length > 1_500_000 || !SHAPE_MARKUP.test(markup)) throw new Error('The illustration was empty, excessively large, or contained no usable vector artwork.');
+    if (/<(?:script|foreignObject|iframe|object|embed|audio|video)\b/i.test(markup) || /(?:javascript:|@import|url\(\s*https?:)/i.test(markup)) throw new Error('The illustration contained blocked active or external content.');
     return item;
   }
 
@@ -121,9 +117,7 @@
       image.remove();
       if (preview && !preview.querySelector('.asset-unavailable')) {
         const note = document.createElement('span');
-        note.className = 'asset-unavailable';
-        note.textContent = 'Preview unavailable';
-        preview.appendChild(note);
+        note.className = 'asset-unavailable'; note.textContent = 'Preview unavailable'; preview.appendChild(note);
       }
       const add = card?.querySelector('button');
       if (add) { add.disabled = true; add.textContent = 'Unavailable'; add.title = 'This source image did not load and has been disabled.'; }
@@ -160,12 +154,7 @@
   }
 
   const style = document.createElement('style');
-  style.textContent = `
-    .asset-unavailable{display:grid;place-items:center;width:100%;height:100%;padding:8px;text-align:center;color:#64748b;font-size:9px;background:#f1f5f9}
-    .expanded-card button:disabled{opacity:.6;cursor:not-allowed}
-    #projectHealthButton{white-space:nowrap!important}
-    #presentationStage svg *{visibility:visible}
-  `;
+  style.textContent = `.asset-unavailable{display:grid;place-items:center;width:100%;height:100%;padding:8px;text-align:center;color:#64748b;font-size:9px;background:#f1f5f9}.expanded-card button:disabled{opacity:.6;cursor:not-allowed}#projectHealthButton{white-space:nowrap!important}`;
   document.head.appendChild(style);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',() => setTimeout(setup,0),{once:true}); else setTimeout(setup,0);
 })();
