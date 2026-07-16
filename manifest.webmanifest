@@ -1,0 +1,11 @@
+{
+  "name": "SciCanvas Scientific Illustration Workspace",
+  "short_name": "SciCanvas",
+  "description": "A local-first scientific illustration and figure editor.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#f4f7fb",
+  "orientation": "landscape"
+}
