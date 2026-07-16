@@ -1,0 +1,1 @@
+Validate the exact production build containing workspace size persistence, Design page-size placement, Insert tools, and pinch zoom.
