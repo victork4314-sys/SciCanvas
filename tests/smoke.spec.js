@@ -88,13 +88,7 @@ test('mobile canvas toolbar controls are not cropped and remain tappable', async
       toolbarHeight: toolbarRect.height,
       controls: controls.map(control => {
         const rect = control.getBoundingClientRect();
-        return {
-          id: control.id || control.textContent.trim(),
-          width: rect.width,
-          height: rect.height,
-          scrollWidth: control.scrollWidth,
-          scrollHeight: control.scrollHeight
-        };
+        return { id:control.id || control.textContent.trim(), width:rect.width, height:rect.height, scrollWidth:control.scrollWidth, scrollHeight:control.scrollHeight };
       })
     };
   });
@@ -108,4 +102,40 @@ test('mobile canvas toolbar controls are not cropped and remain tappable', async
   await expect(page.locator('#handToolButton')).toHaveAttribute('aria-pressed','true');
   await page.locator('#navigatorToggleButton').click();
   await expect(page.locator('#navigatorToggleButton')).toBeVisible();
+});
+
+test('refresh preserves multiple pages and their objects', async ({ page }) => {
+  await openApp(page);
+  await page.locator('#addTextButton').click();
+  await page.locator('#addPageButton').click();
+  await page.locator('#addShapeButton').click();
+  await expect(page.locator('#pagesList .page-thumbnail')).toHaveCount(2);
+  await page.evaluate(() => window.saveSciCanvasImmediately?.('refresh'));
+  await page.reload();
+  await expect(page.locator('#pagesList .page-thumbnail')).toHaveCount(2);
+  await expect(page.locator('#objectLayer .canvas-object')).toHaveCount(1);
+  await page.locator('#pagesList .page-thumbnail').first().click();
+  await expect(page.locator('#objectLayer .canvas-object')).toHaveCount(1);
+});
+
+test('toolbar bubble can collapse and reopen', async ({ page }) => {
+  await openApp(page);
+  const toolbar = page.locator('.canvas-toolbar');
+  await expect(page.locator('.toolbar-grip')).toBeVisible();
+  await page.locator('.toolbar-collapse').click();
+  await expect(toolbar).toHaveClass(/toolbar-collapsed/);
+  await expect(page.locator('#zoomInButton')).toBeHidden();
+  await page.locator('.toolbar-collapse').click();
+  await expect(toolbar).not.toHaveClass(/toolbar-collapsed/);
+  await expect(page.locator('#zoomInButton')).toBeVisible();
+});
+
+test('current page can be deleted without removing the final page', async ({ page }) => {
+  await openApp(page);
+  await page.locator('#addPageButton').click();
+  await expect(page.locator('#pagesList .page-thumbnail')).toHaveCount(2);
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#deletePageButton').click();
+  await expect(page.locator('#pagesList .page-thumbnail')).toHaveCount(1);
+  await expect(page.locator('#deletePageButton')).toBeDisabled();
 });
