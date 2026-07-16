@@ -74,3 +74,38 @@ test('mobile header, Pro Tools and horizontal workspace remain usable', async ({
   const overflow = await stage.evaluate(node => ({ width: node.scrollWidth, client: node.clientWidth }));
   expect(overflow.width).toBeGreaterThanOrEqual(overflow.client);
 });
+
+test('mobile canvas toolbar controls are not cropped and remain tappable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'mobile-only toolbar check');
+  await openApp(page);
+  await page.waitForTimeout(500);
+  const toolbar = page.locator('.canvas-toolbar');
+  await expect(toolbar).toBeVisible();
+  const result = await toolbar.evaluate(node => {
+    const toolbarRect = node.getBoundingClientRect();
+    const controls = [...node.querySelectorAll('button,#zoomValue')].filter(control => getComputedStyle(control).display !== 'none');
+    return {
+      toolbarHeight: toolbarRect.height,
+      controls: controls.map(control => {
+        const rect = control.getBoundingClientRect();
+        return {
+          id: control.id || control.textContent.trim(),
+          width: rect.width,
+          height: rect.height,
+          scrollWidth: control.scrollWidth,
+          scrollHeight: control.scrollHeight
+        };
+      })
+    };
+  });
+  expect(result.toolbarHeight).toBeGreaterThanOrEqual(42);
+  for (const control of result.controls) {
+    expect(control.width, `${control.id} width`).toBeGreaterThanOrEqual(30);
+    expect(control.height, `${control.id} height`).toBeGreaterThanOrEqual(32);
+    expect(control.scrollHeight, `${control.id} text height`).toBeLessThanOrEqual(control.height + 2);
+  }
+  await page.locator('#handToolButton').click();
+  await expect(page.locator('#handToolButton')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#navigatorToggleButton').click();
+  await expect(page.locator('#navigatorToggleButton')).toBeVisible();
+});
