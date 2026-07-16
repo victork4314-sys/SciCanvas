@@ -35,11 +35,15 @@ jobs:
           test -f design-tools.js
           test -f export-tools.js
           test -f storage-vault.js
+          test -f font-library.js
           test -f interaction-tools.js
           test -f resize-tools.js
+          test -f layer-drag.js
           test -f asset-vault.js
+          test -f editable-svg-import.js
           test -f external-packs.js
           test -f fun-design-tools.js
+          test -f project-themes.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
