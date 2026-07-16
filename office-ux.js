@@ -42,6 +42,53 @@
     exportMenuNode.insertBefore(flat, anchor);
   }
 
+  function installOfficeTourStep() {
+    const overlay = document.getElementById('scicanvasTour');
+    const next = overlay?.querySelector('[data-tour="next"]');
+    if (!overlay || !next || next.dataset.officeTourInstalled) return;
+    next.dataset.officeTourInstalled = '1';
+    let showingOffice = false;
+
+    next.addEventListener('click', event => {
+      const progress = overlay.querySelector('.tour-progress')?.textContent?.trim();
+      if (!showingOffice && progress === '6 of 6') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showingOffice = true;
+        overlay.querySelector('#tourTitle').textContent = 'PowerPoint and spreadsheets';
+        overlay.querySelector('#tourText').textContent = 'Use Import beside Export for PowerPoint, Excel, ODS, CSV, and TSV. Export also includes explicit editable and compatibility PowerPoint options.';
+        overlay.querySelector('.tour-progress').textContent = '7 of 7';
+        next.textContent = 'Done';
+        const back = overlay.querySelector('[data-tour="back"]');
+        if (back) back.disabled = false;
+        const target = document.getElementById('importButton') || document.getElementById('officeBridgeButton');
+        const highlight = overlay.querySelector('.tour-highlight');
+        if (target && highlight) {
+          const rect = target.getBoundingClientRect();
+          highlight.hidden = false;
+          highlight.style.left = `${Math.max(4, rect.left - 5)}px`;
+          highlight.style.top = `${Math.max(4, rect.top - 5)}px`;
+          highlight.style.width = `${rect.width + 10}px`;
+          highlight.style.height = `${rect.height + 10}px`;
+        }
+      } else if (showingOffice) {
+        showingOffice = false;
+      }
+    }, true);
+
+    overlay.querySelector('[data-tour="back"]')?.addEventListener('click', event => {
+      if (!showingOffice) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      showingOffice = false;
+      overlay.querySelector('#tourTitle').textContent = 'Export and backup';
+      overlay.querySelector('#tourText').textContent = 'Export SVG, PNG, PowerPoint, or the complete editable project. The Export button always stays visible in the top bar.';
+      overlay.querySelector('.tour-progress').textContent = '6 of 6';
+      next.textContent = 'Next';
+    }, true);
+  }
+  setTimeout(installOfficeTourStep, 50);
+
   const style = document.createElement('style');
   style.textContent = `
     #importButton{display:inline-flex!important;visibility:visible!important;align-items:center;justify-content:center;background:#f8fafc!important;color:#2454ad!important;border-color:#9db6e5!important;font-weight:700}
