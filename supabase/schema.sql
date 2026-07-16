@@ -94,8 +94,23 @@ returns boolean language sql stable security definer set search_path = public as
   select coalesce((select ar.rank >= rr.rank from actual a join roles ar on ar.role = a.role join roles rr on rr.role = required_role), false);
 $$;
 
+-- Safely extracts the UUID from private topics such as project-room:<uuid>.
+create or replace function public.realtime_project_id()
+returns uuid language plpgsql stable security definer set search_path = public, realtime as $$
+declare
+  candidate text;
+begin
+  candidate := split_part(realtime.topic(), ':', 2);
+  if candidate is null or candidate = '' then return null; end if;
+  return candidate::uuid;
+exception when invalid_text_representation then
+  return null;
+end;
+$$;
+
 grant execute on function public.project_role(uuid, uuid) to authenticated;
 grant execute on function public.can_access_project(uuid, text) to authenticated;
+grant execute on function public.realtime_project_id() to authenticated;
 
 alter table public.profiles enable row level security;
 alter table public.projects enable row level security;
@@ -120,7 +135,7 @@ drop policy if exists "memberships are readable by project members" on public.pr
 create policy "memberships are readable by project members" on public.project_members for select to authenticated using (public.can_access_project(project_id, 'viewer'));
 drop policy if exists "members can leave projects" on public.project_members;
 create policy "members can leave projects" on public.project_members for delete to authenticated using (user_id = auth.uid() or public.project_role(project_id) = 'owner');
--- Inserts and role changes are performed only by the invite-member Edge Function using the service role.
+-- Inserts and role changes are performed only by the invite-member Edge Function using a server secret.
 
 drop policy if exists "comments are readable by project members" on public.collaboration_comments;
 create policy "comments are readable by project members" on public.collaboration_comments for select to authenticated using (public.can_access_project(project_id, 'viewer'));
@@ -131,7 +146,46 @@ create policy "authors can update comments" on public.collaboration_comments for
 drop policy if exists "authors can delete comments" on public.collaboration_comments;
 create policy "authors can delete comments" on public.collaboration_comments for delete to authenticated using (user_id = auth.uid() or public.can_access_project(project_id, 'editor'));
 
--- Realtime: project document updates use authenticated broadcast channels; comments use Postgres changes.
+-- Private Broadcast/Presence authorization. Realtime Settings should also disable public channels.
+alter table realtime.messages enable row level security;
+
+drop policy if exists "project members receive room messages" on realtime.messages;
+create policy "project members receive room messages"
+on realtime.messages for select to authenticated
+using (
+  split_part(realtime.topic(), ':', 1) = 'project-room'
+  and extension in ('broadcast','presence')
+  and public.can_access_project(public.realtime_project_id(), 'viewer')
+);
+
+drop policy if exists "project members send room messages" on realtime.messages;
+create policy "project members send room messages"
+on realtime.messages for insert to authenticated
+with check (
+  split_part(realtime.topic(), ':', 1) = 'project-room'
+  and extension in ('broadcast','presence')
+  and public.can_access_project(public.realtime_project_id(), 'viewer')
+);
+
+drop policy if exists "project members receive edit broadcasts" on realtime.messages;
+create policy "project members receive edit broadcasts"
+on realtime.messages for select to authenticated
+using (
+  split_part(realtime.topic(), ':', 1) = 'project-edit'
+  and extension = 'broadcast'
+  and public.can_access_project(public.realtime_project_id(), 'viewer')
+);
+
+drop policy if exists "project editors send edit broadcasts" on realtime.messages;
+create policy "project editors send edit broadcasts"
+on realtime.messages for insert to authenticated
+with check (
+  split_part(realtime.topic(), ':', 1) = 'project-edit'
+  and extension = 'broadcast'
+  and public.can_access_project(public.realtime_project_id(), 'editor')
+);
+
+-- Persistent comments use Postgres Changes.
 do $$
 begin
   alter publication supabase_realtime add table public.collaboration_comments;
