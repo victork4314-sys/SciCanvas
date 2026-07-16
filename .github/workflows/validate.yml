@@ -28,6 +28,7 @@ jobs:
           test -f styles.css
           test -f app.js
           test -f science-library.js
+          test -f water-icons.js
           test -f science-vocabulary.js
           test -f library-dedup.js
           test -f project-tools.js
@@ -49,6 +50,8 @@ jobs:
           test -f page-size-tools.js
           test -f figure-assistant.js
           test -f poster-assistant-fixes.js
+          test -f theme-font-pairs.js
+          test -f canvas-navigation.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
