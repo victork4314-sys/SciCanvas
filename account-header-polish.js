@@ -4,6 +4,8 @@
   if (!avatarButton || !collaborateButton) return;
 
   const NAME_KEY = 'scicanvas-user-name-v1';
+  const AVATAR_KEY = 'scicanvas-profile-avatar-v1';
+  const AVATAR_SYMBOLS = { dna:'🧬', flask:'⚗', molecule:'⌬', cell:'◉', wave:'∿', star:'✦' };
   let authSubscription = null;
 
   function cleanName(value) {
@@ -36,16 +38,30 @@
     return /^https:\/\//i.test(value) ? value : '';
   }
 
+  function avatarChoice(user) {
+    const value = user?.user_metadata?.avatar_symbol || localStorage.getItem(AVATAR_KEY) || 'initial';
+    return value === 'initial' || AVATAR_SYMBOLS[value] ? value : 'initial';
+  }
+
   function removeLegacyHeaderItems() {
     document.getElementById('accountButton')?.remove();
     document.getElementById('userGreetingButton')?.remove();
   }
 
-  function renderAvatar(user = window.SciCanvasCloud?.getUser?.() || null) {
+  function buildAvatarFace(user) {
     const name = displayName(user);
+    const choice = avatarChoice(user);
     const imageUrl = avatarUrl(user);
     const face = document.createElement('span');
     face.className = 'account-avatar-face';
+
+    if (choice !== 'initial' && AVATAR_SYMBOLS[choice]) {
+      const symbol = document.createElement('span');
+      symbol.className = 'account-avatar-symbol';
+      symbol.textContent = AVATAR_SYMBOLS[choice];
+      face.appendChild(symbol);
+      return face;
+    }
 
     if (imageUrl) {
       const image = document.createElement('img');
@@ -59,13 +75,19 @@
         }));
       }, { once:true });
       face.appendChild(image);
-    } else {
-      const letters = document.createElement('span');
-      letters.className = 'account-avatar-initials';
-      letters.textContent = initials(name);
-      face.appendChild(letters);
+      return face;
     }
 
+    const letters = document.createElement('span');
+    letters.className = 'account-avatar-initials';
+    letters.textContent = initials(name);
+    face.appendChild(letters);
+    return face;
+  }
+
+  function renderAvatar(user = window.SciCanvasCloud?.getUser?.() || null) {
+    const name = displayName(user);
+    const face = buildAvatarFace(user);
     avatarButton.replaceChildren(face);
     avatarButton.dataset.signedIn = user ? 'true' : 'false';
     avatarButton.title = user ? `${name} · Account and project gallery` : 'Sign in or open the project gallery';
@@ -88,12 +110,10 @@
   }
 
   function openCollaboration() {
-    const workspaceCard = document.querySelector('.pro-workspace-card[data-workspace="collab"]');
-    if (workspaceCard && !workspaceCard.disabled) {
-      workspaceCard.click();
-      return;
-    }
-    document.getElementById('collaborationDrawer')?.classList.add('open');
+    const collaborationDrawer = document.getElementById('collaborationDrawer');
+    collaborationDrawer?.classList.add('open');
+    window.openSciCanvasCollaboration?.();
+    window.dispatchEvent(new CustomEvent('scicanvas-collaboration-opened'));
   }
 
   async function bindAuthState() {
@@ -123,8 +143,9 @@
 
   window.addEventListener('scicanvas-cloud-opened', () => renderAvatar());
   window.addEventListener('scicanvas-cloud-saved', () => renderAvatar());
+  window.addEventListener('scicanvas-avatar-changed', () => renderAvatar());
   window.addEventListener('storage', event => {
-    if (event.key === NAME_KEY) renderAvatar();
+    if (event.key === NAME_KEY || event.key === AVATAR_KEY) renderAvatar();
   });
   window.addEventListener('beforeunload', () => authSubscription?.unsubscribe?.());
 
@@ -144,6 +165,7 @@
     #accountProfileButton .account-avatar-face{display:grid!important;place-items:center;width:100%;height:100%;margin:0!important;overflow:hidden;border-radius:50%;background:inherit;color:white!important}
     #accountProfileButton .account-avatar-face img{display:block;width:100%;height:100%;margin:0;object-fit:cover}
     #accountProfileButton .account-avatar-initials{display:block;margin:0!important;color:white!important;font-size:12px;font-weight:850;line-height:1;letter-spacing:.01em;text-shadow:0 1px 3px rgba(20,31,50,.24)}
+    #accountProfileButton .account-avatar-symbol{display:block;margin:0!important;color:white!important;font-size:18px;line-height:1;filter:drop-shadow(0 1px 2px rgba(20,31,50,.24))}
     #cloudSignedIn .cloud-user-avatar{overflow:hidden;padding:0}
     #cloudSignedIn .cloud-user-avatar .account-avatar-face{display:grid;place-items:center;width:100%;height:100%;margin:0}
     #cloudSignedIn .cloud-user-avatar .account-avatar-initials{margin:0;color:white;font-weight:850}
@@ -151,7 +173,8 @@
     .ribbon-tab{border-bottom:0!important}
     .ribbon-tab.active{border-bottom-color:transparent!important}
     .ribbon-tab.active::after{content:'';position:absolute;left:24%;right:24%;bottom:1px;height:2px;border-radius:999px;background:linear-gradient(90deg,var(--delight-cyan,#58a9b8),var(--delight-blue,#4169c1),var(--delight-lilac,#8f82b8))}
-    .ribbon-command-tab{position:relative;height:38px;padding:0 15px;border:0;background:transparent;color:#52647c;font-weight:700}
+    .ribbon-tabs{padding-right:18px!important}
+    .ribbon-command-tab{position:relative;height:38px;margin-left:auto;padding:0 15px;border:0;background:transparent;color:#52647c;font-weight:700}
     .ribbon-command-tab::before{content:'◎';margin-right:6px;color:#6489a4}
     .ribbon-command-tab:hover{color:#294d91;background:rgba(75,116,165,.07)}
     .ribbon-command-tab:focus-visible{outline:2px solid rgba(65,105,193,.35);outline-offset:-3px;border-radius:7px}
