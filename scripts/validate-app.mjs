@@ -23,7 +23,7 @@ const required = [
   'map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js',
   'pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js',
   'scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js',
-  'publish-presentation-tools.js'
+  'publish-presentation-tools.js','finishing-touches.js'
 ];
 for (const file of required) {
   if (!scripts.includes(file)) fail(`Required module is not loaded: ${file}`);
@@ -53,6 +53,8 @@ before('selection-layout-tools.js','component-object-tools.js');
 before('component-object-tools.js','review-accessibility-tools.js');
 before('review-accessibility-tools.js','publish-presentation-tools.js');
 before('publish-presentation-tools.js','object-quick-menu.js');
+before('object-quick-menu.js','finishing-touches.js');
+before('data-science-tools.js','finishing-touches.js');
 
 const usability = read('control-usability.js');
 for (const marker of ['overflow:scroll!important','show-pages-panel','show-format-panel','scrollbar-gutter']) {
@@ -85,7 +87,7 @@ for (const marker of ['marquee-selection','multi-resize-handle','Smart alignment
 }
 
 const dataTools = read('data-science-tools.js');
-for (const marker of ['Bar chart','Scatter plot','Box plot','Heatmap','Double-click chart']) {
+for (const marker of ['Bar chart','Scatter plot','Box plot','Heatmap','Double-click chart','window.openDataLab']) {
   if (!dataTools.includes(marker)) fail(`Data tools are missing marker: ${marker}`);
 }
 
@@ -109,6 +111,11 @@ for (const marker of ['Journal · single column','Run publication checks','Start
   if (!publish.includes(marker)) fail(`Publish tools are missing marker: ${marker}`);
 }
 
+const finishing = read('finishing-touches.js');
+for (const marker of ['scicanvas-guided-tour-v1','Edit chart or table data','tourHelpButton','#exportButton']) {
+  if (!finishing.includes(marker)) fail(`Finishing touches module is missing marker: ${marker}`);
+}
+
 if (!fs.existsSync(path.join(root,'favicon.svg'))) fail('favicon.svg is missing');
 if (!html.includes('href="./favicon.svg"')) fail('index.html does not reference favicon.svg');
 if (!worker.includes('"./favicon.svg"')) fail('Service worker does not cache favicon.svg');
@@ -118,4 +125,4 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map(match => match[1]);
 const duplicateIds = ids.filter((id,index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) fail(`Duplicate static HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 
-console.log(`Static audit passed: ${scripts.length} scripts, complete offline shell, valid Pro Tools architecture, favicon present, and no duplicate static IDs.`);
+console.log(`Static audit passed: ${scripts.length} scripts, complete offline shell, valid Pro Tools and onboarding architecture, persistent Export action, favicon present, and no duplicate static IDs.`);
