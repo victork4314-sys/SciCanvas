@@ -112,7 +112,7 @@ for (const marker of ['Journal · single column','Run publication checks','Start
 }
 
 const finishing = read('finishing-touches.js');
-for (const marker of ['scicanvas-guided-tour-v1','Edit chart or table data','tourHelpButton','#exportButton']) {
+for (const marker of ['scicanvas-guided-tour-v1','Edit chart or table data','tourHelpButton','#exportButton','openSciCanvasTour']) {
   if (!finishing.includes(marker)) fail(`Finishing touches module is missing marker: ${marker}`);
 }
 
