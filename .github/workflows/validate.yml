@@ -89,11 +89,14 @@ jobs:
           test -f cloud-account.js
           test -f collaboration-tools.js
           test -f account-header-polish.js
+          test -f profile-gallery-polish.js
+          test -f collaboration-share-links.js
           test -f svg-path-editor.js
           test -f tex-typesetting.js
           test -f pathway-exchange.js
           test -f local-prompt-assistant.js
           test -f supabase/schema.sql
+          test -f supabase/share-links.sql
           test -f docs/CLOUD_SETUP.md
           test -f app-bootstrap.js
           test -f manifest.webmanifest
