@@ -7,6 +7,7 @@ This document maps the original product requirements to the current implementati
 - **Built-in editable scientific objects:** Implemented.
 - **Basic biology and microbiology objects:** Implemented.
 - **Specialist search terms and organism aliases:** Implemented.
+- **Distinct built-in previews rather than repeated aliases:** Implemented by collapsing shared visual concepts while preserving aliases in search.
 - **Large external scientific package:** Implemented through the complete Bioicons index with 2,829 individually licensed SVG entries.
 - **Whole-package downloads:** Implemented for Bioicons source ZIP and the Servier Medical Art complete slide-set ZIP.
 - **Additional reputable sources:** NIH BioArt Source and Reactome are linked with licence warnings.
@@ -37,6 +38,7 @@ This document maps the original product requirements to the current implementati
 - **Alignment guides:** Implemented.
 - **Move objects by dragging:** Implemented.
 - **Position and size fields:** Implemented.
+- **Eight on-canvas resize handles:** Implemented, including Shift-constrained corner resizing.
 - **Rotation:** Implemented.
 - **Opacity, fill, and stroke controls:** Implemented.
 - **Layer visibility and ordering:** Implemented.
@@ -44,6 +46,8 @@ This document maps the original product requirements to the current implementati
 - **Undo and redo:** Implemented.
 - **Attached arrows and inhibition connectors:** Implemented.
 - **Multiple pages:** Implemented.
+- **Independent per-page solid, gradient, and transparent backgrounds:** Implemented.
+- **Background presets and randomized palette selection:** Implemented.
 - **Zoom and fit:** Implemented.
 - **Grouping and multi-selection:** Not implemented.
 - **Freeform vector node editing, masks, and Boolean operations:** Not implemented.
@@ -76,17 +80,21 @@ This document maps the original product requirements to the current implementati
 - **Editable SVG export:** Implemented.
 - **Standard and high-resolution PNG export:** Implemented.
 - **Optional grid in exported graphics:** Implemented.
+- **Transparent figure export option:** Implemented for PowerPoint slide art.
 - **Complete editable project export:** Implemented.
 - **Detailed attribution report:** Implemented.
-- **PDF, PowerPoint, and TIFF export:** Not implemented.
+- **PowerPoint `.pptx` export:** Implemented with one visually preserved high-resolution SciCanvas page per slide.
+- **Native editable PowerPoint shapes:** Not implemented; current PowerPoint slides contain flattened high-resolution page artwork.
+- **PDF and TIFF export:** Not implemented.
 - **Machine-readable SBGN/BioPAX/SBML export:** Not implemented.
 
 ## Next priority areas
 
 1. Browser-level interaction tests and automated deployment verification.
 2. Account-based encrypted cloud storage.
-3. Grouping, multi-selection, resize handles, and richer vector editing.
-4. Equations, chemical notation, and scientific text rules.
-5. A normalized import pipeline for additional licensed packs.
-6. Collaborative lab workspaces, comments, and review history.
-7. Accessible figure descriptions and standards-based pathway export.
+3. Grouping, multi-selection, and richer vector editing.
+4. Native editable PowerPoint-object export.
+5. Equations, chemical notation, and scientific text rules.
+6. A normalized import pipeline for additional licensed packs.
+7. Collaborative lab workspaces, comments, and review history.
+8. Accessible figure descriptions and standards-based pathway export.
