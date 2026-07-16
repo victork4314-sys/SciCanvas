@@ -121,3 +121,13 @@
     if (event.target.closest?.("#scWelcome")) setTimeout(syncPersonalTourTitle, 320);
   });
 })();
+
+(() => {
+  const note = document.querySelector("#collaborationDrawer .collab-note");
+  if (note) note.textContent = "Only the project owner can change access. Existing accounts get access immediately; new email addresses activate automatically after creating an account.";
+  const button = document.getElementById("collabInviteButton");
+  if (button) {
+    button.textContent = "Grant / reserve access";
+    button.title = "Grant access now or reserve it for this email";
+  }
+})();
