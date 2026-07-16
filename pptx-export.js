@@ -18,24 +18,27 @@
 
   function renderCurrentPagePngData({ includeGrid = false, transparent = false, scale = 2 } = {}) {
     return new Promise((resolve, reject) => {
+      const dimensions = window.currentCanvasSize?.() || { width:1200, height:750 };
       const copy = cleanCanvasClone(includeGrid);
+      copy.setAttribute('width', dimensions.width);
+      copy.setAttribute('height', dimensions.height);
       if (transparent) copy.querySelector("#canvasBackground")?.remove();
       const source = new XMLSerializer().serializeToString(copy);
-      const sourceUrl = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
+      const sourceUrl = URL.createObjectURL(new Blob([source], { type:"image/svg+xml;charset=utf-8" }));
       const image = new Image();
 
       image.onload = () => {
         try {
           const bitmap = document.createElement("canvas");
-          bitmap.width = 1200 * scale;
-          bitmap.height = 750 * scale;
+          bitmap.width = Math.round(dimensions.width * scale);
+          bitmap.height = Math.round(dimensions.height * scale);
           const context = bitmap.getContext("2d");
           context.scale(scale, scale);
           if (!transparent) {
             context.fillStyle = "#ffffff";
-            context.fillRect(0, 0, 1200, 750);
+            context.fillRect(0, 0, dimensions.width, dimensions.height);
           }
-          context.drawImage(image, 0, 0, 1200, 750);
+          context.drawImage(image, 0, 0, dimensions.width, dimensions.height);
           URL.revokeObjectURL(sourceUrl);
           resolve(bitmap.toDataURL("image/png"));
         } catch (error) {
@@ -67,7 +70,10 @@
 
       const Pptx = await loadPptxGenJs();
       const pptx = new Pptx();
-      pptx.defineLayout({ name: "SCICANVAS", width: 12, height: 7.5 });
+      const dimensions = window.currentCanvasSize?.() || { widthMm:304.8, heightMm:190.5 };
+      const slideWidth = dimensions.widthMm / 25.4;
+      const slideHeight = dimensions.heightMm / 25.4;
+      pptx.defineLayout({ name:"SCICANVAS", width:slideWidth, height:slideHeight });
       pptx.layout = "SCICANVAS";
       pptx.author = "SciCanvas";
       pptx.company = "SciCanvas";
@@ -86,19 +92,19 @@
         if (button) button.textContent = `Rendering slide ${index + 1} of ${state.pages.length}…`;
         const png = await renderCurrentPagePngData(options);
         const slide = pptx.addSlide();
-        slide.background = { color: "FFFFFF" };
+        slide.background = { color:"FFFFFF" };
         slide.addImage({
-          data: png,
-          x: 0,
-          y: 0,
-          w: 12,
-          h: 7.5,
-          altText: page.name || `SciCanvas page ${index + 1}`
+          data:png,
+          x:0,
+          y:0,
+          w:slideWidth,
+          h:slideHeight,
+          altText:page.name || `SciCanvas page ${index + 1}`
         });
       }
 
       if (button) button.textContent = "Building .pptx…";
-      await pptx.writeFile({ fileName: safeFileName("pptx"), compression: true });
+      await pptx.writeFile({ fileName:safeFileName("pptx"), compression:true });
     } catch (error) {
       console.error("PowerPoint export failed", error);
       alert(`PowerPoint export failed: ${error.message}\n\nSVG and PNG export are still available.`);
@@ -124,15 +130,15 @@
   const pptxButton = document.createElement("button");
   pptxButton.type = "button";
   pptxButton.dataset.export = "pptx";
-  pptxButton.innerHTML = '<strong>PowerPoint · all pages</strong><small>One SciCanvas page per slide</small>';
+  pptxButton.innerHTML = '<strong>PowerPoint · all pages</strong><small>Uses the selected project/poster dimensions</small>';
   pptxButton.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
     exportMenu.classList.remove("open");
     exportPowerPoint({
-      includeGrid: document.getElementById("exportGrid").checked,
-      transparent: document.getElementById("pptxTransparent").checked,
-      scale: 2
+      includeGrid:document.getElementById("exportGrid").checked,
+      transparent:document.getElementById("pptxTransparent").checked,
+      scale:2
     });
   });
 
@@ -142,7 +148,7 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    #exportMenu{width:260px}.pptx-export-option{font-size:11px;color:#697589}.pptx-export-option input{vertical-align:middle}.pptx-export-option+button{display:grid;gap:2px;border-color:#8da9df!important;background:#eef4ff!important}.pptx-export-option+button strong{font-size:12px;color:#204c9e}.pptx-export-option+button small{font-size:10px;color:#60749a}.pptx-export-option+button:disabled{opacity:.65;cursor:progress}
+    #exportMenu{width:275px}.pptx-export-option{font-size:11px;color:#697589}.pptx-export-option input{vertical-align:middle}.pptx-export-option+button{display:grid;gap:2px;border-color:#8da9df!important;background:#eef4ff!important}.pptx-export-option+button strong{font-size:12px;color:#204c9e}.pptx-export-option+button small{font-size:10px;color:#60749a}.pptx-export-option+button:disabled{opacity:.65;cursor:progress}
   `;
   document.head.appendChild(style);
 })();
