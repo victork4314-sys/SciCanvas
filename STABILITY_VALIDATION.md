@@ -1,0 +1,1 @@
+Validation marker for presentation, trusted asset, broken preview, and project repair hardening.
