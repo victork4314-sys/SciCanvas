@@ -48,6 +48,7 @@ jobs:
           test -f theme-control-fix.js
           test -f page-size-tools.js
           test -f figure-assistant.js
+          test -f poster-assistant-fixes.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
