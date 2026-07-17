@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-20-frozen-pptx-pages-20260718-v1";
+  const EXPECTED_BUILD = "chunk-20-frozen-pptx-pages-20260718-v2";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -22,7 +22,8 @@
     "manual-collaboration-projects-ui.js",
     "projects-home-button-match.js",
     "project-tab-close-export.js",
-    "global-pptx-export-fix.js"
+    "global-pptx-export-fix.js",
+    "pptx-frozen-export-controller.js"
   ];
   let reloading = false;
 
