@@ -11,7 +11,7 @@
   function loadPuterFallback() {
     if (window.__figureLoomPuterFallback || document.querySelector('script[data-loomy-puter-fallback]')) return;
     const script = document.createElement('script');
-    script.src = 'puter-fallback.js?v=1';
+    script.src = 'puter-fallback.js?v=2';
     script.dataset.loomyPuterFallback = '1';
     document.head.appendChild(script);
   }
