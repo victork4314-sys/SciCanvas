@@ -1,5 +1,7 @@
 (() => {
   if (document.getElementById('projectsHomeButtonMatchStyle')) return;
+
+  const root = document.documentElement;
   const style = document.createElement('style');
   style.id = 'projectsHomeButtonMatchStyle';
   style.textContent = `
@@ -49,9 +51,9 @@
       white-space:nowrap!important
     }
     #projectsRibbonHost .projects-open-chip.active{
-      border-color:#8fa7d2!important;
-      background:#f2f6fc!important;
-      box-shadow:inset 0 -2px 0 rgba(65,105,193,.42)!important
+      border-color:#cfd7e3!important;
+      background:#fff!important;
+      box-shadow:none!important
     }
     #projectsRibbonHost .projects-current-group [data-project-action="disconnect"]{display:none!important}
     #projectsRibbonHost .projects-current-group{margin-left:auto!important;max-width:none!important}
@@ -59,15 +61,26 @@
 
     html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-main-actions button,
     html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-current-group>button,
-    html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-open-chip{
-      border-color:#455365!important;
-      background:#293440!important;
-      color:#dce3eb!important
+    html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-open-chip,
+    html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-open-chip.active{
+      border-color:#4c535e!important;
+      background:#353b44!important;
+      color:#e8ebef!important;
+      box-shadow:none!important
     }
     html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-main-actions button:hover:not(:disabled),
     html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-current-group>button:hover:not(:disabled),
-    html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-open-chip:hover:not(:disabled){background:#313d4a!important}
-    html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-open-chip.active{border-color:#7188bb!important;background:#303c4b!important}
+    html[data-figureloom-theme="dark"] #projectsRibbonHost .projects-open-chip:hover:not(:disabled){
+      border-color:#4c535e!important;
+      background:#404751!important;
+      color:#e8ebef!important;
+      box-shadow:none!important
+    }
+
+    html:not([data-figureloom-live-connected="1"]) #collabChatBubble,
+    html:not([data-figureloom-live-connected="1"]) #collabChatPanel{
+      display:none!important
+    }
 
     @media(max-width:900px){
       #projectsRibbonHost .projects-current-copy{display:none!important}
@@ -75,4 +88,30 @@
     }
   `;
   document.head.appendChild(style);
+
+  function syncLiveVisibility() {
+    const button = document.getElementById('projectDisconnectRibbonButton');
+    const connected = button?.dataset.state === 'connected' && !button.hidden;
+    root.dataset.figureloomLiveConnected = connected ? '1' : '0';
+    if (!connected) {
+      const bubble = document.getElementById('collabChatBubble');
+      const panel = document.getElementById('collabChatPanel');
+      if (bubble) bubble.hidden = true;
+      if (panel) panel.hidden = true;
+    }
+  }
+
+  const observer = new MutationObserver(syncLiveVisibility);
+  observer.observe(document.body, {
+    subtree:true,
+    childList:true,
+    attributes:true,
+    attributeFilter:['data-state', 'hidden']
+  });
+
+  syncLiveVisibility();
+  window.addEventListener('figureloom-collaboration-connected', syncLiveVisibility);
+  window.addEventListener('figureloom-collaboration-disconnected', syncLiveVisibility);
+  window.addEventListener('scicanvas-cloud-opened', syncLiveVisibility);
+  window.addEventListener('beforeunload', () => observer.disconnect(), { once:true });
 })();
