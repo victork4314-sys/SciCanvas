@@ -9,20 +9,11 @@
 
   const honestNote = 'This is a generated starting draft. Review and edit the layout, labels, and scientific details before using it.';
   const claimPattern = /\b(?:publication|journal|submission|camera)[ -]?(?:ready|quality|grade|style)\b|\bready for (?:publication|submission|a journal)\b|\bprofessional[ -]?(?:quality|grade)\b|\bpolished final\b/gi;
-  const quotaPattern = /quota|rate limit|too many requests|resource exhausted|daily limit|shared requests?|request limit|usage limit|limit exceeded|exceeded.*limit|429/i;
+  const quotaPattern = /quota|rate limit|too many requests|resource exhausted|daily limit|shared requests?|request limit|usage limit|usage error|limit exceeded|exceeded.*limit|429/i;
 
-  function selectedSource() {
-    return shell.querySelector('.figureloom-chat-source.active')?.dataset.source || 'gemini';
-  }
-
-  function latestRequestTarget() {
-    const labels = [...messages.querySelectorAll('.figureloom-chat-message.user > small')];
-    return labels.at(-1)?.textContent || '';
-  }
-
-  function requestWasGemini() {
-    return selectedSource() === 'gemini' && /to Gemini/i.test(latestRequestTarget());
-  }
+  const quotaStyle = document.createElement('style');
+  quotaStyle.textContent = '.figureloom-chat-quota{display:none!important}';
+  document.head.appendChild(quotaStyle);
 
   function honestText(text) {
     const original = String(text || '');
@@ -51,8 +42,7 @@
     });
   }
 
-  function clearWrongQuotaErrors() {
-    if (requestWasGemini()) return;
+  function clearQuotaUi() {
     messages.querySelectorAll('.figureloom-chat-quota').forEach(line => line.remove());
     messages.querySelectorAll('.figureloom-chat-message.error').forEach(article => {
       if (quotaPattern.test(article.textContent || '')) article.remove();
@@ -63,9 +53,9 @@
     const subtitle = drawer.querySelector('.utility-head span');
     const safety = shell.querySelector('.figureloom-chat-safety');
     if (subtitle) subtitle.textContent = 'An optional helper for making a starting draft';
-    if (safety) safety.textContent = 'Loomy makes editable starting drafts, not finished figures. Check and edit the layout, wording, illustrations, and scientific details yourself. Shared quota is used only when you deliberately send with Gemini; Puter and Builder never use it.';
+    if (safety) safety.textContent = 'Loomy makes editable starting drafts, not finished figures. Check and edit the layout, wording, illustrations, and scientific details yourself.';
     cleanAssistantClaims();
-    clearWrongQuotaErrors();
+    clearQuotaUi();
   }
 
   const observer = new MutationObserver(applyHonestUi);
