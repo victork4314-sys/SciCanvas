@@ -5,7 +5,6 @@
   const drawer = document.getElementById('collaborationDrawer');
   const status = drawer?.querySelector('#collabStatus');
   const toggle = drawer?.querySelector('#collabSessionToggle');
-  const message = drawer?.querySelector('#collabMessage');
   if (!drawer || !status || !toggle) return;
 
   let connecting = false;
@@ -28,8 +27,8 @@
     const statusText = String(status.textContent || '');
     const buttonText = String(toggle.textContent || '');
     return toggle.dataset.figureloomConnected === '1' ||
-      /private realtime session active/i.test(statusText) ||
-      /^stop review session$/i.test(buttonText);
+      /private realtime session active|live collaboration connected/i.test(statusText) ||
+      /^(?:stop review session|connected)$/i.test(buttonText);
   }
 
   function setText(node, value) {
@@ -39,7 +38,7 @@
   function cleanCopy() {
     const connected = engineReportsLive();
     if (connected) toggle.dataset.figureloomConnected = '1';
-    else if (/ready to start|no cloud project|save or open/i.test(status.textContent || '')) delete toggle.dataset.figureloomConnected;
+    else if (/ready to start|no cloud project|save or open|join or sign in/i.test(status.textContent || '')) delete toggle.dataset.figureloomConnected;
 
     const actualConnected = toggle.dataset.figureloomConnected === '1';
     const id = projectId();
@@ -112,11 +111,16 @@
   observer.observe(status, { childList:true, subtree:true, characterData:true });
   observer.observe(toggle, { childList:true, subtree:true, characterData:true, attributes:true });
 
-  ['scicanvas-cloud-opened', 'scicanvas-cloud-saved', 'scicanvas-share-link-accepted'].forEach(type => {
-    window.addEventListener(type, () => {
-      delete toggle.dataset.figureloomConnected;
-      setTimeout(() => ensureConnected(true), 120);
-    });
+  window.addEventListener('scicanvas-cloud-opened', () => {
+    delete toggle.dataset.figureloomConnected;
+    setTimeout(() => ensureConnected(true), 120);
+  });
+  window.addEventListener('scicanvas-share-link-accepted', () => {
+    delete toggle.dataset.figureloomConnected;
+    setTimeout(() => ensureConnected(true), 120);
+  });
+  window.addEventListener('scicanvas-cloud-saved', () => {
+    setTimeout(() => ensureConnected(true), 120);
   });
 
   document.addEventListener('click', event => {
