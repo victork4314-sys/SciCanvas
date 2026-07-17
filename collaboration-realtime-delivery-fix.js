@@ -2,18 +2,34 @@
   if (window.__figureLoomRealtimeDeliveryFix) return;
   window.__figureLoomRealtimeDeliveryFix = true;
 
-  const clientId = `confirmed-chat-${crypto.randomUUID()}`;
+  const MUTED_KEY = 'figureloom-chat-muted-v1';
+  const POLL_INTERVAL = 700;
   let client = null;
   let channel = null;
   let project = '';
   let connecting = null;
+  let pollTimer = 0;
+  let lastFetchedAt = 0;
   let lastText = '';
   let lastSentAt = 0;
   const sentAt = [];
+  const seen = new Set();
+  const muted = new Set(readMuted());
 
   const cloud = () => window.SciCanvasCloud;
   const user = () => cloud()?.getUser?.() || null;
   const projectId = () => cloud()?.currentProjectId || localStorage.getItem('scicanvas-current-cloud-project-v1') || '';
+
+  function readMuted() {
+    try {
+      const value = JSON.parse(localStorage.getItem(MUTED_KEY) || '[]');
+      return Array.isArray(value) ? value : [];
+    } catch { return []; }
+  }
+
+  function saveMuted() {
+    localStorage.setItem(MUTED_KEY, JSON.stringify([...muted]));
+  }
 
   function normalize(value) {
     return String(value || '')
@@ -60,14 +76,51 @@
     return `hsl(${Math.abs(hash) % 360} 52% 48%)`;
   }
 
-  function messageExists(host, id) {
-    return [...host.querySelectorAll('article[data-message-id]')].some(article => article.dataset.messageId === String(id));
+  function setStatus(text, online = false) {
+    const node = document.getElementById('ccOnline');
+    if (node) node.textContent = text;
+    const dot = document.querySelector('#collabChatBubble > i');
+    if (dot) dot.dataset.online = online ? '1' : '0';
   }
 
-  function appendMessage(host, payload, mine) {
-    if (!payload?.id || messageExists(host, payload.id) || moderationReason(payload.text)) return;
+  function toPayload(row) {
+    return {
+      id:row.id,
+      projectId:row.project_id,
+      userId:row.user_id,
+      name:row.display_name,
+      avatar:row.avatar_url || '',
+      color:row.color || color(row.user_id),
+      text:row.body,
+      sentAt:row.created_at
+    };
+  }
+
+  async function reportMessage(payload, article) {
+    if (!client || !projectId() || !user()?.id) throw new Error('Moderation reporting is not connected yet.');
+    if (!confirm(`Report this message from ${payload.name || 'this collaborator'}?`)) return;
+    const { error } = await client.from('collaboration_chat_reports').insert({
+      project_id:projectId(),
+      reporter_id:user().id,
+      reported_user_id:payload.userId,
+      message_id:String(payload.id || '').slice(0, 100),
+      reason:'abuse_or_harassment',
+      excerpt:String(payload.text || '').slice(0, 300)
+    });
+    if (error) throw error;
+    article.classList.add('reported');
+    setStatus('Message reported to the project owner.', true);
+  }
+
+  function appendMessage(row) {
+    const payload = toPayload(row);
+    if (!payload.id || seen.has(payload.id) || muted.has(payload.userId) || moderationReason(payload.text)) return;
+    const host = document.getElementById('ccMessages');
+    if (!host) return;
+    seen.add(payload.id);
     host.querySelector('.cc-empty')?.remove();
 
+    const mine = payload.userId === user()?.id;
     const article = document.createElement('article');
     article.className = mine ? 'mine' : '';
     article.dataset.userId = payload.userId || '';
@@ -82,7 +135,7 @@
       face.appendChild(image);
     } else {
       face.classList.add('cc-init');
-      face.style.setProperty('--c', payload.color || color(payload.userId));
+      face.style.setProperty('--c', payload.color);
       face.textContent = initials(payload.name);
     }
 
@@ -96,12 +149,72 @@
     const text = document.createElement('p');
     text.textContent = String(payload.text || '');
     body.append(meta, text);
+
+    if (!mine) {
+      const menuButton = document.createElement('button');
+      menuButton.type = 'button';
+      menuButton.className = 'cc-menu-button';
+      menuButton.textContent = '⋯';
+      menuButton.setAttribute('aria-label', 'Message options');
+      const menu = document.createElement('div');
+      menu.className = 'cc-message-menu';
+      const muteButton = document.createElement('button');
+      muteButton.type = 'button';
+      muteButton.textContent = 'Mute person';
+      muteButton.addEventListener('click', () => {
+        muted.add(payload.userId);
+        saveMuted();
+        document.querySelectorAll(`#ccMessages article[data-user-id="${CSS.escape(payload.userId)}"]`).forEach(node => node.remove());
+        setStatus(`${payload.name || 'Collaborator'} muted on this device.`, true);
+      });
+      const reportButton = document.createElement('button');
+      reportButton.type = 'button';
+      reportButton.textContent = 'Report message';
+      reportButton.addEventListener('click', () => reportMessage(payload, article).catch(error => setStatus(error.message, true)));
+      menu.append(muteButton, reportButton);
+      menuButton.addEventListener('click', event => {
+        event.stopPropagation();
+        document.querySelectorAll('.cc-message-menu.open').forEach(node => { if (node !== menu) node.classList.remove('open'); });
+        menu.classList.toggle('open');
+      });
+      body.append(menuButton, menu);
+    }
+
     article.append(face, body);
     host.appendChild(article);
     host.scrollTop = host.scrollHeight;
+
+    const panel = document.getElementById('collabChatPanel');
+    const badge = document.querySelector('#collabChatBubble > b');
+    if (!mine && panel?.hidden && badge) {
+      const next = Number(badge.textContent || 0) + 1;
+      badge.textContent = String(next);
+      badge.hidden = false;
+    }
+  }
+
+  async function fetchMessages(initial = false) {
+    if (!client || !project) return;
+    const since = initial ? new Date(Date.now() - 12 * 60 * 60 * 1000) : new Date(Math.max(0, lastFetchedAt - 1500));
+    const { data, error } = await client
+      .from('collaboration_chat_messages')
+      .select('id,project_id,user_id,display_name,avatar_url,color,body,created_at,expires_at')
+      .eq('project_id', project)
+      .gt('expires_at', new Date().toISOString())
+      .gte('created_at', since.toISOString())
+      .order('created_at', { ascending:true })
+      .limit(150);
+    if (error) throw error;
+    for (const row of data || []) {
+      appendMessage(row);
+      lastFetchedAt = Math.max(lastFetchedAt, new Date(row.created_at).getTime());
+    }
+    setStatus(channel ? 'Chat connected.' : 'Chat connected through reliable fallback.', true);
   }
 
   async function disconnect() {
+    clearInterval(pollTimer);
+    pollTimer = 0;
     if (client && channel) {
       try { await client.removeChannel(channel); } catch {}
     }
@@ -109,34 +222,51 @@
     client = null;
     project = '';
     connecting = null;
+    lastFetchedAt = 0;
   }
 
-  async function connect(host) {
+  async function connect() {
     const nextProject = projectId();
     const activeUser = user();
-    if (!nextProject || !activeUser || !cloud()?.configured?.()) throw new Error('Open a shared cloud project first.');
-    if (channel && project === nextProject) return channel;
+    if (!nextProject || !activeUser || !cloud()?.configured?.()) {
+      await disconnect();
+      setStatus('Open a shared cloud project to chat.', false);
+      return null;
+    }
+    if (client && project === nextProject) return client;
     if (connecting) return connecting;
 
     connecting = (async () => {
       await disconnect();
       client = await cloud().getClient();
-      const { data, error } = await client.auth.getSession();
-      if (error) throw error;
-      if (data.session?.access_token) await client.realtime.setAuth(data.session.access_token);
-      else await client.realtime.setAuth();
       project = nextProject;
-      channel = client.channel(`project-room:${nextProject}`, {
-        config:{ private:true, broadcast:{ self:false, ack:true } }
+      await fetchMessages(true);
+
+      channel = client
+        .channel(`figureloom-chat-db:${nextProject}`)
+        .on('postgres_changes', {
+          event:'INSERT',
+          schema:'public',
+          table:'collaboration_chat_messages',
+          filter:`project_id=eq.${nextProject}`
+        }, event => appendMessage(event.new));
+
+      await new Promise(resolve => {
+        let settled = false;
+        const finish = () => { if (!settled) { settled = true; resolve(); } };
+        channel.subscribe(status => {
+          if (status === 'SUBSCRIBED') finish();
+          if (['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)) {
+            channel = null;
+            finish();
+          }
+        });
+        setTimeout(finish, 1800);
       });
-      channel.on('broadcast', { event:'chat-message' }, ({ payload }) => {
-        window.setTimeout(() => appendMessage(host, payload, false), 200);
-      });
-      await new Promise((resolve, reject) => channel.subscribe(status => {
-        if (status === 'SUBSCRIBED') resolve();
-        if (['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)) reject(new Error(`Chat channel ${status.toLowerCase().replaceAll('_', ' ')}.`));
-      }));
-      return channel;
+
+      pollTimer = window.setInterval(() => fetchMessages(false).catch(error => setStatus(`Chat retrying: ${error.message}`, false)), POLL_INTERVAL);
+      setStatus(channel ? 'Chat connected.' : 'Chat connected through reliable fallback.', true);
+      return client;
     })();
 
     try { return await connecting; }
@@ -146,12 +276,10 @@
   function setup() {
     const form = document.getElementById('ccForm');
     const input = document.getElementById('ccInput');
-    const host = document.getElementById('ccMessages');
-    const online = document.getElementById('ccOnline');
     const button = form?.querySelector('button[type="submit"]');
-    if (!form || !input || !host || !online || !button) return false;
-    if (form.dataset.figureloomConfirmedDelivery === '1') return true;
-    form.dataset.figureloomConfirmedDelivery = '1';
+    if (!form || !input || !button) return false;
+    if (form.dataset.figureloomDatabaseChat === '1') return true;
+    form.dataset.figureloomDatabaseChat = '1';
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
@@ -159,7 +287,7 @@
       const text = input.value.trim();
       const blocked = moderationReason(text) || rateReason(text);
       if (blocked) {
-        online.textContent = blocked;
+        setStatus(blocked, true);
         return;
       }
 
@@ -167,27 +295,32 @@
       button.textContent = 'Sending…';
       try {
         const activeUser = user();
-        const activeChannel = await connect(host);
-        const payload = {
+        const activeClient = await connect();
+        if (!activeClient || !activeUser) throw new Error('Open a shared project first.');
+        const row = {
           id:crypto.randomUUID(),
-          projectId:projectId(),
-          userId:activeUser.id,
-          name:activeUser.user_metadata?.full_name || activeUser.user_metadata?.name || activeUser.email?.split('@')[0] || localStorage.getItem('scicanvas-user-name-v1') || 'Collaborator',
-          avatar:activeUser.user_metadata?.avatar_url || activeUser.user_metadata?.picture || '',
+          project_id:projectId(),
+          user_id:activeUser.id,
+          display_name:activeUser.user_metadata?.full_name || activeUser.user_metadata?.name || activeUser.email?.split('@')[0] || localStorage.getItem('scicanvas-user-name-v1') || 'Collaborator',
+          avatar_url:activeUser.user_metadata?.avatar_url || activeUser.user_metadata?.picture || '',
           color:color(activeUser.id),
-          text:text.slice(0, 1200),
-          sentAt:new Date().toISOString()
+          body:text.slice(0, 1200)
         };
-        const response = await activeChannel.send({ type:'broadcast', event:'chat-message', payload });
-        if (response !== 'ok') throw new Error(response === 'timed out' ? 'The message timed out and was not shown as sent.' : 'The server rejected the message.');
-        appendMessage(host, payload, true);
+        const { data, error } = await activeClient
+          .from('collaboration_chat_messages')
+          .insert(row)
+          .select('id,project_id,user_id,display_name,avatar_url,color,body,created_at,expires_at')
+          .single();
+        if (error) throw error;
+        appendMessage(data);
         input.value = '';
         sentAt.push(Date.now());
         lastText = text;
         lastSentAt = Date.now();
-        online.textContent = 'Message delivered.';
+        lastFetchedAt = Math.max(lastFetchedAt, new Date(data.created_at).getTime());
+        setStatus('Message delivered.', true);
       } catch (error) {
-        online.textContent = `Message not sent: ${error.message}`;
+        setStatus(`Message not sent: ${error.message}`, false);
       } finally {
         button.disabled = false;
         button.textContent = 'Send';
@@ -197,22 +330,23 @@
     ['scicanvas-cloud-opened','scicanvas-cloud-saved','scicanvas-share-link-accepted'].forEach(type => {
       window.addEventListener(type, () => {
         void disconnect();
-        setTimeout(() => connect(host).catch(() => {}), 100);
+        setTimeout(() => connect().catch(error => setStatus(error.message, false)), 100);
       });
     });
-    setTimeout(() => connect(host).catch(() => {}), 300);
+    setTimeout(() => connect().catch(error => setStatus(error.message, false)), 300);
     return true;
   }
 
   let attempts = 0;
-  const timer = window.setInterval(() => {
+  const setupTimer = window.setInterval(() => {
     attempts += 1;
-    if (setup() || attempts > 80) clearInterval(timer);
+    if (setup() || attempts > 100) clearInterval(setupTimer);
   }, 100);
   setup();
 
+  document.addEventListener('click', () => document.querySelectorAll('.cc-message-menu.open').forEach(node => node.classList.remove('open')));
   window.addEventListener('beforeunload', () => {
-    clearInterval(timer);
+    clearInterval(setupTimer);
     void disconnect();
   }, { once:true });
 })();
