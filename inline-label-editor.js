@@ -154,6 +154,14 @@
   script.src = './intuitive-interface.js';
   script.dataset.figureloomIntuitiveInterface = 'true';
   script.async = false;
+  script.addEventListener('load', () => {
+    if (document.querySelector('script[data-figureloom-intuitive-fix]')) return;
+    const fix = document.createElement('script');
+    fix.src = './intuitive-interface-fix.js';
+    fix.dataset.figureloomIntuitiveFix = 'true';
+    fix.async = false;
+    document.head.appendChild(fix);
+  }, { once:true });
   script.addEventListener('error', () => {
     console.error('Figureloom usability guidance could not be loaded.');
   }, { once:true });
