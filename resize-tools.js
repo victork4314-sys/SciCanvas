@@ -1,7 +1,9 @@
 (() => {
-  const HANDLE_SIZE = 14;
+  const HANDLE_SIZE = 20;
+  const HANDLE_HIT_SIZE = 38;
   const MIN_SIZE = 20;
   const directions = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+  const textDirections = ["nw", "ne", "se", "sw"];
 
   const baseRenderSelection = renderSelection;
   renderSelection = function renderResizableSelection() {
@@ -20,59 +22,89 @@
       w: [item.x, item.y + item.height / 2]
     };
 
-    directions.forEach(direction => {
+    const activeDirections = item.type === "text" ? textDirections : directions;
+    activeDirections.forEach(direction => {
       const [cx, cy] = points[direction];
+      const hitTarget = createSvg("rect", {
+        class: `resize-hit-target resize-${direction}`,
+        x: cx - HANDLE_HIT_SIZE / 2,
+        y: cy - HANDLE_HIT_SIZE / 2,
+        width: HANDLE_HIT_SIZE,
+        height: HANDLE_HIT_SIZE,
+        rx: 8,
+        "data-direction": direction,
+        role: "button",
+        "aria-label": `Resize ${direction}`
+      });
+      hitTarget.addEventListener("pointerdown", beginResize);
+
       const handle = createSvg("rect", {
         class: `resize-handle resize-${direction}`,
         x: cx - HANDLE_SIZE / 2,
         y: cy - HANDLE_SIZE / 2,
         width: HANDLE_SIZE,
         height: HANDLE_SIZE,
-        rx: 3,
-        "data-direction": direction,
-        tabindex: 0,
-        role: "button",
-        "aria-label": `Resize ${direction}`
+        rx: 4,
+        "aria-hidden": "true"
       });
-      handle.addEventListener("pointerdown", beginResize);
-      selectionLayer.appendChild(handle);
+      selectionLayer.append(hitTarget, handle);
     });
   };
 
   function beginResize(event) {
     const item = selectedObject();
-    if (!item || item.type === "connector") return;
+    if (!item || item.type === "connector" || item.locked) return;
     event.preventDefault();
     event.stopPropagation();
     pushHistory();
     const point = canvasPoint(event);
     state.resize = {
       id: item.id,
+      pointerId: event.pointerId,
       direction: event.currentTarget.dataset.direction,
       startPointerX: point.x,
       startPointerY: point.y,
       startX: item.x,
       startY: item.y,
       startWidth: item.width,
-      startHeight: item.height
+      startHeight: item.height,
+      startFontSize: Math.max(6, Number(item.fontSize) || 30)
     };
-    canvas.setPointerCapture(event.pointerId);
+    canvas.setPointerCapture?.(event.pointerId);
   }
 
   function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(maximum, value));
   }
 
-  function applyProportionalResize(item, resize, dx, dy, direction) {
+  function resizeScale(resize, dx, dy, direction) {
     const horizontalScale = direction.includes("e")
-      ? (resize.startWidth + dx) / resize.startWidth
-      : (resize.startWidth - dx) / resize.startWidth;
+      ? (resize.startWidth + dx) / Math.max(1, resize.startWidth)
+      : (resize.startWidth - dx) / Math.max(1, resize.startWidth);
     const verticalScale = direction.includes("s")
-      ? (resize.startHeight + dy) / resize.startHeight
-      : (resize.startHeight - dy) / resize.startHeight;
-    let scale = Math.abs(horizontalScale - 1) >= Math.abs(verticalScale - 1)
+      ? (resize.startHeight + dy) / Math.max(1, resize.startHeight)
+      : (resize.startHeight - dy) / Math.max(1, resize.startHeight);
+    return Math.abs(horizontalScale - 1) >= Math.abs(verticalScale - 1)
       ? horizontalScale
       : verticalScale;
+  }
+
+  function applyTextResize(item, resize, dx, dy, direction) {
+    let scale = resizeScale(resize, dx, dy, direction);
+    const nextFontSize = clamp(resize.startFontSize * scale, 6, 320);
+    scale = nextFontSize / resize.startFontSize;
+    const width = Math.max(MIN_SIZE, resize.startWidth * scale);
+    const height = Math.max(MIN_SIZE, resize.startHeight * scale);
+
+    item.fontSize = nextFontSize;
+    item.x = direction.includes("w") ? resize.startX + resize.startWidth - width : resize.startX;
+    item.y = direction.includes("n") ? resize.startY + resize.startHeight - height : resize.startY;
+    item.width = width;
+    item.height = height;
+  }
+
+  function applyProportionalResize(item, resize, dx, dy, direction) {
+    let scale = resizeScale(resize, dx, dy, direction);
     scale = Math.max(MIN_SIZE / resize.startWidth, MIN_SIZE / resize.startHeight, scale);
 
     let width = resize.startWidth * scale;
@@ -113,9 +145,11 @@
 
   canvas.addEventListener("pointermove", event => {
     const resize = state.resize;
-    if (!resize) return;
+    if (!resize || event.pointerId !== resize.pointerId) return;
     const item = state.objects.find(object => object.id === resize.id);
     if (!item) return;
+    event.preventDefault();
+    event.stopPropagation();
 
     const point = canvasPoint(event);
     const dx = point.x - resize.startPointerX;
@@ -123,7 +157,9 @@
     const direction = resize.direction;
     const isCorner = direction.length === 2;
 
-    if (isCorner && event.shiftKey) {
+    if (item.type === "text" && isCorner) {
+      applyTextResize(item, resize, dx, dy, direction);
+    } else if (isCorner && event.shiftKey) {
       applyProportionalResize(item, resize, dx, dy, direction);
     } else {
       let left = resize.startX;
@@ -145,8 +181,8 @@
     render();
   });
 
-  function finishResize() {
-    if (!state.resize) return;
+  function finishResize(event) {
+    if (!state.resize || (event?.pointerId != null && event.pointerId !== state.resize.pointerId)) return;
     state.resize = null;
     render();
     scheduleSave();
@@ -157,8 +193,9 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .resize-handle{fill:#fff;stroke:#2563eb;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:all}
-    .resize-handle:hover{fill:#dbe8ff}
+    .resize-hit-target{fill:transparent;stroke:transparent;pointer-events:all;touch-action:none}
+    .resize-handle{fill:#fff;stroke:#2563eb;stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}
+    .resize-hit-target:hover + .resize-handle{fill:#dbe8ff}
     .resize-nw,.resize-se{cursor:nwse-resize}.resize-ne,.resize-sw{cursor:nesw-resize}
     .resize-n,.resize-s{cursor:ns-resize}.resize-e,.resize-w{cursor:ew-resize}
   `;
