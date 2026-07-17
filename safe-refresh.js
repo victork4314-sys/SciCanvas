@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-11-smooth-object-state-20260717-v1";
+  const EXPECTED_BUILD = "chunk-12-project-tabs-20260717-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -17,7 +17,8 @@
     "collaboration-live-motion.js",
     "collaboration-realtime-delivery-fix.js",
     "shared-content-state-bridge.js",
-    "shared-content-safety.js"
+    "shared-content-safety.js",
+    "project-tabs.js"
   ];
   let reloading = false;
 
