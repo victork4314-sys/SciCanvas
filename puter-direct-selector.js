@@ -9,6 +9,7 @@
   const builderButton = sourceBar?.querySelector('[data-source="builder"]');
   const sendButton = shell?.querySelector('#figureloomChatSend');
   const input = shell?.querySelector('#figureloomChatInput');
+  const action = shell?.querySelector('#figureloomChatAction');
   const actionLabel = shell?.querySelector('#figureloomChatActionLabel');
   const builderSettings = shell?.querySelector('#figureloomBuilderSettings');
   const access = shell?.querySelector('#figureloomChatAccess');
@@ -17,7 +18,7 @@
   const rememberKey = shell?.querySelector('#figureloomChatRemember');
   const messages = shell?.querySelector('#figureloomChatMessages');
   const progress = document.getElementById('loomyProgress');
-  if (!drawer || !shell || !sourceBar || !geminiButton || !builderButton || !sendButton || !input || !keyInput || !rememberKey || !messages) return;
+  if (!drawer || !shell || !sourceBar || !geminiButton || !builderButton || !sendButton || !input || !action || !keyInput || !rememberKey || !messages) return;
 
   const PUTER_CDN = 'https://js.puter.com/v2/';
   const KEY_STORAGE = 'figureloom-personal-gemini-key-session';
@@ -259,6 +260,13 @@ Never delete, replace, or modify existing work. The result is rendered on a new 
       const plan = await askPuter(data);
       setProgress('Puter proposal ready', 'No FigureLoom quota was used.', 96);
       return syntheticResponse(plan);
+    } catch (error) {
+      const message = String(error?.message || error || 'Puter AI could not complete the request.');
+      setProgress('Puter stopped', 'Nothing was changed and no FigureLoom quota was used.', 98);
+      return new Response(JSON.stringify({ error:{ message } }), {
+        status:502,
+        headers:{ 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store' }
+      });
     } finally {
       restoreRoute?.();
     }
