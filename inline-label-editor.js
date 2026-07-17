@@ -201,7 +201,8 @@
       pointerId:event.pointerId,
       x:event.clientX,
       y:event.clientY,
-      moved:false
+      moved:false,
+      historyLength:state.history.length
     };
   }, true);
 
@@ -223,10 +224,8 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     state.drag = null;
-    if (state.history.length) {
-      state.history.pop();
-      updateHistoryButtons();
-    }
+    while (state.history.length > candidate.historyLength) state.history.pop();
+    updateHistoryButtons();
     suppressClickUntil = performance.now() + 600;
     start(item, textNode);
   }, true);
