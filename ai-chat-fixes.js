@@ -20,4 +20,11 @@
     };
     Object.defineProperty(buildButton, '__figureLoomChatClickWrapped', { value:true });
   }
+
+  if (!document.querySelector('script[data-figureloom-gemini-blueprint]')) {
+    const script = document.createElement('script');
+    script.src = 'gemini-blueprint.js?v=1';
+    script.dataset.figureloomGeminiBlueprint = '1';
+    document.head.appendChild(script);
+  }
 })();
