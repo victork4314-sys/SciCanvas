@@ -237,7 +237,8 @@
     const item = objects?.find?.(candidate => String(candidate.id) === String(row.object_id));
     if (!item) return;
 
-    const objectState = row.object_state && typeof row.object_state === 'object'
+    const hasCompleteState = row.object_state && typeof row.object_state === 'object' && Object.keys(row.object_state).length > 0;
+    const objectState = hasCompleteState
       ? row.object_state
       : { x:row.x, y:row.y, width:row.width, height:row.height, rotation:row.rotation };
 
