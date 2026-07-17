@@ -12,6 +12,10 @@
     return Math.max(6, Number(item.fontSize) || 30);
   }
 
+  function editorValue(editor) {
+    return String(editor?.textContent || '').replace(/[\r\n]+/g, '');
+  }
+
   function textMetrics(item, value = item.text || '') {
     const size = fontSize(item);
     const weight = item.fontWeight || 650;
@@ -33,9 +37,9 @@
     return group?.querySelector('text') || null;
   }
 
-  function syncTextBounds(item) {
+  function syncTextBounds(item, value = item?.text || '') {
     if (!item || item.type !== 'text') return;
-    const metrics = textMetrics(item);
+    const metrics = textMetrics(item, value);
     item.width = metrics.width;
     item.height = metrics.height;
   }
@@ -57,17 +61,24 @@
     #canvas,#canvas *,button,label,.utility-drawer,.science-drawer,.packs-drawer{
       -webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important
     }
-    input,textarea,select,[contenteditable="true"],.figureloom-direct-label-editor{
+    input,textarea,select,[contenteditable="true"],[contenteditable="plaintext-only"],.figureloom-direct-label-editor{
       -webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important
     }
     #objectLayer .canvas-object{touch-action:none}
     #objectLayer .canvas-object text{cursor:move}
     .figureloom-direct-label-editor{
-      position:fixed;z-index:2147483647;box-sizing:border-box;
-      min-width:38px;max-width:calc(100vw - 16px);min-height:32px;
-      padding:2px 5px;border:1.5px solid rgba(37,99,235,.9);border-radius:6px;
-      background:transparent;outline:none;box-shadow:none;line-height:1.08;
-      caret-color:#2563eb
+      position:fixed;z-index:2147483647;display:block;box-sizing:border-box;
+      min-width:18px;max-width:calc(100vw - 12px);min-height:22px;
+      margin:0;padding:0 2px;border:2px solid #2563eb;border-radius:5px;
+      background:rgba(0,0,0,0)!important;background-color:transparent!important;
+      -webkit-appearance:none!important;appearance:none!important;
+      outline:none!important;box-shadow:none!important;overflow:visible;
+      white-space:pre;word-break:normal;line-height:1;caret-color:#2563eb;
+      -webkit-text-fill-color:currentColor
+    }
+    .figureloom-direct-label-editor:focus{
+      background:rgba(0,0,0,0)!important;background-color:transparent!important;
+      outline:none!important;box-shadow:none!important
     }
   `;
   document.head.appendChild(style);
@@ -76,14 +87,15 @@
     if (!active) return;
     const session = active;
     active = null;
-    session.input.removeEventListener('blur', session.onBlur);
+    session.editor.removeEventListener('blur', session.onBlur);
 
     const item = textItem(session.id);
     if (item) {
       if (commit) {
-        item.text = session.input.value;
-        item.name = session.input.value.trim().slice(0, 40) || 'Text label';
-        syncTextBounds(item);
+        const value = editorValue(session.editor);
+        item.text = value;
+        item.name = value.trim().slice(0, 40) || 'Text label';
+        syncTextBounds(item, value);
       } else {
         item.text = session.original.text;
         item.name = session.original.name;
@@ -97,7 +109,8 @@
     }
 
     if (session.textNode?.isConnected) session.textNode.style.visibility = '';
-    session.input.remove();
+    selectionLayer.style.visibility = '';
+    session.editor.remove();
     render();
     window.syncPage?.();
     scheduleSave();
@@ -106,10 +119,24 @@
   function resizeEditor(session) {
     const item = textItem(session.id);
     if (!item) return;
-    const metrics = textMetrics(item, session.input.value);
+    const value = editorValue(session.editor);
+    const metrics = textMetrics(item, value);
     const scale = session.cssScale || 1;
-    session.input.style.width = `${Math.min(window.innerWidth - 16, Math.max(38, metrics.width * scale + 12))}px`;
-    session.input.style.height = `${Math.max(32, metrics.height * scale + 8)}px`;
+    const width = Math.min(window.innerWidth - 12, Math.max(18, metrics.width * scale + 6));
+    const height = Math.max(22, metrics.height * scale + 4);
+    session.editor.style.width = `${width}px`;
+    session.editor.style.height = `${height}px`;
+    session.editor.style.lineHeight = `${Math.max(18, metrics.height * scale)}px`;
+  }
+
+  function placeCaretAtEnd(editor) {
+    const selection = window.getSelection?.();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 
   function start(item, textNode) {
@@ -122,54 +149,70 @@
     const rect = liveTextNode.getBoundingClientRect();
     const metrics = textMetrics(item);
     const cssScale = Math.max(.1, rect.width / Math.max(1, metrics.width));
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = item.text || '';
-    input.className = 'figureloom-direct-label-editor';
-    input.setAttribute('aria-label', 'Edit text label');
-    input.style.left = `${Math.max(8, Math.min(rect.left - 5, window.innerWidth - 46))}px`;
-    input.style.top = `${Math.max(8, Math.min(rect.top - 4, window.innerHeight - 40))}px`;
-    input.style.color = item.fill || '#172033';
-    input.style.fontFamily = metrics.family;
-    input.style.fontSize = `${Math.max(12, metrics.size * cssScale)}px`;
-    input.style.fontWeight = String(metrics.weight);
-    input.style.fontStyle = metrics.style;
+    const editor = document.createElement('div');
+    editor.contentEditable = 'plaintext-only';
+    if (editor.contentEditable !== 'plaintext-only') editor.contentEditable = 'true';
+    editor.textContent = item.text || '';
+    editor.className = 'figureloom-direct-label-editor';
+    editor.setAttribute('role', 'textbox');
+    editor.setAttribute('aria-label', 'Edit text label');
+    editor.setAttribute('aria-multiline', 'false');
+    editor.spellcheck = false;
+    editor.style.left = `${Math.max(6, Math.min(rect.left - 3, window.innerWidth - 28))}px`;
+    editor.style.top = `${Math.max(6, Math.min(rect.top - 3, window.innerHeight - 28))}px`;
+    editor.style.color = item.fill || '#172033';
+    editor.style.fontFamily = metrics.family;
+    editor.style.fontSize = `${Math.max(12, metrics.size * cssScale)}px`;
+    editor.style.fontWeight = String(metrics.weight);
+    editor.style.fontStyle = metrics.style;
 
     const session = {
-      id:item.id,
-      original:{
-        text:item.text || '',
-        name:item.name || 'Text label',
-        width:item.width,
-        height:item.height
+      id: item.id,
+      original: {
+        text: item.text || '',
+        name: item.name || 'Text label',
+        width: item.width,
+        height: item.height
       },
-      input,
-      textNode:liveTextNode,
+      editor,
+      textNode: liveTextNode,
       cssScale,
-      historyPushed:false,
-      onBlur:() => finish(true)
+      historyPushed: false,
+      onBlur: () => finish(true)
     };
     active = session;
     liveTextNode.style.visibility = 'hidden';
-    document.body.appendChild(input);
+    selectionLayer.style.visibility = 'hidden';
+    document.body.appendChild(editor);
     resizeEditor(session);
 
-    input.addEventListener('input', () => {
+    editor.addEventListener('beforeinput', event => {
+      if (event.inputType === 'insertParagraph' || event.inputType === 'insertLineBreak') event.preventDefault();
+    });
+    editor.addEventListener('paste', event => {
+      event.preventDefault();
+      const text = event.clipboardData?.getData('text/plain')?.replace(/[\r\n]+/g, ' ') || '';
+      document.execCommand?.('insertText', false, text);
+    });
+    editor.addEventListener('input', () => {
       const current = textItem(session.id);
       if (!current) return;
+      const value = editorValue(editor);
+      if (editor.textContent !== value) editor.textContent = value;
       if (!session.historyPushed) {
         pushHistory();
         session.historyPushed = true;
       }
-      current.text = input.value;
-      current.name = input.value.trim().slice(0, 40) || 'Text label';
-      syncTextBounds(current);
+      current.text = value;
+      current.name = value.trim().slice(0, 40) || 'Text label';
+      syncTextBounds(current, value);
       const inspector = document.getElementById('textContent');
-      if (inspector) inspector.value = input.value;
+      if (inspector) inspector.value = value;
       resizeEditor(session);
+      placeCaretAtEnd(editor);
     });
 
-    input.addEventListener('keydown', event => {
+    editor.addEventListener('keydown', event => {
       event.stopPropagation();
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -179,14 +222,19 @@
         finish(false);
       }
     });
-    input.addEventListener('blur', session.onBlur);
+    editor.addEventListener('blur', session.onBlur);
 
-    input.focus({ preventScroll:true });
-    input.select();
+    editor.focus({ preventScroll: true });
+    placeCaretAtEnd(editor);
   }
 
   document.addEventListener('pointerdown', event => {
     if (event.target.closest?.('.figureloom-direct-label-editor')) return;
+    if (window.FigureloomMultiSelectMode?.isActive?.()) {
+      pointerCandidate = null;
+      if (active) finish(true);
+      return;
+    }
     if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey) {
       pointerCandidate = null;
       return;
@@ -201,13 +249,13 @@
     const item = textItem(group?.dataset.id);
     if (!item) return;
     pointerCandidate = {
-      id:item.id,
-      pointerId:event.pointerId,
-      x:event.clientX,
-      y:event.clientY,
-      moved:false,
-      historyLength:state.history.length,
-      startedAt:performance.now()
+      id: item.id,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+      historyLength: state.history.length,
+      startedAt: performance.now()
     };
   }, true);
 
@@ -222,6 +270,7 @@
     const candidate = pointerCandidate;
     if (!candidate || candidate.pointerId !== event.pointerId) return;
     pointerCandidate = null;
+    if (window.FigureloomMultiSelectMode?.isActive?.()) return;
     if (candidate.moved || performance.now() - candidate.startedAt > 480) return;
     const item = textItem(candidate.id);
     const textNode = renderedTextNode(candidate.id);
