@@ -131,3 +131,197 @@
     button.title = "Grant access now or reserve it for this email";
   }
 })();
+
+(() => {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const XHTML_NS = "http://www.w3.org/1999/xhtml";
+  const editorCanvas = document.getElementById("canvas");
+  if (!editorCanvas || typeof state === "undefined") return;
+
+  let pointerCandidate = null;
+  let pendingEdit = null;
+  let pendingTimer = 0;
+  let activeEditor = null;
+
+  function textItem(id) {
+    const item = state.objects?.find(candidate => candidate.id === id);
+    return item?.type === "text" ? item : null;
+  }
+
+  function hitText(target) {
+    const element = target instanceof Element ? target : target?.parentElement;
+    const textNode = element?.closest?.("text");
+    const group = textNode?.closest?.(".canvas-object[data-id]");
+    const id = group?.dataset?.id;
+    return id && textItem(id) ? { id, group, textNode } : null;
+  }
+
+  function livePreview(item, value) {
+    item.text = value;
+    item.name = value.trim().slice(0, 40) || "Text label";
+    const group = [...document.querySelectorAll("#objectLayer .canvas-object[data-id]")]
+      .find(node => node.dataset.id === item.id);
+    const textNode = group?.querySelector("text");
+    if (textNode) textNode.textContent = value;
+    const inspector = document.getElementById("textContent");
+    if (inspector && state.selectedId === item.id) inspector.value = value;
+  }
+
+  function closeEditor(commit = true) {
+    if (!activeEditor) return;
+    const session = activeEditor;
+    activeEditor = null;
+    session.input.removeEventListener("blur", session.onBlur);
+    const item = textItem(session.id);
+    if (item) {
+      const value = commit ? session.input.value : session.original;
+      item.text = value;
+      item.name = value.trim().slice(0, 40) || "Text label";
+    }
+    session.foreignObject.remove();
+    render();
+    scheduleSave();
+    window.syncPage?.();
+  }
+
+  function openEditor(id, addHistory = false) {
+    const item = textItem(id);
+    if (!item) return;
+    if (activeEditor?.id === id) {
+      activeEditor.input.focus();
+      return;
+    }
+    closeEditor(true);
+    if (addHistory) pushHistory();
+    if (state.selectedId !== id) select(id);
+    state.drag = null;
+
+    const fontSize = Math.max(10, Number(item.fontSize) || 30);
+    const width = Math.min(
+      1200 - item.x + 8,
+      Math.max(Number(item.width) + 28 || 218, Math.min(720, (String(item.text || "").length + 4) * fontSize * 0.58))
+    );
+    const height = Math.max(Number(item.height) + 18 || 73, fontSize + 24);
+    const foreignObject = document.createElementNS(SVG_NS, "foreignObject");
+    foreignObject.setAttribute("x", String(Math.max(0, item.x - 8)));
+    foreignObject.setAttribute("y", String(Math.max(0, item.y - 8)));
+    foreignObject.setAttribute("width", String(Math.max(150, width)));
+    foreignObject.setAttribute("height", String(height));
+    foreignObject.setAttribute("class", "inline-text-editor");
+    foreignObject.style.overflow = "visible";
+
+    const input = document.createElementNS(XHTML_NS, "input");
+    input.setAttribute("type", "text");
+    input.setAttribute("aria-label", "Edit text label");
+    input.value = item.text || "";
+    Object.assign(input.style, {
+      width: "100%",
+      height: `${Math.max(44, fontSize + 14)}px`,
+      boxSizing: "border-box",
+      border: "2px solid #39786d",
+      borderRadius: "9px",
+      outline: "none",
+      padding: "4px 10px",
+      background: "rgba(255,255,255,.97)",
+      boxShadow: "0 8px 24px rgba(12,46,40,.22)",
+      color: item.fill || "#172033",
+      fontFamily: item.fontFamily || "Segoe UI, sans-serif",
+      fontSize: `${fontSize}px`,
+      fontWeight: String(item.fontWeight || 650),
+      fontStyle: item.fontStyle || "normal",
+      lineHeight: "1.15"
+    });
+    foreignObject.appendChild(input);
+    editorCanvas.appendChild(foreignObject);
+
+    const session = {
+      id,
+      original: item.text || "",
+      input,
+      foreignObject,
+      onBlur: () => closeEditor(true)
+    };
+    activeEditor = session;
+
+    input.addEventListener("input", () => {
+      const current = textItem(id);
+      if (current) livePreview(current, input.value);
+    });
+    input.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        closeEditor(true);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        closeEditor(false);
+      }
+      event.stopPropagation();
+    });
+    input.addEventListener("blur", session.onBlur);
+    requestAnimationFrame(() => {
+      input.focus({ preventScroll:true });
+      input.select();
+    });
+  }
+
+  editorCanvas.addEventListener("pointerdown", event => {
+    if (activeEditor && !activeEditor.foreignObject.contains(event.target)) closeEditor(true);
+    const hit = hitText(event.target);
+    pointerCandidate = hit ? {
+      id: hit.id,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false
+    } : null;
+  }, true);
+
+  editorCanvas.addEventListener("pointermove", event => {
+    if (!pointerCandidate || pointerCandidate.pointerId !== event.pointerId) return;
+    if (Math.hypot(event.clientX - pointerCandidate.x, event.clientY - pointerCandidate.y) > 7) {
+      pointerCandidate.moved = true;
+    }
+  }, true);
+
+  editorCanvas.addEventListener("pointerup", event => {
+    if (!pointerCandidate || pointerCandidate.pointerId !== event.pointerId) return;
+    const candidate = pointerCandidate;
+    pointerCandidate = null;
+    if (candidate.moved) return;
+    pendingEdit = { id:candidate.id };
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(() => {
+      if (!pendingEdit) return;
+      const id = pendingEdit.id;
+      pendingEdit = null;
+      openEditor(id, false);
+    }, 0);
+  }, true);
+
+  editorCanvas.addEventListener("click", event => {
+    if (!pendingEdit) return;
+    const id = pendingEdit.id;
+    pendingEdit = null;
+    clearTimeout(pendingTimer);
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openEditor(id, false);
+  }, true);
+
+  editorCanvas.addEventListener("dblclick", event => {
+    const hit = hitText(event.target);
+    if (!hit) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openEditor(hit.id, false);
+  }, true);
+
+  document.addEventListener("keydown", event => {
+    if (event.key !== "Enter" || activeEditor) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
+    const item = textItem(state.selectedId);
+    if (!item) return;
+    event.preventDefault();
+    openEditor(item.id, true);
+  }, true);
+})();
