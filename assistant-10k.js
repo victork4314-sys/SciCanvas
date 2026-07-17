@@ -5,6 +5,16 @@
   const assetSearch = window.SciCanvasAssetSearch;
   if (!drawer || !oldButton || !promptInput || !assetSearch) return;
 
+  const EXTRA_PREFIXES = ['medical-icon','lucide','carbon','material-symbols','mdi','ph'];
+  const EXTRA_SOURCE_LABELS = {
+    'medical-icon':'Medical Icons',
+    lucide:'Lucide',
+    carbon:'Carbon',
+    'material-symbols':'Material Symbols',
+    mdi:'Material Design Icons',
+    ph:'Phosphor'
+  };
+
   const button = oldButton.cloneNode(true);
   oldButton.replaceWith(button);
 
@@ -13,9 +23,9 @@
   const onlineControl = controls?.querySelector('#assistantUseBioicons');
   const onlineLabel = onlineControl?.closest('label');
   const status = controls?.querySelector('#assistantBuildStatus');
-  if (onlineLabel) onlineLabel.innerHTML = '<input id="assistantUseBioicons" type="checkbox" checked> Search the ≈10,000 deduplicated illustration library when online';
+  if (onlineLabel) onlineLabel.innerHTML = '<input id="assistantUseBioicons" type="checkbox" checked> Search every connected illustration library when online';
   const onlineCheckbox = controls?.querySelector('#assistantUseBioicons');
-  if (status) status.textContent = 'Uses built-in science and Water 32 locally, plus Bioicons, Healthicons, and Tabler when online.';
+  if (status) status.textContent = 'Uses built-in science and Water 32 locally, plus Bioicons, Healthicons, Tabler, Medical Icons, Lucide, Carbon, Material Symbols, MDI, and Phosphor when online.';
 
   function canvasSize() {
     return window.currentCanvasSize?.() || { width:1200, height:750 };
@@ -47,16 +57,88 @@
     return parts.length>=2 && parts.length<=8 ? parts : [];
   }
 
+  function inferredStages(prompt) {
+    const explicit = extractStages(prompt);
+    if (explicit.length) return explicit;
+    const lower = String(prompt || '').toLowerCase();
+    if (/\b(?:q?pcr|polymerase chain reaction|dna amplification)\b/.test(lower)) {
+      return [
+        'biological sample tube',
+        'PCR reagents and pipette',
+        'thermal cycler',
+        'DNA amplification',
+        'gel electrophoresis',
+        'PCR result'
+      ];
+    }
+    return [];
+  }
+
+  function readable(value='') {
+    return String(value).replace(/[_/.-]+/g,' ').replace(/\b\w/g,letter=>letter.toUpperCase()).trim();
+  }
+
+  function relevance(label, phrase) {
+    const haystack = String(label || '').toLowerCase();
+    const tokens = String(phrase || '').toLowerCase().match(/[a-z0-9-]{3,}/g) || [];
+    return tokens.reduce((score,token)=>score+(haystack===token?20:haystack.includes(token)?7:0),0);
+  }
+
+  async function extraMatches(phrase, limit=80) {
+    const url = `https://api.iconify.design/search?query=${encodeURIComponent(phrase)}&prefixes=${EXTRA_PREFIXES.join(',')}&limit=${Math.min(300,Math.max(32,limit))}`;
+    const response = await fetch(url,{cache:'force-cache'});
+    if (!response.ok) throw new Error(`Extra illustration search returned ${response.status}.`);
+    const data = await response.json();
+    return (data.icons || []).map((fullName,index)=>{
+      const separator = fullName.indexOf(':');
+      const prefix = fullName.slice(0,separator);
+      const name = fullName.slice(separator+1);
+      const label = readable(name);
+      return {
+        kind:'iconify',source:prefix,prefix,name,fullName,label,
+        key:assetSearch.canonicalKey(label),
+        score:relevance(label,phrase)+Math.max(1,300-index),
+        collection:data.collections?.[prefix] || null,
+        sourceLabel:EXTRA_SOURCE_LABELS[prefix] || prefix
+      };
+    });
+  }
+
+  async function combinedMatches(phrase,online,limit=40) {
+    const basePromise = assetSearch.search(phrase,{online,limit}).catch(error=>{
+      console.warn('Main illustration search unavailable',error);
+      return {entries:[]};
+    });
+    const extraPromise = online ? extraMatches(phrase,limit).catch(error=>{
+      console.warn('Extra illustration search unavailable',error);
+      return [];
+    }) : Promise.resolve([]);
+    const [base,extra] = await Promise.all([basePromise,extraPromise]);
+    const seen = new Set();
+    return [...(base.entries || []),...extra]
+      .map((entry,index)=>({
+        ...entry,
+        _rank:relevance(entry.label,phrase)+(entry.score || 0)-(index*.001)
+      }))
+      .sort((a,b)=>b._rank-a._rank)
+      .filter(entry=>{
+        const key=assetSearch.canonicalKey(entry.label);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
   async function selectForPhrase(phrase,online,used) {
-    const result = await assetSearch.search(phrase,{online,limit:18});
-    const match = result.entries.find(entry => !used.has(assetSearch.canonicalKey(entry.label))) || result.entries[0];
+    const entries = await combinedMatches(phrase,online,50);
+    const match = entries.find(entry => !used.has(assetSearch.canonicalKey(entry.label))) || entries[0];
     if (match) used.add(assetSearch.canonicalKey(match.label));
     return match || null;
   }
 
   async function selectAssets(prompt,online,count) {
     const used = new Set();
-    const stages = extractStages(prompt);
+    const stages = inferredStages(prompt);
     if (stages.length) {
       const entries = [];
       for (const stage of stages) {
@@ -66,9 +148,9 @@
       if (entries.length>=2) return entries;
     }
 
-    const result = await assetSearch.search(prompt,{online,limit:80});
+    const entries = await combinedMatches(prompt,online,120);
     const selected = [];
-    result.entries.forEach(entry => {
+    entries.forEach(entry => {
       const key = assetSearch.canonicalKey(entry.label);
       if (!key || used.has(key) || selected.length>=count) return;
       used.add(key);
@@ -88,7 +170,8 @@
     const item = await assetSearch.materialize(entry,{x,y,width,height});
     item.name = entry.stageLabel || entry.label;
     item.metadata ??= {};
-    item.metadata.notes = `${item.metadata.notes || ''}\nSelected by the expanded Figure Assistant for: ${entry.stageLabel || entry.label}`.trim();
+    if (entry.sourceLabel && !item.metadata.sourcePack) item.metadata.sourcePack = entry.sourceLabel;
+    item.metadata.notes = `${item.metadata.notes || ''}\nSelected by Loomy from the complete illustration libraries for: ${entry.stageLabel || entry.label}`.trim();
     return item;
   }
 
@@ -155,22 +238,33 @@
     return objects;
   }
 
+  function fitObjectsToCanvas(objects,width,height) {
+    objects.forEach(item=>{
+      if (!item || item.type==='connector') return;
+      item.width=Math.max(20,Math.min(Number(item.width)||20,width*.94));
+      item.height=Math.max(20,Math.min(Number(item.height)||20,height*.90));
+      item.x=Math.max(0,Math.min(width-item.width,Number(item.x)||0));
+      item.y=Math.max(0,Math.min(height-item.height,Number(item.y)||0));
+    });
+    return objects;
+  }
+
   async function buildFigure(prompt,layout,online) {
     const {width,height}=canvasSize();
     const portrait=height>width;
     const requested=layout==='auto' ? (/cycle|circular|loop/i.test(prompt)?'cycle':/compare|versus|vs\.?|comparison/i.test(prompt)?'comparison':'workflow') : layout;
-    const stageCount=extractStages(prompt).length;
+    const stageCount=inferredStages(prompt).length;
     const count=requested==='comparison'?4:requested==='cycle'?5:Math.min(7,Math.max(3,stageCount||5));
     const selections=await selectAssets(prompt,online,count);
     if (!selections.length) throw new Error('No suitable illustrations were found.');
     const objects=[
       textItem(prompt,width*.07,height*.045,width*.86,Math.max(30,width*.03),true),
-      textItem(`Built from ${online?'the ≈10,000 deduplicated library':'all local SciCanvas artwork'} · every visual stays editable`,width*.07,height*.115,width*.86,Math.max(14,width*.012))
+      textItem(`Built from ${online?'all connected illustration libraries':'all local FigureLoom artwork'} · every visual stays editable`,width*.07,height*.115,width*.86,Math.max(14,width*.012))
     ];
     if (requested==='cycle') objects.push(...await buildCycle(selections,width,height));
     else if (requested==='comparison') objects.push(...await buildComparison(selections,width,height,portrait));
     else objects.push(...await buildWorkflow(prompt,selections,width,height,portrait));
-    return objects;
+    return fitObjectsToCanvas(objects,width,height);
   }
 
   button.addEventListener('click',async event => {
@@ -183,14 +277,14 @@
     const online=onlineCheckbox?.checked ?? true;
     const layout=layoutControl?.value || 'auto';
     button.disabled=true;
-    button.textContent='Searching the deduplicated library…';
-    if (status) status.textContent=online?'Searching Bioicons, Healthicons, Tabler, Water 32, and every built-in category…':'Searching every local scientific and water asset…';
+    button.textContent='Searching every illustration library…';
+    if (status) status.textContent=online?'Searching all connected scientific, medical, molecular, and diagram libraries…':'Searching every local scientific and water asset…';
     try {
       const objects=await buildFigure(prompt,layout,online);
       pushHistory();
       objects.forEach(item => {
         window.styleNewObjectFromTheme?.(item);
-        if (item.type==='svg' && ['Healthicons','Tabler Icons'].includes(item.metadata?.sourcePack)) item.svgColorMode='recolor';
+        if (item.type==='svg' && item.metadata?.sourcePack!=='Bioicons') item.svgColorMode='recolor';
       });
       if (replace) state.objects=objects;
       else state.objects.push(...objects);
@@ -199,7 +293,7 @@
       documentName.value=prompt.slice(0,60);
       window.applyProjectThemeFonts?.(state.projectTheme,{renderNow:false});
       render();renderPages();scheduleSave();
-      if (status) status.textContent=`Built ${objects.length} editable objects with duplicate concepts removed.`;
+      if (status) status.textContent=`Built ${objects.length} editable objects from the complete picture libraries.`;
       drawer.classList.remove('open');
     } catch (error) {
       console.error(error);
