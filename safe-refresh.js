@@ -2,13 +2,14 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-3-libraries-20260717-v1";
+  const EXPECTED_BUILD = "chunk-3-gallery-fix-20260717-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
     "library-more-fonts-styles.js",
-    "library-chemicals-add.js"
+    "library-chemicals-add.js",
+    "library-illustration-gallery-fix.js"
   ];
   let reloading = false;
 
