@@ -1,7 +1,7 @@
 (() => {
   if (document.querySelector('script[data-figureloom-map-engine="google-v3"]')) return;
   const script = document.createElement('script');
-  script.src = './map-studio-simple-v3.js?v=3';
+  script.src = './map-studio-simple-v3.js?v=4';
   script.dataset.figureloomMapEngine = 'google-v3';
   script.async = false;
   script.addEventListener('error', () => {
