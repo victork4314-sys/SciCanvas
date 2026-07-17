@@ -47,6 +47,11 @@
     window.setTimeout(clearPuterQuotaNoise, 1200);
   }, true);
 
+  function appState() {
+    if (typeof state !== 'undefined' && state) return state;
+    return window.state || null;
+  }
+
   function canvasSize() {
     const value = window.currentCanvasSize?.() || { width:1200, height:750 };
     const width = Number(value.width);
@@ -148,17 +153,19 @@
   }
 
   function startFitWatch() {
-    const initialPageCount = Array.isArray(window.state?.pages) ? window.state.pages.length : 0;
-    const initialPage = Number(window.state?.activePage ?? -1);
+    const initialState = appState();
+    const initialPageCount = Array.isArray(initialState?.pages) ? initialState.pages.length : 0;
+    const initialPage = Number(initialState?.activePage ?? -1);
     const started = Date.now();
     let stableTicks = 0;
     let previousSignature = '';
 
     const timer = window.setInterval(() => {
-      const pages = Array.isArray(window.state?.pages) ? window.state.pages : [];
-      const activePage = Number(window.state?.activePage ?? -1);
+      const currentState = appState();
+      const pages = Array.isArray(currentState?.pages) ? currentState.pages : [];
+      const activePage = Number(currentState?.activePage ?? -1);
       const pageChanged = pages.length > initialPageCount || activePage !== initialPage;
-      const objects = Array.isArray(window.state?.objects) ? window.state.objects : [];
+      const objects = Array.isArray(currentState?.objects) ? currentState.objects : [];
       const builderDone = /^Built\b/i.test(String(builderStatus?.textContent || ''));
 
       if (pageChanged && objects.length >= 2) {
