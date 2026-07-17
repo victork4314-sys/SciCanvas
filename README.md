@@ -1,265 +1,119 @@
 # Figureloom
 
-**A local-first scientific illustration studio for figures, posters, data, maps, presentations, collaborative review, and gloriously specific scientific nonsense.**
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-663399.svg)](LICENSE)
+[![Use Figureloom](https://img.shields.io/badge/open-figureloom.org-0c2e28.svg)](https://figureloom.org/)
+[![Free and open source](https://img.shields.io/badge/free%20%26%20open%20source-yes-2ea44f.svg)](LICENSE)
 
-Figureloom feels familiar to people who know PowerPoint, Keynote, or office-style editors, while keeping scientific tools editable and progressively disclosed. It runs in the browser, supports touch devices, and remains usable without an account.
+**A free, local-first scientific figure editor for people who need their diagrams editable, not held hostage by a watermark.**
 
-## The experience
+Figureloom runs directly in the browser. You can open it, make a figure, save locally, and export without creating an account. No paywall. No “contact sales.” No mysterious university pricing ritual.
 
-The interface uses a calm editorial-laboratory aesthetic: luminous neutral surfaces, restrained botanical and spectral accents, clear typography, frosted drawers, responsive cards, and subtle motion. It is polished without becoming toy-like or visually noisy.
+It feels familiar if you have used PowerPoint, Keynote, or another office-style editor, but it is built around scientific work: pathways, plots, equations, maps, microscopy layouts, annotations, references, and all the gloriously specific nonsense research eventually demands.
 
-On first launch, Figureloom asks what it should call the user. The locally stored name appears as an editable title-bar greeting and leads into a passive tour that highlights visible controls without opening panels, scrolling the workspace, selecting objects, or modifying the project.
+## The useful bits
 
-## Core editor
+- Multi-page, layer-based vector editor
+- Local autosave, recovery snapshots, and downloadable `.scicanvas` backups
+- Text, shapes, arrows, connectors, groups, smart guides, grids, alignment, and distribution
+- Poster, print, screen, presentation, square, and custom physical page sizes
+- Editable charts and tables from pasted spreadsheet data
+- Bar, line, scatter, box, violin, volcano, heatmap, PCA-style, Kaplan–Meier, forest, radar, bubble, Gantt, timeline, and flow-cytometry-style plots
+- TeX equations rendered as editable SVG artwork
+- SVG path editing and break-apart tools
+- World maps, country maps, study-site locators, and GeoJSON import
+- PowerPoint and spreadsheet import/export tools
+- Publication checks for contrast, tiny text, grayscale, color-vision previews, alt text, references, attribution, and journal sizing
+- Fullscreen multi-page presentation mode
 
-- Local-first multi-page scientific figure editor
-- Continuous autosave with synchronous save-before-refresh/suspension
-- Last-known-good fallback and rotating recovery snapshots
-- Downloadable `.scicanvas` project backups
-- Screen, print, poster, square, presentation, and custom physical formats
-- Portrait/landscape projects with millimetre-aware export geometry
-- Movable and collapsible canvas control bubble
-- Hand-tool panning, hold-Space panning, navigator, fit, actual size, wheel zoom, and pinch zoom
-- Adaptive grids, object snapping, smart guides, alignment, distribution, grouping, and shared resizing
-- Multiple pages with rename, reorder, move/copy objects, and protected deletion
-- Layers with visibility, locking, naming, reordering, and duplication
-- Anchored connectors that follow their source and destination objects
-- Refresh-safe restoration after every project module has initialized
+## Scientific artwork without the warehouse
 
-## Live email accounts and project gallery
+Figureloom includes original programmatic artwork and can load outside libraries such as Bioicons, Healthicons, and other compatible packs on demand.
 
-**Pro Tools → Accounts & gallery** is connected to the Figureloom Supabase project.
+That is why the repository is suspiciously tiny: much of the artwork is either drawn from compact vector instructions or fetched only when someone actually asks for it. Tiny art factory, not giant image warehouse.
 
-It provides:
-
-- A local project gallery that works without signing in
-- Email/password account creation and sign-in
-- Email confirmation and confirmation resend
-- Forgot-password links delivered by email
-- An in-app two-field new-password form after the recovery redirect
-- A gallery of owned and shared cloud projects
-- Save, open, duplicate, and owner-only deletion
-- Owner, editor, reviewer, and viewer roles
-- Browser-side AES-GCM encryption before cloud storage
-
-Figureloom deliberately uses **email and password only**. Apple, Microsoft, and other social sign-in providers are not included.
-
-The browser contains only the Supabase project URL and publishable key. Database access is enforced through Row Level Security. No service-role key, database password, SMTP credential, or server secret belongs in browser code.
-
-Project payloads are encrypted before storage. Cloud thumbnails are not stored; titles, ownership, timestamps, roles, and revisions remain visible metadata so the project gallery can work. The encryption design is application-layer rather than zero-knowledge: a privileged database operator can derive project keys.
-
-See [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md) and [`supabase/schema.sql`](supabase/schema.sql).
-
-## Live collaboration
-
-**Pro Tools → Live collaboration** adds:
-
-- Private authenticated Realtime sessions
-- Named presence and remote cursors
-- Encrypted whole-project broadcasts
-- Encrypted persistent review comments
-- Owner, editor, reviewer, and viewer permissions
-- A conflict pause when an incoming revision arrives while the local user is typing or dragging
-- Explicit **Apply remote update** and **Keep mine** controls
-
-Project owners grant access by email:
-
-- Existing accounts receive access immediately.
-- Unknown emails become pending invitations.
-- Access activates automatically when that exact email creates an account.
-
-Figureloom currently reserves collaboration access but does not send a separate collaboration-invitation email. Owners should share the app link themselves. Supabase Auth still sends normal account-confirmation and password-recovery emails.
-
-The collaboration model favors understandable conflict handling over pretending to be a CRDT. Whole-project revisions are encrypted, revision-tracked, and never silently applied over an active local interaction.
-
-## Scientific illustration libraries
-
-Figureloom combines complementary sources while loading results on demand:
-
-- Original built-in programmatic scientific artwork
-- **Water 32** for water, wastewater, hydrology, pollution, monitoring, marine systems, and treatment
-- Bioicons
-- Healthicons
-- Tabler diagram symbols
-- Reusable user uploads and editable SVG vaults
-
-Search results are normalized and deduplicated. External SVGs are sanitized, validated, embedded into the project, and retain available source, creator, licence, and attribution metadata. Clearly inappropriate general-library terms are filtered, and broken previews are disabled instead of offering a dead Add button.
+Imported SVGs are sanitized before being added. Available creator, source, licence, and attribution information stays attached to the artwork.
 
 ## Figure Assistant
 
-The private Figure Assistant accepts a description of a pathway, comparison, workflow, cycle, environmental system, or laboratory process and assembles an editable figure from available libraries.
+Describe a pathway, cycle, workflow, comparison, environmental system, or laboratory process and Figure Assistant assembles an **editable** starting figure.
 
-It does not generate a flattened picture. It creates movable, recolorable, resizable Figureloom objects.
+It does not hand you one flattened AI picture and flee the scene. The result is made from normal Figureloom objects that can be moved, resized, recolored, relabeled, and rearranged.
 
-When a compatible browser exposes an on-device language-model API, an optional local interpreter can restructure vague prompts and suggest an automatic, workflow, comparison, or cycle layout. The deterministic assistant remains the fallback.
+A compatible browser may optionally use an on-device language model to clean up vague prompts. The deterministic assistant still works without it.
 
-## Data and advanced science
+## Accounts, cloud projects, and collaboration
 
-Paste spreadsheet or delimited data to create editable data objects. Double-click charts/tables to reopen their source.
+An account is optional.
 
-Supported starters include:
+Without signing in, projects can stay entirely in browser storage. With an account, Figureloom can provide:
 
-- Bar, line, scatter, box, heatmap, and table
-- Histogram, violin, volcano, PCA-style scatter, Kaplan–Meier, and forest plots
-- Radar, bubble, Gantt, timeline, and flow-cytometry-style plots
-- Trendlines and logarithmic axes
-- Sequence and protein-domain tracks
-- Phylogenetic trees
-- Gel/blot lanes
-- Microscopy-channel layouts
+- An encrypted cloud project gallery
+- Owned and shared projects
+- Owner, editor, reviewer, and viewer roles
+- Named live presence and remote cursors
+- Encrypted project broadcasts and review comments
+- Explicit conflict controls instead of silently overwriting active work
 
-Charts remain compact data objects rather than exploding into hundreds of canvas layers.
+Project contents are encrypted in the browser before cloud storage. Titles, ownership, timestamps, roles, and revision metadata remain visible so the gallery can function. This is application-layer encryption, not a zero-knowledge system.
 
-## TeX vector equations
+Deployment details live in [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
 
-**Pro Tools → TeX typesetting** loads MathJax on demand and converts TeX source into embedded SVG artwork.
+## Privacy, in normal-person language
 
-- TeX source remains editable
-- Equations scale as vectors
-- Display and inline rendering are supported
-- AMS mathematics and chemistry notation are enabled
-- Color remains editable
-- Double-clicking reopens the source
+Local projects, uploads, fonts, embedded workbooks, comments, references, components, checkpoints, recovery copies, gallery copies, and preferences stay in browser storage unless the user deliberately saves a cloud copy.
 
-MathJax needs internet access the first time its runtime is requested. The rendered SVG is then stored inside the project.
+The browser receives the public Supabase URL and publishable key only. Service-role keys, database passwords, SMTP credentials, and other server secrets do not belong in client code.
 
-## SVG path editing
+## Run it locally
 
-**Pro Tools → SVG path editor** supports:
-
-- `M`, `L`, `H`, `V`, `C`, `S`, `Q`, `T`, `A`, and `Z` commands
-- Numeric command editing, including relative commands
-- Draggable absolute anchors and curve controls
-- Raw path-data editing
-- Adding/deleting paths
-- Breaking compound SVG artwork into independent editable SVG objects
-- Preserving viewBoxes, definitions, metadata, and ancestor transforms
-
-## Pathway exchange
-
-**Pro Tools → Pathway exchange** exports the active page as:
-
-- SBGN-ML Process Description
-- BioPAX Level 3 RDF/XML
-- SBML Level 3 Version 2
-
-Visible objects become entities/species and anchored connectors become interactions/reactions. Exports are interoperable starting models and should be validated in specialist pathway software before deposition.
-
-## Maps
-
-**Insert → Maps** provides world maps, country silhouettes, highlighted-country maps, study-site locators, and imported GeoJSON for streets, districts, watersheds, routes, coastlines, and research boundaries.
-
-Maps are inserted as editable vector objects with source metadata.
-
-## Office bridge
-
-### PowerPoint
-
-- Editable-first export for supported text, shapes, arrows, charts, and tables
-- Vector/image placement for supported artwork
-- Flattened compatibility export when fidelity matters more than editability
-- Compatibility report for native, vector/image, and flattened fallbacks
-- Import of common slides, text, pictures, shapes, tables, groups, and basic charts
-
-SmartArt, unusual masters, animation, 3D effects, and specialized PowerPoint behavior may simplify rather than being falsely advertised as perfectly reversible.
-
-### Spreadsheets
-
-The Office bridge accepts `.xlsx`, `.xls`, `.xlsm`, `.ods`, `.csv`, and `.tsv`. Users can choose sheets, preview data, insert editable tables/charts, embed source workbook bytes, refresh from an updated file, and export selected data back to `.xlsx`.
-
-## Review and publication
-
-- Panel labels, callouts, numbered markers, legends, brackets, scale bars, and measurement lines
-- Object/page comments with resolve states
-- Encrypted shared-project comments
-- DOI, source, author, licence, and attribution records
-- Automatic attribution collection
-- Named checkpoints and visual comparisons
-- Alt-text drafting
-- Contrast, tiny-text, grayscale, and color-vision previews
-- Publication-readiness reports and journal-size presets
-- Fullscreen multi-page presentation mode
-
-## Touch and navigation
-
-- Pinch to zoom around the gesture midpoint
-- Use the Hand tool or hold Space to pan
-- Drag/collapse the canvas control bubble
-- Move or close the navigator
-- Horizontally scroll narrow control strips instead of crushing buttons
-- Open Pages or Format as mobile overlays
-
-## Refresh and recovery
-
-Before refresh, tab suspension, or page close, Figureloom synchronously saves the active page into the complete multi-page project. Data is validated before replacing the primary copy, and the previous valid project remains a fallback.
-
-After all modules load, a final authoritative restore runs using the current multi-page format. For irreplaceable work, also download a `.scicanvas` backup.
-
-## Personalization and small delights
-
-- First-run local display name
-- Editable greeting
-- Expanded passive tour
-- Simple and Advanced interface modes
-- Reduced-motion support
-- Responsive touch targets
-- Konami-code DNA animation
-- `Ctrl/⌘ K` → `microscope` dark cyan laboratory interface mode
-
-The greeting and interface effects never appear in exported artwork.
-
-## Run locally
+There is no build ritual.
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080/`.
+Then open:
 
-Local editor features need no build step. Cloud email redirects require the local URL to be added to the Supabase Auth redirect allow list.
+```text
+http://localhost:8080/
+```
+
+Most editor features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list.
 
 ## Testing
 
-Normal pushes and pull requests run the fast validation suite:
+Normal pushes and pull requests run fast checks for things such as:
 
 - JavaScript syntax
 - Required files and script order
 - Duplicate IDs
 - Offline-shell completeness
-- Asset/SVG trust markers
+- SVG and asset trust markers
 - Refresh-safe restoration
-- Live email account, gallery, and collaboration wiring
-- SVG path, TeX, pathway, and local-model wiring
+- Account, gallery, collaboration, TeX, pathway, and local-model wiring
 
-Desktop and iPhone-sized Chromium tests remain available through manual `workflow_dispatch`; ordinary pushes do not launch the long browser suite.
+Longer desktop and iPhone-sized browser tests remain available through manual workflow dispatch.
 
-## Data and privacy
+## Contributing
 
-Local projects, uploads, fonts, embedded workbooks, comments, references, components, checkpoints, recovery copies, the local display name, gallery copies, and preferences stay in browser storage until the user explicitly saves a cloud copy.
+Bug fixes, scientific asset improvements, accessibility work, import/export fixes, and aggressively niche research-tool ideas are welcome.
 
-When signed in, encrypted project payloads and encrypted comment bodies are stored in Supabase. Cloud titles and access metadata remain plaintext. Read the deployment/security details in [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
+Please keep contributions understandable, preserve source and licence metadata for external artwork, and avoid turning the interface into a cockpit unless the cockpit is genuinely necessary.
 
-## Roadmap status
+## Licence
 
-The former roadmap is implemented:
+Figureloom's original code and project-authored artwork are released under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`).
 
-1. Email-account encrypted cloud gallery and shared workspaces
-2. SVG path/node editing and break-apart operations
-3. TeX-quality SVG typesetting
-4. Realtime collaborative review
-5. SBGN, BioPAX, and SBML export
-6. Optional browser-local prompt interpretation
+[Read the full licence](LICENSE).
 
-Remaining work is operational: configure the production Auth Site URL/redirect allow list, add production SMTP, test email delivery, monitor the service, maintain backups, publish privacy/account-deletion policies, and validate pathway exports with specialist tools.
+In practical terms: people may use, study, modify, and share Figureloom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code to be made available to its users.
 
-## Licensing
+External asset packs keep their own licences and attribution requirements. Review [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) before publishing work that uses them.
 
-Original Figureloom and Water 32 artwork is project-authored programmatic SVG. External assets retain available source, creator, licence, and attribution information. Users remain responsible for reviewing current source terms before publication.
+## More documentation
 
-See also:
-
-- [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md)
 - [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md)
 - [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md)
 - [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md)
 - [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md)
+- [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md)
