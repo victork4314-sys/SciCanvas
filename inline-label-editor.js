@@ -23,6 +23,12 @@
     return item?.type === 'text' ? item : null;
   }
 
+  function renderedTextNode(id) {
+    const group = [...document.querySelectorAll('#objectLayer .canvas-object[data-id]')]
+      .find(node => node.dataset.id === id);
+    return group?.querySelector('text') || null;
+  }
+
   function finish(commit = true) {
     if (!active) return;
     const session = active;
@@ -55,7 +61,8 @@
     state.drag = null;
     state.selectedId = item.id;
 
-    const rect = textNode.getBoundingClientRect();
+    const liveTextNode = renderedTextNode(item.id) || textNode;
+    const rect = liveTextNode.getBoundingClientRect();
     const input = document.createElement('input');
     input.type = 'text';
     input.value = item.text || '';
@@ -74,7 +81,7 @@
       id:item.id,
       original:item.text || '',
       input,
-      textNode,
+      textNode:liveTextNode,
       historyPushed:false,
       onBlur:() => finish(true)
     };
