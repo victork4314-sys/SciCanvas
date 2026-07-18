@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV11) return;
-  window.__figureLoomStableRuntime71d36dfV11 = true;
+  if (window.__figureLoomStableRuntime71d36dfV12) return;
+  window.__figureLoomStableRuntime71d36dfV12 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260718-v11";
+  const STABLE_BUILD = "stable-71d36df-locked-20260718-v12";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -32,7 +32,8 @@
   const TEXT_ADDONS = [
     "text-layout-bundle.js",
     "text-editing-complete.js",
-    "text-editing-stability-fix.js"
+    "text-editing-stability-fix.js",
+    "text-editing-gentle-polish.js"
   ];
 
   const root = document.documentElement;
@@ -104,6 +105,7 @@
     }
     await loadAddon(TEXT_ADDONS[1]);
     await loadAddon(TEXT_ADDONS[2]);
+    await loadAddon(TEXT_ADDONS[3]);
   }
 
   function revealStableApp() {
