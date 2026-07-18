@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomVisualOnlyPresentationImportV1) return;
-  window.__figureLoomVisualOnlyPresentationImportV1 = true;
+  if (window.__figureLoomVisualOnlyPresentationImportV2) return;
+  window.__figureLoomVisualOnlyPresentationImportV2 = true;
 
   function stripImportedText() {
     let removed = 0;
@@ -29,7 +29,9 @@
 
     const status = document.getElementById('officeStatus');
     if (status) {
-      status.textContent = `Imported ${pages.length} slides without text. Add text manually in FigureLoom.`;
+      status.textContent = removed
+        ? `Imported ${pages.length} slides without ${removed} text ${removed === 1 ? 'box' : 'boxes'}. Add text manually in FigureLoom.`
+        : `Imported ${pages.length} slides without text. Add text manually in FigureLoom.`;
     }
 
     return removed;
@@ -44,7 +46,8 @@
       return;
     }
 
-    if (office.importPresentation.__figureLoomVisualOnly) return;
+    if (input.dataset.visualOnlyPresentationImport === 'true') return;
+    input.dataset.visualOnlyPresentationImport = 'true';
 
     const baseImport = office.importPresentation;
     const visualOnlyImport = async file => {
@@ -53,20 +56,29 @@
     };
     visualOnlyImport.__figureLoomVisualOnly = true;
 
+    // Programmatic imports use the same visual-only path.
     office.importPresentation = visualOnlyImport;
     office.importPowerPoint = visualOnlyImport;
 
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      input.value = '';
+    // Remove the importer's target handler. A capture listener below owns file
+    // imports, so scripts loaded later cannot accidentally run the text import.
+    input.onchange = null;
+
+    document.addEventListener('change', event => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.id !== 'officePptxFile') return;
+
+      const file = target.files?.[0];
+      target.value = '';
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
       if (!file) return;
 
-      try {
-        await visualOnlyImport(file);
-      } catch (error) {
+      void visualOnlyImport(file).catch(error => {
         alert(`Presentation import failed: ${error.message}`);
-      }
-    };
+      });
+    }, true);
   }
 
   if (document.readyState === 'loading') {
