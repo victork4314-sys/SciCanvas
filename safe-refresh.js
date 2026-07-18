@@ -24,7 +24,8 @@
     "project-tab-close-export.js",
     "global-pptx-export-fix.js",
     "pptx-safe-jpeg-export.js",
-    "code-window-tools.js"
+    "code-window-tools.js",
+    "code-window-startup-render.js"
   ];
   let reloading = false;
 
