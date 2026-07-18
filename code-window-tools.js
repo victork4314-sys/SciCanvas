@@ -232,7 +232,7 @@
   }
 
   function renderCopyButton(group, item, text, paletteValue, y = 7) {
-    if (item.codeCopyButton === false && item.instructionCopyButton === false) return;
+    if ((item.type === 'code' && item.codeCopyButton === false) || (item.type === 'instruction' && item.instructionCopyButton === false)) return;
     const button = svg('g', { class:'figureloom-code-copy', transform:`translate(${Math.max(8, item.width - 70)} ${y})`, role:'button', tabindex:'0' });
     button.appendChild(svg('rect', { width:58, height:22, rx:6, fill:paletteValue.header || '#e2e8f0', stroke:paletteValue.border || '#94a3b8', 'stroke-width':1 }));
     addText(button, { x:29, y:15, fill:paletteValue.text || '#1e293b', 'font-size':9, 'font-weight':700, 'font-family':'Segoe UI, sans-serif', 'text-anchor':'middle' }, 'Copy');
@@ -409,7 +409,16 @@
     modal.querySelector('[data-code-close]').onclick = close;
     modal.querySelector('[data-code-cancel]').onclick = close;
     modal.addEventListener('pointerdown', event => { if (event.target === modal) close(); });
-    modal.querySelector('[data-code-save]').onclick = () => { const item = findItem(editingId, 'code'); if (!item) return close(); pushHistory?.(); item.code = modal.querySelector('[data-code-value]').value; render?.(); scheduleSave?.(); close(); };
+    modal.querySelector('[data-code-save]').onclick = () => {
+      const item = findItem(editingId, 'code');
+      if (!item) return close();
+      pushHistory?.();
+      if (item.codeMode === 'diff') item.diffAfter = modal.querySelector('[data-code-value]').value;
+      else item.code = modal.querySelector('[data-code-value]').value;
+      render?.();
+      scheduleSave?.();
+      close();
+    };
     modal.querySelector('[data-code-value]').addEventListener('keydown', event => { const item = findItem(editingId, 'code'); if (item) textareaTabHandler(event, item); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) close(); });
     const style = document.createElement('style');
