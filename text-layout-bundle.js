@@ -8,7 +8,8 @@
     'text-layout-protect-bounds.js',
     'text-layout-tools.js',
     'text-layout-new-text-default.js',
-    'text-layout-paste-autogrow.js'
+    'text-layout-paste-autogrow.js',
+    'text-presentation-persistence.js'
   ];
 
   async function loadInOrder() {
