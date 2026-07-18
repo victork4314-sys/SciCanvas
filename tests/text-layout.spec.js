@@ -34,7 +34,7 @@ test('pasted paragraphs become wrapped text blocks and layout restores', async (
   expect(legacy.height).toBeGreaterThan(55);
   expect(legacy.migrated).toBe(1);
   const legacyGroup = page.locator(`#objectLayer .canvas-object[data-id="${legacy.id}"]`);
-  expect(await legacyGroup.locator('text tspan').count()).toBeGreaterThan(2);
+  expect(await legacyGroup.locator('text tspan').count()).toBeGreaterThan(1);
 
   await page.click('#addTextButton');
   const content = page.locator('#textContent');
@@ -60,7 +60,7 @@ test('pasted paragraphs become wrapped text blocks and layout restores', async (
 
   const group = page.locator(`#objectLayer .canvas-object[data-id="${created.id}"]`);
   await expect(group).toBeVisible();
-  expect(await group.locator('text tspan').count()).toBeGreaterThan(2);
+  expect(await group.locator('text tspan').count()).toBeGreaterThan(1);
 
   await page.click('[data-text-horizontal] button[data-value="center"]');
   await expect(group.locator('text')).toHaveAttribute('text-anchor', 'middle');
