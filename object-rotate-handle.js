@@ -62,6 +62,18 @@
       .find(node => node.dataset.id === id) || null;
   }
 
+  function applySelectionOverlayRotation(item) {
+    const centerX = Number(item.x) + Number(item.width) / 2;
+    const centerY = Number(item.y) + Number(item.height) / 2;
+    const transform = `rotate(${Number(item.rotation) || 0} ${centerX} ${centerY})`;
+
+    // The outline and every resize hit target/grip are separate SVG nodes.
+    // Give all of them the exact same center rotation as the selected object.
+    selectionLayer.querySelectorAll('.selection-box, .resize-handle').forEach(node => {
+      node.setAttribute('transform', transform);
+    });
+  }
+
   function updateLiveHandle(item) {
     const geometry = handleGeometry(item);
     const stem = selectionLayer.querySelector('.object-rotate-stem');
@@ -95,11 +107,7 @@
       );
     }
 
-    const centerX = Number(item.x) + Number(item.width) / 2;
-    const centerY = Number(item.y) + Number(item.height) / 2;
-    selectionLayer.querySelectorAll('.selection-box').forEach(box => {
-      box.setAttribute('transform', `rotate(${Number(item.rotation) || 0} ${centerX} ${centerY})`);
-    });
+    applySelectionOverlayRotation(item);
     updateLiveHandle(item);
 
     const rotationInput = document.getElementById('objectRotation');
@@ -161,6 +169,10 @@
     baseRenderSelection();
     const item = rotatableObject();
     if (!item || selectionLayer.style.visibility === 'hidden') return;
+
+    // A normal render rebuilds the outline and grips at unrotated coordinates.
+    // Rotate that rebuilt overlay before adding the separately positioned handle.
+    applySelectionOverlayRotation(item);
 
     const geometry = handleGeometry(item);
     const stem = makeSvg('line', {
@@ -259,7 +271,7 @@
     .object-rotate-hit:hover + .object-rotate-grip{fill:#dbeafe}
     .figureloom-rotation-shield{position:fixed;z-index:2147483646;inset:0;background:transparent;cursor:grabbing;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
     .figureloom-object-rotating,.figureloom-object-rotating *{cursor:grabbing!important;touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;overscroll-behavior:none!important}
-    .figureloom-object-rotating .resize-handle,.figureloom-object-rotating .resize-grip,.figureloom-object-rotating .text-box-resize-hit,.figureloom-object-rotating .text-box-resize-grip{pointer-events:none!important;opacity:.35}
+    .figureloom-object-rotating .resize-handle,.figureloom-object-rotating .resize-grip,.figureloom-object-rotating .text-box-resize-hit,.figureloom-object-rotating .text-box-resize-grip{pointer-events:none!important}
     html[data-figureloom-theme="dark"] .object-rotate-grip{fill:#172033;stroke:#8bb2ff}
     html[data-figureloom-theme="dark"] .object-rotate-icon{fill:#a9c5ff}
   `;
