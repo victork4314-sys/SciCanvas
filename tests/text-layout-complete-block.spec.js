@@ -7,7 +7,7 @@ test('pasted text becomes a complete auto-height block with every line preserved
 
   await page.click('#addTextButton');
   const repeated = Array.from({ length: 34 }, (_, index) => `Step ${index + 1} explains a scientific instruction with enough words to wrap naturally inside the text box.`).join(' ');
-  const longText = `${repeated} FINAL_VISIBLE_MARKER`;
+  const longText = `${repeated} ENDMARK`;
 
   const content = page.locator('#textContent');
   await content.focus();
@@ -46,7 +46,7 @@ test('pasted text becomes a complete auto-height block with every line preserved
   expect(result.text).toBe(longText);
   expect(result.flow).toBe('auto-height');
   expect(result.lineCount).toBeGreaterThanOrEqual(20);
-  expect(result.lastLine).toContain('FINAL_VISIBLE_MARKER');
+  expect(result.lastLine).toContain('ENDMARK');
   expect(result.clipPath).toBe('');
   expect(result.height).toBeGreaterThanOrEqual(result.lineCount * result.fontSize * result.lineHeight);
 
@@ -60,6 +60,6 @@ test('pasted text becomes a complete auto-height block with every line preserved
     const item = state.objects.find(entry => entry.type === 'text');
     if (!item || item.text !== expected || item.textFlow !== 'auto-height') return false;
     const lines = [...document.querySelectorAll(`#objectLayer .canvas-object[data-id="${item.id}"] text tspan`)];
-    return lines.length >= 20 && lines.at(-1)?.textContent.includes('FINAL_VISIBLE_MARKER');
+    return lines.length >= 20 && lines.at(-1)?.textContent.includes('ENDMARK');
   }, longText);
 });
