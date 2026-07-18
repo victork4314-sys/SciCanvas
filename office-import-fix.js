@@ -1,6 +1,7 @@
 (() => {
   if (window.__figureLoomImporterCoreLoaderV5) return;
   window.__figureLoomImporterCoreLoaderV5 = true;
+  window.__figureLoomImportTextFidelityV1 = true;
 
   const CORE_URL = 'office-import-core.js?v=text-fidelity-v1';
 
@@ -46,6 +47,31 @@
   function addImporterRules(source) {
     source = replaceExactly(
       source,
+      `  function placeholderKey(node) {
+    const placeholder = first(node, 'ph');
+    if (!placeholder) return '';
+    return \`${placeholder.getAttribute('type') || 'body'}:${placeholder.getAttribute('idx') || '0'}\`;
+  }`,
+      `  function placeholderKeys(node) {
+    const placeholder = first(node, 'ph');
+    if (!placeholder) return [];
+    const index = placeholder.getAttribute('idx');
+    const type = placeholder.getAttribute('type');
+    return [...new Set([
+      index != null && index !== '' ? \`idx:${index}\` : '',
+      type ? \`type:${type}\` : '',
+      \`${type || 'body'}:${index || '0'}\`
+    ].filter(Boolean))];
+  }
+
+  function placeholderKey(node) {
+    return placeholderKeys(node)[0] || '';
+  }`,
+      'placeholder identity'
+    );
+
+    source = replaceExactly(
+      source,
       `  function placeholderMap(doc) {
     const map = new Map();
     if (!doc) return map;
@@ -60,9 +86,9 @@
     const map = new Map();
     if (!doc) return map;
     [...all(doc, 'sp'), ...all(doc, 'pic'), ...all(doc, 'graphicFrame')].forEach(node => {
-      const key = placeholderKey(node);
+      const keys = placeholderKeys(node);
       const transformValue = rawTransform(node);
-      if (key && transformValue) map.set(key, transformValue);
+      if (transformValue) keys.forEach(key => map.set(key, transformValue));
     });
     return map;
   }
@@ -71,8 +97,9 @@
     const map = new Map();
     if (!doc) return map;
     all(doc, 'sp').forEach(node => {
-      const key = placeholderKey(node);
-      if (key && !map.has(key)) map.set(key, node);
+      placeholderKeys(node).forEach(key => {
+        if (!map.has(key)) map.set(key, node);
+      });
     });
     const textStyles = first(doc, 'txStyles');
     const titleStyle = first(textStyles, 'titleStyle');
@@ -85,7 +112,7 @@
   }
 
   function inheritedPlaceholderShapes(node, maps = []) {
-    const key = placeholderKey(node);
+    const keys = placeholderKeys(node);
     const placeholder = first(node, 'ph');
     const type = placeholder?.getAttribute('type') || 'body';
     const styleKey = ['title','ctrTitle'].includes(type)
@@ -95,7 +122,7 @@
         : '__textStyle:other';
     const shapes = [];
     maps.forEach(map => {
-      const shape = key ? map?.get?.(key) : null;
+      const shape = keys.map(key => map?.get?.(key)).find(Boolean) || null;
       const style = map?.get?.(styleKey);
       if (shape && !shapes.includes(shape)) shapes.push(shape);
       if (style && !shapes.includes(style)) shapes.push(style);
@@ -103,6 +130,31 @@
     return shapes;
   }`,
       'placeholder text inheritance helpers'
+    );
+
+    source = replaceExactly(
+      source,
+      `    const key = placeholderKey(node);
+    if (!value && key) {
+      for (const map of inheritedMaps) {
+        if (map?.has(key)) {
+          value = map.get(key);
+          break;
+        }
+      }
+    }`,
+      `    const keys = placeholderKeys(node);
+    if (!value && keys.length) {
+      for (const map of inheritedMaps) {
+        for (const key of keys) {
+          if (!map?.has(key)) continue;
+          value = map.get(key);
+          break;
+        }
+        if (value) break;
+      }
+    }`,
+      'placeholder position inheritance'
     );
 
     source = replaceExactly(
@@ -122,7 +174,7 @@
     const alignment = paragraphProperties?.getAttribute('algn');
     const anchor = bodyProperties?.getAttribute('anchor');
     return {
-      fill:`#${resolvedColor(solidFill || runProperties, '172033', theme, colorMap)}`,
+      fill:\`#${resolvedColor(solidFill || runProperties, '172033', theme, colorMap)}\`,
       fontSize:Math.max(8, number(runProperties?.getAttribute('sz'), 2400) / 100 * .75),
       fontFamily,
       fontWeight:runProperties?.getAttribute('b') === '1' ? 700 : 400,
@@ -150,9 +202,9 @@
       const styleContainer = ['titleStyle','bodyStyle','otherStyle'].includes(local(source)) ? source : null;
       const listStyle = body ? (directFirst(body, 'lstStyle') || first(body, 'lstStyle')) : styleContainer;
       const levelPr = listStyle
-        ? directFirst(listStyle, `lvl${level}pPr`)
+        ? directFirst(listStyle, \`lvl${level}pPr\`)
           || directFirst(listStyle, 'lvl1pPr')
-          || first(listStyle, `lvl${level}pPr`)
+          || first(listStyle, \`lvl${level}pPr\`)
           || first(listStyle, 'lvl1pPr')
         : null;
       if (paragraphPr) paragraphProperties.push(paragraphPr);
@@ -223,9 +275,9 @@
     }
 
     return {
-      fill:`#${resolvedColor(colorSource, theme.colors.dk1 || '172033', theme, colorMap)}`,
+      fill:\`#${resolvedColor(colorSource, theme.colors.dk1 || '172033', theme, colorMap)}\`,
       fontSize,
-      fontFamily:`${resolvedFont}, Arial, sans-serif`,
+      fontFamily:\`${resolvedFont}, Arial, sans-serif\`,
       fontWeight:powerpointBoolean(firstAttribute(chains.runProperties, 'b', '0')) ? 700 : 400,
       fontStyle:powerpointBoolean(firstAttribute(chains.runProperties, 'i', '0')) ? 'italic' : 'normal',
       textAlign:alignment === 'ctr' ? 'center' : alignment === 'r' ? 'right' : alignment === 'just' || alignment === 'dist' ? 'justify' : 'left',
@@ -270,7 +322,7 @@
         objects.push({
           id:uidSafe(),
           type:'text',
-          name:`${objectName(node, 'Imported text')} text`,
+          name:\`${objectName(node, 'Imported text')} text\`,
           ...bounds,
           text,
           ...style,
@@ -302,7 +354,7 @@
         objects.push({
           id:uidSafe(),
           type:'text',
-          name:`${objectName(node, 'Imported text')} text`,
+          name:\`${objectName(node, 'Imported text')} text\`,
           ...contentBounds,
           text,
           ...style,
