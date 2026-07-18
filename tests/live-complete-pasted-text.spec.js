@@ -8,7 +8,10 @@ test('live pasted text creates every required wrapped line and restores', async 
     window.__figureLoomPastedTextAutogrow &&
     document.getElementById('textBoxFlow')
   ));
-  await page.evaluate(() => document.getElementById('scWelcome')?.classList.remove('open'));
+  await page.evaluate(() => {
+    document.getElementById('scWelcome')?.classList.remove('open');
+    document.getElementById('figureloomQuickStartLite')?.remove();
+  });
 
   await page.click('#addTextButton');
   await page.locator('#fontSize').fill('18');
