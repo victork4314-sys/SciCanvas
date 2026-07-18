@@ -51,7 +51,8 @@ html[data-figureloom-high-contrast="1"] :where(.titlebar,.ribbon-tabs,.ribbon,.l
 html[data-figureloom-high-contrast="1"]:not([data-figureloom-theme="dark"]) body{color:#111827}
 html[data-figureloom-high-contrast="1"][data-figureloom-theme="dark"] :where(.titlebar,.ribbon-tabs,.ribbon,.left-panel,.right-panel,.statusbar,.utility-drawer,.drawer,dialog,.modal,.figureloom-settings-page,button,input,select,textarea){border-color:#a6afbb!important}
 html[data-figureloom-underline-links="1"] a{text-decoration:underline!important;text-underline-offset:2px}
-html[data-figureloom-readable-font="1"] body,html[data-figureloom-readable-font="1"] button,html[data-figureloom-readable-font="1"] input,html[data-figureloom-readable-font="1"] select,html[data-figureloom-readable-font="1"] textarea{font-family:Arial,Verdana,sans-serif!important}
+html[data-figureloom-readable-font="1"] :where(.titlebar,.ribbon-tabs,.ribbon,.left-panel,.right-panel,.statusbar,.canvas-toolbar,.utility-drawer,.drawer,dialog,.modal,.figureloom-settings-page,.figureloom-chat-shell){font-family:Arial,Verdana,sans-serif!important}
+html[data-figureloom-readable-font="1"] :where(button,input,select,textarea){font-family:Arial,Verdana,sans-serif!important}
 
 @media(max-width:680px){
   .settings-topbar{padding:14px 16px}.settings-layout{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
