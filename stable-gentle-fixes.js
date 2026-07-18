@@ -1,12 +1,14 @@
 (() => {
-  if (window.__figureLoomStableGentleFixesV1) return;
-  window.__figureLoomStableGentleFixesV1 = true;
+  if (window.__figureLoomStableGentleFixesV2) return;
+  window.__figureLoomStableGentleFixesV2 = true;
 
   const DRAFTS_KEY = 'figureloom-window-local-drafts-v1';
   const ACTIVE_DRAFT_KEY = 'figureloom-window-active-local-draft-v1';
   const DRAFT_PAYLOAD_PREFIX = 'figureloom-project-draft-';
   const replayNewProject = new WeakSet();
+  const replayProjectsTab = new WeakSet();
   let preserving = false;
+  let registeringInitialProject = false;
 
   function cleanTitle(value) {
     return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 90) || 'Untitled figure';
@@ -66,12 +68,12 @@
     sessionStorage.setItem(key, JSON.stringify(payload));
   }
 
-  async function preserveUntrackedProject() {
+  async function preserveUntrackedProject({ includeBlank = false } = {}) {
     const cloud = window.SciCanvasCloud;
-    if (sessionStorage.getItem(ACTIVE_DRAFT_KEY) || cloud?.currentProjectId) return;
+    if (sessionStorage.getItem(ACTIVE_DRAFT_KEY) || cloud?.currentProjectId) return false;
 
     const payload = currentPayload();
-    if (isUntouchedBlank(payload)) return;
+    if (!includeBlank && isUntouchedBlank(payload)) return false;
 
     const id = `draft-${crypto.randomUUID()}`;
     const title = cleanTitle(payload.documentName);
@@ -81,7 +83,39 @@
     drafts.push({ id, title, updatedAt:new Date().toISOString() });
     sessionStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts.slice(0, 24)));
     sessionStorage.setItem(ACTIVE_DRAFT_KEY, id);
+    return true;
   }
+
+  document.addEventListener('click', event => {
+    const tab = event.target?.closest?.('.ribbon-tab[data-tab="projects"]');
+    if (!tab) return;
+
+    if (replayProjectsTab.has(tab)) {
+      replayProjectsTab.delete(tab);
+      return;
+    }
+
+    const cloud = window.SciCanvasCloud;
+    if (sessionStorage.getItem(ACTIVE_DRAFT_KEY) || cloud?.currentProjectId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    if (registeringInitialProject) return;
+    registeringInitialProject = true;
+
+    void preserveUntrackedProject({ includeBlank:true })
+      .then(() => {
+        replayProjectsTab.add(tab);
+        tab.click();
+      })
+      .catch(error => {
+        alert(`Could not open the current project: ${error.message}`);
+      })
+      .finally(() => {
+        registeringInitialProject = false;
+      });
+  }, true);
 
   document.addEventListener('click', event => {
     const button = event.target?.closest?.('#projectsRibbonHost [data-project-action="new"]');
