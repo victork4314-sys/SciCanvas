@@ -19,7 +19,7 @@
     return item;
   }
 
-  function editingWidth(item) {
+  function editorWidth(item) {
     const existing = Number(item.__figureLoomEditingWrapWidth);
     if (existing > 0) return existing;
     const width = Math.max(80, Number(item.textBoxWidth) || Number(item.width) || 320);
@@ -32,6 +32,16 @@
     return width;
   }
 
+  function savedWidth(item) {
+    return Math.max(
+      20,
+      Number(item.__figureLoomEditingWrapWidth) ||
+      Number(item.textBoxWidth) ||
+      Number(item.width) ||
+      320
+    );
+  }
+
   function editorScale() {
     const canvas = document.getElementById('canvas');
     const viewWidth = Number(canvas?.viewBox?.baseVal?.width) || 1200;
@@ -39,7 +49,7 @@
   }
 
   function fitEditor(editor, item) {
-    const width = editingWidth(item);
+    const width = editorWidth(item);
     item.width = width;
     item.textBoxWidth = width;
 
@@ -91,8 +101,11 @@
     if (!isWrappedText(item)) return baseRenderObject(item);
 
     const temporaryWidth = Number(item.__figureLoomEditingWrapWidth);
-    const width = Math.max(20, temporaryWidth || Number(item.width) || Number(item.textBoxWidth) || 320);
+    const width = savedWidth(item);
     const height = Math.max(20, Number(item.height) || 62);
+
+    item.width = width;
+    item.textBoxWidth = width;
     const group = baseRenderObject(item);
 
     item.width = width;
