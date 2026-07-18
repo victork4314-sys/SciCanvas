@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test');
 test('code windows edit, render, resize, and restore from the project vault', async ({ page }) => {
   await page.goto('/');
   await page.waitForFunction(() => Boolean(window.FigureLoomCodeWindows && document.getElementById('addCodeWindowButton')));
+  await page.evaluate(() => document.getElementById('scWelcome')?.classList.remove('open'));
 
   await page.click('#addCodeWindowButton');
   const editor = page.locator('#figureloomCodeEditorOverlay');
