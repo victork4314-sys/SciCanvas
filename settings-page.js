@@ -16,8 +16,7 @@
     const link = document.createElement('link');
     link.id = 'figureloomSettingsAccessibilityStylesheet';
     link.rel = 'stylesheet';
-    const source = document.currentScript?.src || '';
-    link.href = `settings-accessibility.css${source.includes('?') ? source.slice(source.indexOf('?')) : ''}`;
+    link.href = 'settings-accessibility.css?v=20260719-v1';
     document.head.appendChild(link);
   }
 
