@@ -17,8 +17,10 @@
         item.metadata ??= {};
         if (item.metadata.figureLoomTextLayoutVersion === 1) return;
 
-        if (item.textFlow == null || item.textFlow === 'single') {
+        const wasUnconfigured = item.textFlow == null || item.textFlow === 'single';
+        if (wasUnconfigured) {
           item.textFlow = 'auto-height';
+          if (Number(item.width) > 600) item.width = 420;
         }
         item.textAlign ??= 'left';
         item.textVerticalAlign ??= 'top';
