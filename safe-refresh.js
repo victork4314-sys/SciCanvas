@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-25-text-layout-20260718-v2";
+  const EXPECTED_BUILD = "chunk-25-text-layout-20260718-v3";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -26,9 +26,7 @@
     "pptx-safe-jpeg-export.js",
     "code-window-tools.js",
     "code-window-startup-render.js",
-    "text-layout-tools.js",
-    "text-layout-default-migration.js",
-    "text-paste-auto-grow-fix.js"
+    "text-layout-bundle.js"
   ];
   let reloading = false;
 
