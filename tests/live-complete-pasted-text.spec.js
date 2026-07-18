@@ -30,16 +30,20 @@ test('live pasted text creates every required wrapped line and restores', async 
   await page.locator(`#objectLayer .canvas-object[data-id="${created.id}"] text`).first().click();
   const editor = page.locator('.figureloom-direct-label-editor');
   await expect(editor).toBeVisible();
+  await editor.press('Control+A');
   await editor.press('Control+V');
 
   await page.waitForFunction(({ id, text }) => {
     const item = state.objects.find(entry => entry.id === id);
-    const group = document.querySelector(`#objectLayer .canvas-object[data-id="${id}"]`);
-    return item?.text === text && item.textFlow === 'auto-height' && group?.querySelectorAll('text > tspan').length > 20;
+    return item?.text === text && item.textFlow === 'auto-height';
   }, { id:created.id, text:longText });
 
   await page.locator('#canvasBackground').click({ position:{ x:10, y:10 } });
   await expect(editor).toBeHidden();
+  await page.waitForFunction(id => {
+    const group = document.querySelector(`#objectLayer .canvas-object[data-id="${id}"]`);
+    return group?.querySelectorAll('text > tspan').length > 20;
+  }, created.id);
 
   const result = await page.evaluate(id => {
     const item = state.objects.find(entry => entry.id === id);
