@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV4) return;
-  window.__figureLoomStableRuntime71d36dfV4 = true;
+  if (window.__figureLoomStableRuntime71d36dfV5) return;
+  window.__figureLoomStableRuntime71d36dfV5 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260718-v4";
+  const STABLE_BUILD = "stable-71d36df-locked-20260718-v5";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -27,6 +27,7 @@
     "code-window-startup-render.js",
     "text-layout-bundle.js",
     "text-editing-complete.js",
+    "text-editing-stability-fix.js",
     "object-rotate-handle.js",
     "arrange-layout-template-tools.js",
     "stable-gentle-fixes.js"
