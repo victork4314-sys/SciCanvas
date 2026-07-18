@@ -92,6 +92,31 @@
     return String(item.text || '').split('\n').flatMap(paragraph => wrapParagraph(paragraph, maximumWidth, item));
   }
 
+  function layoutMetrics(item, lines = layoutLines(item)) {
+    const fontSize = Math.max(6, Number(item.fontSize) || 30);
+    const lineHeight = fontSize * Math.max(1, Number(item.lineHeight) || 1.25);
+    const padding = Math.max(0, Number(item.textPadding) || 0);
+    const contentHeight = Math.max(lineHeight, lines.length * lineHeight);
+    return { lines, fontSize, lineHeight, padding, contentHeight };
+  }
+
+  function prepareTextGeometry(item) {
+    defaults(item);
+    const metrics = layoutMetrics(item);
+    if (item.textFlow !== 'auto-height') return metrics;
+
+    const requiredHeight = Math.max(30, Math.ceil(metrics.contentHeight + metrics.padding * 2));
+    const pageHeight = Number(document.getElementById('canvas')?.viewBox?.baseVal?.height) || 750;
+    item.height = requiredHeight;
+
+    if (requiredHeight <= pageHeight && Number(item.y || 0) + requiredHeight > pageHeight) {
+      item.y = Math.max(0, pageHeight - requiredHeight);
+    } else if (requiredHeight > pageHeight && Number(item.y || 0) > 0) {
+      item.y = 0;
+    }
+    return metrics;
+  }
+
   function textX(item, padding) {
     if (item.textAlign === 'center') return Number(item.width) / 2;
     if (item.textAlign === 'right') return Number(item.width) - padding;
@@ -104,60 +129,51 @@
     return 'start';
   }
 
-  function renderTextLayout(group, item) {
-    defaults(item);
-    const lines = layoutLines(item);
-    const fontSize = Math.max(6, Number(item.fontSize) || 30);
-    const lineHeight = fontSize * Math.max(1, Number(item.lineHeight) || 1.25);
-    const padding = Math.max(0, Number(item.textPadding) || 0);
-    const contentHeight = Math.max(lineHeight, lines.length * lineHeight);
-
-    if (item.textFlow === 'auto-height') {
-      const pageHeight = Number(document.getElementById('canvas')?.viewBox?.baseVal?.height) || 750;
-      const available = Math.max(30, pageHeight - (Number(item.y) || 0));
-      item.height = Math.min(available, Math.max(30, Math.ceil(contentHeight + padding * 2)));
-    }
-
+  function renderTextLayout(group, item, metrics = layoutMetrics(item)) {
     [...group.children].forEach(child => {
       if (child.tagName?.toLowerCase() === 'text' || child.dataset?.figureloomTextClip === '1') child.remove();
     });
 
-    const safeId = String(item.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
-    const clipId = `figureloom-text-clip-${safeId}`;
-    const clip = makeSvg('clipPath', { id:clipId });
-    clip.dataset.figureloomTextClip = '1';
-    clip.appendChild(makeSvg('rect', { x:0, y:0, width:Math.max(1, item.width), height:Math.max(1, item.height) }));
-    group.appendChild(clip);
-
-    let firstBaseline = padding + fontSize;
-    if (item.textVerticalAlign === 'middle') {
-      firstBaseline = (Number(item.height) - contentHeight) / 2 + fontSize;
-    } else if (item.textVerticalAlign === 'bottom') {
-      firstBaseline = Number(item.height) - padding - contentHeight + fontSize;
+    let clipId = '';
+    if (item.textFlow === 'wrap') {
+      const safeId = String(item.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      clipId = `figureloom-text-clip-${safeId}`;
+      const clip = makeSvg('clipPath', { id:clipId });
+      clip.dataset.figureloomTextClip = '1';
+      clip.appendChild(makeSvg('rect', { x:0, y:0, width:Math.max(1, item.width), height:Math.max(1, item.height) }));
+      group.appendChild(clip);
     }
-    firstBaseline = Math.max(fontSize * .85, firstBaseline);
 
-    const text = makeSvg('text', {
-      x:textX(item, padding),
+    let firstBaseline = metrics.padding + metrics.fontSize;
+    if (item.textVerticalAlign === 'middle') {
+      firstBaseline = (Number(item.height) - metrics.contentHeight) / 2 + metrics.fontSize;
+    } else if (item.textVerticalAlign === 'bottom') {
+      firstBaseline = Number(item.height) - metrics.padding - metrics.contentHeight + metrics.fontSize;
+    }
+    firstBaseline = Math.max(metrics.fontSize * .85, firstBaseline);
+
+    const attrs = {
+      x:textX(item, metrics.padding),
       y:firstBaseline,
       fill:item.fill || '#172033',
-      'font-size':fontSize,
+      'font-size':metrics.fontSize,
       'font-weight':item.fontWeight || 650,
       'font-style':item.fontStyle || 'normal',
       'font-family':item.fontFamily || 'Segoe UI, sans-serif',
       'text-anchor':textAnchor(item),
-      'clip-path':`url(#${clipId})`,
       'xml:space':'preserve'
-    });
+    };
+    if (clipId) attrs['clip-path'] = `url(#${clipId})`;
+    const text = makeSvg('text', attrs);
 
-    lines.forEach((line, index) => {
+    metrics.lines.forEach((line, index) => {
       const tspan = makeSvg('tspan', {
-        x:textX(item, padding),
-        y:firstBaseline + index * lineHeight
+        x:textX(item, metrics.padding),
+        y:firstBaseline + index * metrics.lineHeight
       });
       tspan.textContent = line.text || ' ';
       if (item.textAlign === 'justify' && !line.lastInParagraph && /\s/.test(line.text.trim())) {
-        tspan.setAttribute('textLength', String(Math.max(1, Number(item.width) - padding * 2)));
+        tspan.setAttribute('textLength', String(Math.max(1, Number(item.width) - metrics.padding * 2)));
         tspan.setAttribute('lengthAdjust', 'spacing');
       }
       text.appendChild(tspan);
@@ -167,8 +183,10 @@
 
   const baseRenderObject = renderObject;
   renderObject = function renderObjectWithTextLayout(item) {
+    if (item?.type !== 'text') return baseRenderObject(item);
+    const metrics = prepareTextGeometry(item);
     const group = baseRenderObject(item);
-    if (group && item?.type === 'text') renderTextLayout(group, item);
+    if (group) renderTextLayout(group, item, metrics);
     return group;
   };
 
@@ -181,6 +199,38 @@
     scheduleSave();
   }
 
+  function installLiveTextEditing() {
+    const content = document.getElementById('textContent');
+    if (!content || content.dataset.figureloomLiveText === '1') return;
+    content.dataset.figureloomLiveText = '1';
+    let active = false;
+
+    const sync = () => {
+      const item = selectedObject();
+      if (!item || item.type !== 'text') return;
+      defaults(item);
+      item.text = content.value;
+      item.name = content.value.trim().slice(0, 40) || 'Text label';
+      render();
+      scheduleSave();
+    };
+
+    content.addEventListener('focus', () => {
+      const item = selectedObject();
+      if (!item || item.type !== 'text') return;
+      pushHistory();
+      active = true;
+    }, true);
+    content.addEventListener('input', sync, true);
+    content.addEventListener('change', event => {
+      if (!active) return;
+      event.stopImmediatePropagation();
+      sync();
+      active = false;
+    }, true);
+    content.addEventListener('blur', () => { active = false; }, true);
+  }
+
   function installInspector() {
     const textInspector = document.getElementById('textInspector');
     if (!textInspector || document.getElementById('textBoxFlow')) return;
@@ -190,7 +240,7 @@
       <h3>Text box layout</h3>
       <label class="full-field">Flow
         <select id="textBoxFlow" disabled>
-          <option value="auto-height">Wrap · grow height automatically</option>
+          <option value="auto-height">Wrap · show all text automatically</option>
           <option value="wrap">Wrap inside fixed box</option>
           <option value="single">Single line</option>
         </select>
@@ -299,7 +349,7 @@
     const item = selectedObject();
     if (!item || item.type !== 'text') return;
     defaults(item);
-    item.width = Math.max(280, Number(item.width) || 0);
+    item.width = Math.max(320, Number(item.width) || 0);
     item.height = Math.max(62, Number(item.height) || 0);
     render();
     scheduleSave();
@@ -311,16 +361,20 @@
   style.textContent = `
     .figureloom-text-layout-controls{margin-top:12px;padding-top:11px;border-top:1px solid #e1e6ee}
     .figureloom-text-layout-controls h3{margin:0 0 9px;font-size:11px;color:#526077;text-transform:uppercase;letter-spacing:.04em}
-    .figureloom-text-layout-controls select{width:100%;border:1px solid #cfd7e3;border-radius:7px;padding:7px;background:#fff}
-    .text-layout-label{display:block;margin:9px 0 5px;color:#6e798c;font-size:10px}
-    .text-layout-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.text-layout-buttons[data-text-vertical]{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .text-layout-buttons button{min-width:0;border:1px solid #cfd7e3;border-radius:7px;background:#f8fafc;padding:7px 3px;font-size:10px;white-space:normal}.text-layout-buttons button.active{background:#e8efff;border-color:#7095e0;color:#1e4fa8}
-    .text-box-resize-grip{fill:#fff!important;stroke:#0f766e!important}.text-box-resize-hit:hover + .text-box-resize-grip{fill:#ccfbf1!important}
-    html[data-figureloom-theme="dark"] .figureloom-text-layout-controls{border-color:#404854}html[data-figureloom-theme="dark"] .figureloom-text-layout-controls select,html[data-figureloom-theme="dark"] .text-layout-buttons button{border-color:#4c535e;background:#353b44;color:#e8ebef}html[data-figureloom-theme="dark"] .text-layout-buttons button.active{background:#27495c;border-color:#5c9ec2;color:#eef8ff}
+    .figureloom-text-layout-controls select{width:100%;border:1px solid #cfd7e3;border-radius:6px;padding:7px;background:#fff}
+    .text-layout-label{display:block;margin:10px 0 5px;font-size:10px;color:#6e798c}
+    .text-layout-buttons{display:flex;gap:5px}.text-layout-buttons button{flex:1;min-width:0;border:1px solid #cfd7e3;border-radius:7px;background:#f8fafc;padding:7px 3px;font-size:10px}
+    .text-layout-buttons button.active{background:#e8efff;border-color:#7095e0;color:#1e4fa8}
+    .text-box-resize-grip{fill:#eef5ff!important}
+    html[data-figureloom-theme="dark"] .figureloom-text-layout-controls{border-color:#414854}
+    html[data-figureloom-theme="dark"] .figureloom-text-layout-controls select,html[data-figureloom-theme="dark"] .text-layout-buttons button{border-color:#4b5563;background:#1f2937;color:#e5e7eb}
+    html[data-figureloom-theme="dark"] .text-layout-buttons button.active{background:#263b66;border-color:#6f97e7;color:#dbe8ff}
   `;
   document.head.appendChild(style);
 
   installInspector();
-  render();
-  window.FigureLoomTextLayout = { layoutLines, defaults };
+  installLiveTextEditing();
+  requestAnimationFrame(() => {
+    try { render(); } catch (error) { console.warn('FigureLoom text layout could not rerender immediately.', error); }
+  });
 })();
