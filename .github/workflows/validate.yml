@@ -133,3 +133,28 @@ jobs:
           name: playwright-results
           path: test-results
           if-no-files-found: warn
+
+  pasted-text:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Check pasted-text JavaScript syntax
+        run: node --check text-layout-new-text-default.js && node --check text-layout-paste-autogrow.js && node --check tests/pasted-text-block-fixed.spec.js
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run pasted-text browser tests
+        run: npx playwright test tests/pasted-text-block-fixed.spec.js --project=desktop
+      - name: Upload pasted-text results and traces
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pasted-text-fixed-results
+          path: test-results
+          if-no-files-found: warn
