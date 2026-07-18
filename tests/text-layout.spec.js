@@ -72,7 +72,9 @@ test('pasted paragraphs become wrapped text blocks and layout restores', async (
   await page.click('[data-text-vertical] button[data-value="bottom"]');
   await page.evaluate(id => {
     const item = state.objects.find(entry => entry.id === id);
-    item.width = 500;
+    item.x = 50;
+    item.y = 50;
+    item.width = 800;
     item.height = 450;
     render();
   }, created.id);
