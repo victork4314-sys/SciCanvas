@@ -83,7 +83,7 @@ if (!errors.length) {
     if (theme.includes(oldAccent)) errors.push(`figureloom-sage-theme.js still contains the old accent ${oldAccent}`);
   }
 
-  for (const marker of ['data-figureloom-resolved-mode="phone"', '.ribbon-tabs .ribbon-tab.active', 'border-bottom-color:transparent!important']) {
+  for (const marker of ['data-figureloom-resolved-mode="phone"', 'button.ribbon-tab.active[data-tab]', 'border-bottom-color:transparent!important']) {
     requireText(phoneThemeFix, marker, 'phone-sage-theme-fix.js');
   }
 
