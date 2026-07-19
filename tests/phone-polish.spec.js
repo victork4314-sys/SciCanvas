@@ -104,7 +104,8 @@ test('passive guide and its actions always remain above the phone dock and insid
     await next.click();
     await expect(tour.locator('.tour-counter')).toContainText(`${step + 1} of 12`);
     const actionBox = await actions.boundingBox();
-    expect(actionBox.bottom).toBeLessThanOrEqual(geometry.viewportBottom + 1);
+    expect(actionBox).not.toBeNull();
+    expect(actionBox.y + actionBox.height).toBeLessThanOrEqual(geometry.viewportBottom + 1);
   }
 
   await expect(next).toHaveText('Done');
