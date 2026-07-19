@@ -1,11 +1,20 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV13) return;
+  if (window.__figureLoomUnifiedAiChatFixesV14) return;
+  window.__figureLoomUnifiedAiChatFixesV14 = true;
   window.__figureLoomUnifiedAiChatFixesV13 = true;
   window.__figureLoomUnifiedAiChatFixesV12 = true;
   window.__figureLoomUnifiedAiChatFixesV11 = true;
   window.__figureLoomUnifiedAiChatFixesV10 = true;
   window.__figureLoomUnifiedAiChatFixesV9 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
+
+  const editorFaviconHref = '/favicon.ico?v=20260719-editor-v2';
+  document.head.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]').forEach(node => node.remove());
+  const editorFavicon = document.createElement('link');
+  editorFavicon.rel = 'icon';
+  editorFavicon.type = 'image/x-icon';
+  editorFavicon.href = editorFaviconHref;
+  document.head.appendChild(editorFavicon);
 
   function loadCompanion(src, marker) {
     if (document.querySelector(`script[data-${marker}]`)) return;
