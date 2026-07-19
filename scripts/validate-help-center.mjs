@@ -14,6 +14,8 @@ const requireText = (source, marker, label) => {
 
 const required = [
   'help-center.js',
+  'figureloom-sage-theme.js',
+  'tests/help-center-theme.spec.js',
   'wiki/index.html',
   'wiki/wiki.css',
   'wiki/wiki.js',
@@ -31,22 +33,55 @@ required.forEach(requireFile);
 if (!errors.length) {
   const appHtml = read('index.html');
   const help = read('help-center.js');
+  const theme = read('figureloom-sage-theme.js');
+  const browserTest = read('tests/help-center-theme.spec.js');
   const wikiHtml = read('wiki/index.html');
   const wikiJs = read('wiki/wiki.js');
   const worker = read('service-worker.js');
 
-  requireText(appHtml, '<script src="help-center.js?v=1"></script>', 'index.html');
+  requireText(appHtml, '<script src="help-center.js?v=2"></script>', 'index.html');
+  requireText(appHtml, '<script src="figureloom-sage-theme.js?v=1"></script>', 'index.html');
   const finishingIndex = appHtml.indexOf('finishing-touches.js');
   const helpIndex = appHtml.indexOf('help-center.js');
+  const themeIndex = appHtml.indexOf('figureloom-sage-theme.js');
   if (finishingIndex < 0 || helpIndex < 0 || finishingIndex >= helpIndex) {
     errors.push('help-center.js must load after finishing-touches.js');
+  }
+  if (themeIndex < 0 || helpIndex >= themeIndex) {
+    errors.push('figureloom-sage-theme.js must load after help-center.js');
   }
 
   for (const marker of ['./wiki/', './wiki/#Start-Here', './wiki/#Quick-Task-Guides', './wiki/#Visual-Interface-Guide', 'openSciCanvasTour']) {
     requireText(help, marker, 'help-center.js');
   }
-  requireText(help, 'data-figureloom-theme="dark"', 'help-center.js dark appearance');
+  for (const marker of ['stopImmediatePropagation', 'MutationObserver', "closest('#tourHelpButton')", 'FigureLoomHelpCenter']) {
+    requireText(help, marker, 'help-center.js persistent question-mark binding');
+  }
+  if (help.includes('cloneNode(true)')) errors.push('help-center.js must not rely on cloning a Help button that can be replaced later');
   requireText(help, 'env(safe-area-inset-bottom)', 'help-center.js phone safe area');
+  requireText(help, '--figureloom-ui-accent', 'help-center.js shared palette');
+
+  const paletteMarkers = [
+    '--figureloom-ui-bg:#f4f7f6',
+    '--figureloom-ui-surface:#ffffff',
+    '--figureloom-ui-accent:#2f7468',
+    '--figureloom-ui-accent-soft:#dff1ec',
+    '--figureloom-ui-bg:#181d1c',
+    '--figureloom-ui-surface:#222927',
+    '--figureloom-ui-accent:#78c4b5',
+    '--figureloom-ui-text:#eef7f4',
+    '--figureloom-phone-surface',
+    '.selection-box',
+    'meta[name="theme-color"]'
+  ];
+  paletteMarkers.forEach(marker => requireText(theme, marker, 'figureloom-sage-theme.js'));
+  for (const oldAccent of ['#2563eb', '#7c3aed', '#5c72bf']) {
+    if (theme.includes(oldAccent)) errors.push(`figureloom-sage-theme.js still contains the old accent ${oldAccent}`);
+  }
+
+  for (const marker of ['opens Help rather than starting the passive guide', 'FigureLoomSageTheme', '#figureloomHelpMenu', '#tourHelpButton']) {
+    requireText(browserTest, marker, 'tests/help-center-theme.spec.js');
+  }
 
   requireText(wikiHtml, './wiki.css?v=1', 'wiki/index.html');
   requireText(wikiHtml, './wiki.js?v=2', 'wiki/index.html');
@@ -65,6 +100,7 @@ if (!errors.length) {
 
   const cached = [
     './help-center.js',
+    './figureloom-sage-theme.js',
     './wiki/',
     './wiki/index.html',
     './wiki/wiki.css',
@@ -94,4 +130,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: editor wiring, search, routes, themes, phone safe areas, visual guides, and offline core pages are present.');
+console.log('Help center validation passed: persistent question-mark wiring, shared sage themes, manual routes, search, phone safe areas, visual guides, and offline core pages are present.');
