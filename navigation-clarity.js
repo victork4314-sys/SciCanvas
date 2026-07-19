@@ -33,6 +33,12 @@
       settings.setAttribute('aria-label', 'Settings: app appearance, accessibility, and interface settings');
     }
 
+    const phoneTitle = document.getElementById('figureloomPhoneSheetTitle');
+    const activeTab = document.querySelector('.ribbon-tabs .ribbon-tab.active')?.dataset.tab;
+    if (phoneTitle && activeTab === 'home' && document.documentElement.dataset.figureloomPhoneSheet === 'tools') {
+      setText(phoneTitle, 'Basics · Home tools');
+    }
+
     setText(document.querySelector('.sc-profile-picker-heading span'), 'Choose your profile picture');
     setText(document.querySelector('.sc-profile-picker-heading small'), 'Pick a symbol or upload a photo. It never appears in figures or exports.');
     setText(document.querySelector('.welcome-avatar-chooser strong'), 'Pick a profile picture');
