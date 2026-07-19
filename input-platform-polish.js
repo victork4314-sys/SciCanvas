@@ -4,9 +4,10 @@
 
   const stage = document.getElementById('canvasStage');
   const canvasElement = document.getElementById('canvas');
+  const hasState = () => typeof state === 'object' && state !== null;
 
   function sanitizeObjects() {
-    if (!window.state || !Array.isArray(state.objects)) return;
+    if (!hasState() || !Array.isArray(state.objects)) return;
     const repaired = [];
     for (const item of state.objects) {
       if (!item || typeof item !== 'object' || !item.id) continue;
@@ -26,20 +27,20 @@
 
   sanitizeObjects();
 
-  if (typeof window.render === 'function' && !window.render.__figureLoomObjectGuard) {
-    const baseRender = window.render;
+  if (typeof render === 'function' && !render.__figureLoomObjectGuard) {
+    const baseRender = render;
     const guardedRender = function(...args) {
       sanitizeObjects();
       return baseRender.apply(this, args);
     };
     guardedRender.__figureLoomObjectGuard = true;
+    render = guardedRender;
     window.render = guardedRender;
-    try { render = guardedRender; } catch {}
   }
 
   if (canvasElement) {
     canvasElement.addEventListener('pointermove', event => {
-      if (!window.state?.drag) return;
+      if (!hasState() || !state.drag) return;
       const dragged = Array.isArray(state.objects) ? state.objects.find(item => item && item.id === state.drag.id) : null;
       if (!dragged) {
         state.drag = null;
@@ -52,7 +53,7 @@
   }
 
   function zoomAround(clientX, clientY, nextZoom) {
-    if (!canvasElement || typeof window.setZoom !== 'function' || !window.state) return;
+    if (!canvasElement || typeof setZoom !== 'function' || !hasState()) return;
     const before = canvasElement.getBoundingClientRect();
     const relativeX = before.width ? (clientX - before.left) / before.width : .5;
     const relativeY = before.height ? (clientY - before.top) / before.height : .5;
@@ -69,11 +70,11 @@
 
   if (stage) {
     stage.addEventListener('wheel', event => {
-      if (!(event.ctrlKey || event.metaKey || event.altKey)) return;
+      if (!(event.ctrlKey || event.metaKey || event.altKey) || !hasState()) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       const factor = Math.exp(-Math.max(-120, Math.min(120, event.deltaY)) * .0065);
-      zoomAround(event.clientX, event.clientY, Number(state?.zoom || 1) * factor);
+      zoomAround(event.clientX, event.clientY, Number(state.zoom || 1) * factor);
     }, { capture:true, passive:false });
   }
 
@@ -83,7 +84,7 @@
     return target?.closest?.('#canvasStage,.canvas-area,#canvas');
   }
   function gestureStart(event) {
-    if (!gestureTarget(event) || !window.state) return;
+    if (!gestureTarget(event) || !hasState()) return;
     event.preventDefault();
     const rect = canvasElement?.getBoundingClientRect();
     gesture = {
@@ -110,15 +111,16 @@
   const recentErrors = new Map();
   function cleanToastStack(stack) {
     const now = Date.now();
-    for (const note of [...stack.querySelectorAll('.sc-toast')]) {
+    const seen = new Set();
+    for (const note of [...stack.querySelectorAll('.sc-toast')].reverse()) {
       const message = note.textContent?.trim() || '';
       if (!message) continue;
-      const previous = recentErrors.get(message) || 0;
-      if ((note.classList.contains('error') || note.classList.contains('warning')) && now - previous < 5000) {
-        note.remove();
-        continue;
+      const duplicate = seen.has(message) || ((note.classList.contains('error') || note.classList.contains('warning')) && now - (recentErrors.get(message) || 0) < 5000);
+      if (duplicate) note.remove();
+      else {
+        seen.add(message);
+        recentErrors.set(message, now);
       }
-      recentErrors.set(message, now);
     }
     [...stack.children].slice(0, Math.max(0, stack.children.length - 3)).forEach(note => note.remove());
     for (const [message, time] of recentErrors) if (now - time > 12000) recentErrors.delete(message);
@@ -167,7 +169,7 @@
     const expected = [
       ['icon', 'image/x-icon', 'any', `./favicon.ico?v=${ICON_VERSION}`],
       ['icon', 'image/png', '32x32', `./figureloom-icon-32-v1.png?v=${ICON_VERSION}`],
-      ['icon', 'image/svg+xml', 'any', `./figureloom-mark.svg?v=2`],
+      ['icon', 'image/svg+xml', 'any', './figureloom-mark.svg?v=2'],
       ['apple-touch-icon', 'image/png', '180x180', `./figureloom-apple-touch-180-v1.png?v=${ICON_VERSION}`],
       ['mask-icon', 'image/svg+xml', '', `./figureloom-pinned-tab-v1.svg?v=${ICON_VERSION}`],
     ];
