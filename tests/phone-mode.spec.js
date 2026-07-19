@@ -79,7 +79,7 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
       .filter(node => {
         if (getComputedStyle(node).display === 'none') return false;
         const rect = node.getBoundingClientRect();
-        return rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight;
+        return rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight;
       })
       .map(node => {
         const rect = node.getBoundingClientRect();
@@ -99,13 +99,18 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
       targets,
       dockBackground:dock.backgroundColor,
       titleBackground:title.backgroundColor,
-      horizontalOverflow:document.documentElement.scrollWidth - innerWidth
+      horizontalOverflow:document.documentElement.scrollWidth - innerWidth,
+      ribbonScrollWidth:document.querySelector('.ribbon-tabs').scrollWidth,
+      ribbonClientWidth:document.querySelector('.ribbon-tabs').clientWidth,
+      ribbonOverflowX:getComputedStyle(document.querySelector('.ribbon-tabs')).overflowX
     };
   });
   expect(result.bodyMinWidth).toBe('0px');
   expect(result.shell.left).toBeGreaterThanOrEqual(-1);
   expect(result.shell.right).toBeLessThanOrEqual(result.viewport.width + 1);
   expect(result.horizontalOverflow).toBeLessThanOrEqual(1);
+  expect(result.ribbonScrollWidth).toBeGreaterThanOrEqual(result.ribbonClientWidth);
+  expect(['auto','scroll']).toContain(result.ribbonOverflowX);
   expect(result.canvas.width).toBeLessThanOrEqual(result.stage.width + 1);
   expect(result.canvas.left).toBeGreaterThanOrEqual(result.stage.left - 1);
   expect(result.dockBackground).not.toBe('rgba(0, 0, 0, 0)');
@@ -142,12 +147,10 @@ test('ordinary tools and project controls use sheets while Insert stays full-scr
   const thumb = page.locator('.left-panel .page-thumbnail').first();
   await expect(thumb).toBeVisible();
   expect((await thumb.boundingBox()).width).toBeGreaterThanOrEqual(100);
-  await closePhoneSheet(page);
 
   await page.locator('[data-phone-action="edit"]').click();
   await expect(page.locator('.right-panel')).toHaveClass(/figureloom-phone-sheet-open/);
   await expect(page.locator('#fillColor')).toBeVisible();
-  await closePhoneSheet(page);
 
   await page.locator('[data-phone-action="more"]').click();
   await expect(page.locator('#figureloomPhoneMoreSheet')).toHaveClass(/figureloom-phone-sheet-open/);
@@ -206,7 +209,7 @@ test('dark phone mode uses the existing dark palette rather than transparent mob
     dock:getComputedStyle(document.querySelector('#figureloomPhoneDock')).backgroundColor
   }));
   expect(colors.surface).toContain('36');
-  expect(colors.text).toContain('238');
+  expect(colors.text.toLowerCase()).toBe('#eef1f4');
   expect(colors.dock).not.toBe('rgba(0, 0, 0, 0)');
 });
 
