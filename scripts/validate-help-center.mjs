@@ -17,6 +17,9 @@ function requireText(source, marker, label) {
 const requiredFiles = [
   'help-center.js',
   'figureloom-sage-theme.js',
+  'interface-dark-mode.js',
+  'dark-mode-windows.js',
+  'ai-chat-fixes.js',
   'tour-mobile-safe.js',
   'tests/help-center-theme.spec.js',
   'wiki/index.html',
@@ -41,6 +44,9 @@ if (!errors.length) {
   const appHtml = read('index.html');
   const help = read('help-center.js');
   const theme = read('figureloom-sage-theme.js');
+  const interfaceTheme = read('interface-dark-mode.js');
+  const themedWindows = read('dark-mode-windows.js');
+  const companionLoader = read('ai-chat-fixes.js');
   const tourMobile = read('tour-mobile-safe.js');
   const browserTest = read('tests/help-center-theme.spec.js');
   const wikiHtml = read('wiki/index.html');
@@ -99,6 +105,46 @@ if (!errors.length) {
   }
 
   for (const marker of [
+    'FigureLoomInterfaceTheme',
+    'figureloom-interface-theme-v1',
+    "dark ? '#181d1c' : '#f4f7f6'",
+    '.interface-theme-toggle'
+  ]) requireText(interfaceTheme, marker, 'interface-dark-mode.js theme control');
+
+  if (interfaceTheme.includes('html[data-figureloom-theme="dark"]')) {
+    errors.push('interface-dark-mode.js must only manage the theme control; the shared sage stylesheet owns interface colors');
+  }
+
+  for (const marker of [
+    'figureloom-themed-window',
+    'MutationObserver',
+    'html[data-figureloom-theme] .figureloom-themed-window',
+    'var(--figureloom-ui-surface',
+    'var(--figureloom-ui-soft',
+    'var(--figureloom-ui-text',
+    'var(--figureloom-ui-muted',
+    'var(--figureloom-ui-line',
+    'var(--figureloom-ui-accent',
+    'button:disabled',
+    '.cloud-gallery-drawer',
+    '#scienceDrawer'
+  ]) requireText(themedWindows, marker, 'dark-mode-windows.js shared window palette');
+
+  for (const marker of [
+    "interface-dark-mode.js?v=3",
+    "dark-mode-windows.js?v=2"
+  ]) requireText(companionLoader, marker, 'ai-chat-fixes.js current theme helpers');
+
+  const retiredWindowColors = [
+    '#24282f', '#292e35', '#30353d', '#333941', '#343a43', '#373d46',
+    '#586fb9', '#596fba', '#5c72bf', '#8ca9e8', '#7f9bd3'
+  ];
+  for (const oldColor of retiredWindowColors) {
+    if (interfaceTheme.includes(oldColor)) errors.push(`interface-dark-mode.js still contains retired window color ${oldColor}`);
+    if (themedWindows.includes(oldColor)) errors.push(`dark-mode-windows.js still contains retired window color ${oldColor}`);
+  }
+
+  for (const marker of [
     'var(--figureloom-ui-soft, #edf3f1)',
     'var(--figureloom-ui-surface, #222927)',
     'var(--figureloom-ui-accent, #2f7468)',
@@ -136,6 +182,12 @@ if (!errors.length) {
 
   for (const file of [
     './tour-mobile-safe.js',
+    './ai-chat-fixes.js',
+    './ai-chat-fixes.js?v=9',
+    './interface-dark-mode.js',
+    './interface-dark-mode.js?v=3',
+    './dark-mode-windows.js',
+    './dark-mode-windows.js?v=2',
     './help-center.js',
     './figureloom-sage-theme.js',
     './wiki/',
@@ -168,4 +220,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, passive guide, wiki, phone safety, and offline cache are present.');
+console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, themed dynamic windows, passive guide, wiki, phone safety, and offline cache are present.');
