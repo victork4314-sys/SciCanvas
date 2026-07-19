@@ -1,8 +1,6 @@
 name: Localization audit
 
 on:
-  push:
-    branches: [complete-interface-localization]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -26,6 +24,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LOCALIZATION_MODEL: openai/gpt-4.1-mini
         run: node scripts/generate-localizations.mjs
+      - name: Build exact language pack
+        if: success()
+        run: |
+          node scripts/build-language-pack.mjs
+          node --check language-complete-pack.js
       - name: Upload localization work
         if: always()
         uses: actions/upload-artifact@v6
@@ -35,4 +38,5 @@ jobs:
             interface-string-inventory.json
             complete-interface-translations.json
             complete-interface-translations.partial.json
+            language-complete-pack.js
           if-no-files-found: warn
