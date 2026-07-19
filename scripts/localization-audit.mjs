@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Launch complete localization shards.
+// Localization stopped by user request.
 const root = process.cwd();
 const skip = new Set([
   'language-packs.js','language-interface-phrases.js','language-interface-extra.js',
