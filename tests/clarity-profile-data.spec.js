@@ -50,8 +50,16 @@ test('workspace tabs use clearer names and descriptions', async ({ page }, testI
 });
 
 test('uploaded profile picture appears in Account and Share', async ({ page }, testInfo) => {
-  await prepare(page, testInfo.project.name === 'mobile' ? 'phone' : 'desktop');
-  await page.locator('#accountProfileButton').click();
+  const mobile = testInfo.project.name === 'mobile';
+  await prepare(page, mobile ? 'phone' : 'desktop');
+  if (mobile) {
+    await page.locator('[data-phone-action="more"]').click();
+    await expect(page.locator('#figureloomPhoneMoreSheet')).toBeVisible();
+    await page.locator('#figureloomPhoneMoreSheet [data-phone-action="account"]').click();
+  } else {
+    await page.locator('#accountProfileButton').click();
+  }
+
   const card = page.locator('#scAccountProfileCard');
   await expect(card).toBeVisible();
   await expect(card.locator('.scientific-avatar-picker [data-sc-avatar-plus]')).toHaveCount(6);
@@ -60,7 +68,7 @@ test('uploaded profile picture appears in Account and Share', async ({ page }, t
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR42mP8z8AARAwMDAxQAAAJAgEAff3vWQAAAABJRU5ErkJggg==', 'base64');
   await page.locator('#figureloomProfilePictureUpload').setInputFiles({ name:'profile.png', mimeType:'image/png', buffer:png });
   await page.waitForFunction(() => localStorage.getItem('scicanvas-profile-avatar-v1') === 'custom');
-  await expect(page.locator('#accountProfileButton img.figureloom-profile-image')).toBeVisible();
+  await expect(page.locator('#accountProfileButton img.figureloom-profile-image')).toHaveCount(1);
   await expect(card.locator('[data-sc-avatar-preview] img.figureloom-profile-image')).toBeVisible();
 
   await page.evaluate(() => {
@@ -83,6 +91,9 @@ test('invalid chart data stays in the drawer with a small inline message', async
   await page.evaluate(() => window.openDataLab?.());
   await expect(page.locator('#dataLabDrawer')).toHaveClass(/open/);
   await page.locator('#dataVisual').selectOption('bar');
+  const rawSource = page.locator('.data-raw-source');
+  await rawSource.locator('summary').click();
+  await expect(rawSource).toHaveAttribute('open', '');
   await page.locator('#dataPaste').fill('Condition,Value\nControl,not-a-number\nTreatment,still-text');
   const before = await page.evaluate(() => state.objects.length);
   await page.locator('#insertDataVisual').click();
