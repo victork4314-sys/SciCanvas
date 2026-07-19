@@ -3,6 +3,8 @@ name: Localization audit
 on:
   push:
     branches: [complete-interface-localization]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
