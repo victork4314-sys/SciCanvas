@@ -19,6 +19,8 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   validate:
@@ -41,33 +43,65 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Publish Markdown pages to the GitHub wiki
+        id: publish_wiki
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          log="$RUNNER_TEMP/wiki-publish.log"
           remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
           work="$(mktemp -d)"
 
-          if git clone "$remote" "$work/wiki-repo"; then
-            cd "$work/wiki-repo"
-            find . -maxdepth 1 -type f -name '*.md' -delete
+          {
+            set -e
+            if git clone "$remote" "$work/wiki-repo"; then
+              cd "$work/wiki-repo"
+              find . -maxdepth 1 -type f -name '*.md' -delete
+            else
+              mkdir -p "$work/wiki-repo"
+              cd "$work/wiki-repo"
+              git init
+              git checkout -b master
+              git remote add origin "$remote"
+            fi
+
+            cp "$GITHUB_WORKSPACE"/wiki/*.md .
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+
+            if git diff --cached --quiet; then
+              echo "Wiki is already current."
+              exit 0
+            fi
+
+            git commit -m "Publish FigureLoom manual from ${GITHUB_SHA}"
+            git push origin HEAD:master
+          } 2>&1 | tee "$log"
+          exit "${PIPESTATUS[0]}"
+
+      - name: Report publication result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLISH_OUTCOME: ${{ steps.publish_wiki.outcome }}
+        run: |
+          marker='<!-- figureloom-wiki-publish-status -->'
+          if [ "$PUBLISH_OUTCOME" = "success" ]; then
+            summary="Wiki publication succeeded for \`${GITHUB_SHA}\`."
           else
-            mkdir -p "$work/wiki-repo"
-            cd "$work/wiki-repo"
-            git init
-            git checkout -b master
-            git remote add origin "$remote"
+            tail_output="$(tail -n 20 "$RUNNER_TEMP/wiki-publish.log" 2>/dev/null || true)"
+            summary="Wiki publication failed for \`${GITHUB_SHA}\`.\n\n\`\`\`text\n${tail_output}\n\`\`\`"
+          fi
+          body="${marker}\n${summary}"
+          comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/issues/110/comments" --paginate --jq ".[] | select(.body | contains(\"${marker}\")) | .id" | head -n 1)"
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" -f body="$body" >/dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/110/comments" -f body="$body" >/dev/null
           fi
 
-          cp "$GITHUB_WORKSPACE"/wiki/*.md .
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-
-          if git diff --cached --quiet; then
-            echo "Wiki is already current."
-            exit 0
-          fi
-
-          git commit -m "Publish FigureLoom manual from ${GITHUB_SHA}"
-          git push origin HEAD:master
+      - name: Fail when publication failed
+        if: steps.publish_wiki.outcome == 'failure'
+        run: exit 1
