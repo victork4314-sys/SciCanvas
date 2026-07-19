@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV45) return;
+  if (window.__figureLoomStableRuntime71d36dfV46) return;
+  window.__figureLoomStableRuntime71d36dfV46 = true;
   window.__figureLoomStableRuntime71d36dfV45 = true;
   window.__figureLoomStableRuntime71d36dfV44 = true;
   window.__figureLoomStableRuntime71d36dfV43 = true;
@@ -9,7 +10,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260719-v45";
+  const STABLE_BUILD = "stable-71d36df-locked-20260719-v46";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -53,6 +54,7 @@
     "mobile-mode.js",
     "mobile-mode-canvas-fit.js",
     "mobile-tools-polish.js",
+    "mobile-toast-theme.js",
     "mobile-touch-drag-fix.js",
     "tour-mobile-safe.js",
     "visible-brand-finalizer.js"
