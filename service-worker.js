@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v49";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v50";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -27,7 +27,9 @@ self.addEventListener("install", event => {
       cache.add(new Request("./tour-mobile-safe.js", { cache:"reload" })),
       cache.add(new Request("./visible-brand-finalizer.js", { cache:"reload" })),
       cache.add(new Request("./ai-chat-fixes.js", { cache:"reload" })),
-      cache.add(new Request("./ai-chat-fixes.js?v=9", { cache:"reload" })),
+      cache.add(new Request("./ai-chat-fixes.js?v=10", { cache:"reload" })),
+      cache.add(new Request("./input-platform-polish.js", { cache:"reload" })),
+      cache.add(new Request("./input-platform-polish.js?v=1", { cache:"reload" })),
       cache.add(new Request("./interface-dark-mode.js", { cache:"reload" })),
       cache.add(new Request("./interface-dark-mode.js?v=3", { cache:"reload" })),
       cache.add(new Request("./dark-mode-windows.js", { cache:"reload" })),
@@ -37,9 +39,18 @@ self.addEventListener("install", event => {
       cache.add(new Request("./figureloom-sage-theme.js", { cache:"reload" })),
       cache.add(new Request("./figureloom-sage-theme.js?v=3", { cache:"reload" })),
       cache.add(new Request("./figureloom-mark.svg", { cache:"reload" })),
-      cache.add(new Request("./figureloom-mark.svg?v=1", { cache:"reload" })),
+      cache.add(new Request("./figureloom-mark.svg?v=2", { cache:"reload" })),
+      cache.add(new Request("./figureloom-pinned-tab-v1.svg", { cache:"reload" })),
+      cache.add(new Request("./browserconfig-v1.xml", { cache:"reload" })),
+      cache.add(new Request("./favicon.ico?v=20260719-v1", { cache:"reload" })),
+      cache.add(new Request("./figureloom-icon-32-v1.png?v=20260719-v1", { cache:"reload" })),
+      cache.add(new Request("./figureloom-apple-touch-180-v1.png?v=20260719-v1", { cache:"reload" })),
+      cache.add(new Request("./figureloom-app-192-v1.png?v=20260719-v1", { cache:"reload" })),
+      cache.add(new Request("./figureloom-app-512-v1.png?v=20260719-v1", { cache:"reload" })),
+      cache.add(new Request("./mstile-150x150-v1.png?v=20260719-v1", { cache:"reload" })),
+      cache.add(new Request("./mstile-310x310-v1.png?v=20260719-v1", { cache:"reload" })),
       cache.add(new Request("./manifest.webmanifest", { cache:"reload" })),
-      cache.add(new Request("./manifest.webmanifest?v=10", { cache:"reload" })),
+      cache.add(new Request("./manifest.webmanifest?v=11", { cache:"reload" })),
       cache.add(new Request("./wiki/", { cache:"reload" })),
       cache.add(new Request("./wiki/index.html", { cache:"reload" })),
       cache.add(new Request("./wiki/wiki.css", { cache:"reload" })),
@@ -102,16 +113,7 @@ async function networkFirst(request) {
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.endsWith("/favicon.ico")) {
-    event.respondWith(new Response(null, {
-      status:410,
-      headers:{ "Cache-Control":"no-store, max-age=0" }
-    }));
-    return;
-  }
-
   event.respondWith(networkFirst(request));
 });
