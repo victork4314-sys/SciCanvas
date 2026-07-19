@@ -53,16 +53,18 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('editor, Help and Legal use the same canonical ICO favicon', async ({ page }, testInfo) => {
+test('editor forces a fresh ICO URL while Help and Legal keep the canonical ICO', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop icon audit');
   await prepare(page);
 
-  const expected = [{ href:'/favicon.ico?v=20260719-final', type:'image/x-icon' }];
+  const editorExpected = [{ href:'/favicon.ico?v=20260719-editor-v2', type:'image/x-icon' }];
+  const canonicalExpected = [{ href:'/favicon.ico?v=20260719-final', type:'image/x-icon' }];
   const editorIcons = await page.evaluate(() => [...document.querySelectorAll('link[rel="icon"]')].map(link => ({
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(editorIcons).toEqual(expected);
+  expect(editorIcons).toEqual(editorExpected);
+  expect(await page.locator('link[rel="shortcut icon"]').count()).toBe(0);
   expect(await page.locator('link[rel="manifest"]').count()).toBe(0);
   expect(await page.locator('link[rel="apple-touch-icon"]').count()).toBe(0);
   expect(await page.locator('link[rel="apple-touch-icon-precomposed"]').count()).toBe(0);
@@ -70,7 +72,7 @@ test('editor, Help and Legal use the same canonical ICO favicon', async ({ page 
   expect(await page.locator('meta[name="msapplication-config"]').count()).toBe(0);
 
   const favicon = await page.evaluate(async () => {
-    const response = await fetch('/favicon.ico?v=20260719-final', { cache:'no-store' });
+    const response = await fetch('/favicon.ico?v=20260719-editor-v2', { cache:'no-store' });
     const bytes = [...new Uint8Array(await response.arrayBuffer()).slice(0, 4)];
     return { status:response.status, bytes };
   });
@@ -92,14 +94,14 @@ test('editor, Help and Legal use the same canonical ICO favicon', async ({ page 
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(helpIcons).toEqual(expected);
+  expect(helpIcons).toEqual(canonicalExpected);
 
   await page.goto('/legal.html');
   const legalIcons = await page.evaluate(() => [...document.querySelectorAll('link[rel="icon"]')].map(link => ({
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(legalIcons).toEqual(expected);
+  expect(legalIcons).toEqual(canonicalExpected);
 });
 
 test('native Safari trackpad pinch zooms the page', async ({ page }, testInfo) => {
