@@ -319,12 +319,16 @@
       cancelDrawing();
       if (points.length < 2) return;
 
-      const xs = points.map(point => point.x);
-      const ys = points.map(point => point.y);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
+      let minX = points[0].x;
+      let minY = points[0].y;
+      let maxX = points[0].x;
+      let maxY = points[0].y;
+      for (const point of points) {
+        minX = Math.min(minX, point.x);
+        minY = Math.min(minY, point.y);
+        maxX = Math.max(maxX, point.x);
+        maxY = Math.max(maxY, point.y);
+      }
       const width = Math.max(1, maxX - minX);
       const height = Math.max(1, maxY - minY);
       if (Math.hypot(width, height) < 4) return;
@@ -388,6 +392,7 @@
       #figureloomShapesButton::after{content:' ▾';font-size:.8em}
       #figureloomDrawButton.active{color:var(--figureloom-ui-accent-strong,#195c51)!important;background:var(--figureloom-ui-accent-soft,#dff1ec)!important;border-color:var(--figureloom-ui-accent,#2f7468)!important}
       #canvas.figureloom-draw-active{cursor:crosshair!important;touch-action:none!important}
+      #canvas.figureloom-draw-active #objectLayer{pointer-events:none!important}
       .figureloom-shapes-menu{position:fixed;z-index:2147483000;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;border:1px solid var(--figureloom-ui-line,#cddbd7);border-radius:11px;color:var(--figureloom-ui-text,#172321);background:var(--figureloom-ui-surface,#fff);box-shadow:0 16px 44px var(--figureloom-ui-shadow,rgba(12,46,40,.22))}
       .figureloom-shapes-menu[hidden]{display:none!important}
       .figureloom-shapes-menu button{min-height:38px;padding:8px 9px;border:1px solid var(--figureloom-ui-line,#cddbd7);border-radius:8px;color:var(--figureloom-ui-text,#172321);background:var(--figureloom-ui-soft,#edf3f1);font:600 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:left}
