@@ -85,6 +85,11 @@
     });
   });
 
+  const style = document.createElement('style');
+  style.id = 'figureloomCollaborationHiddenFixStyle';
+  style.textContent = '#collaborationDrawer #collabRemoteBanner[hidden]{display:none!important}';
+  document.head.appendChild(style);
+
   const bodyObserver = new MutationObserver(() => install());
   bodyObserver.observe(document.body, { childList:true, subtree:true });
   install();
