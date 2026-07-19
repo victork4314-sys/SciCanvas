@@ -24,31 +24,39 @@ async function prepare(page, interfaceMode) {
   await expect(page.locator('#canvas')).toBeVisible();
   await page.waitForFunction(() => Boolean(
     document.documentElement.dataset.figureloomReady === '1' &&
+    window.__figureLoomDesktopHistoryActionsV2 &&
     window.FigureLoomDesktopHistoryActions
   ));
 }
 
-test('mouse desktop places Undo and Redo directly beside Delete', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'mouse desktop placement');
-  await prepare(page, 'desktop');
-
-  await expect(page.locator('html')).toHaveAttribute('data-figureloom-desktop-history-actions', '1');
-  const placement = await page.evaluate(() => {
+async function placement(page) {
+  return page.evaluate(() => {
     const undo = document.getElementById('undoButton');
     const redo = document.getElementById('redoButton');
     const remove = document.getElementById('deleteButton');
     const titleActions = document.querySelector('.title-actions');
     return {
+      resolvedMode:document.documentElement.dataset.figureloomResolvedMode,
+      moved:document.documentElement.dataset.figureloomDesktopHistoryActions === '1',
       sameGroup:undo.parentElement === remove.parentElement && redo.parentElement === remove.parentElement,
       order:[...remove.parentElement.children].filter(node => ['undoButton','redoButton','deleteButton'].includes(node.id)).map(node => node.id),
       undoInHeader:undo.parentElement === titleActions,
       redoInHeader:redo.parentElement === titleActions
     };
   });
-  expect(placement.sameGroup).toBe(true);
-  expect(placement.order).toEqual(['undoButton','redoButton','deleteButton']);
-  expect(placement.undoInHeader).toBe(false);
-  expect(placement.redoInHeader).toBe(false);
+}
+
+test('normal desktop places Undo and Redo directly beside Delete', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'desktop placement');
+  await prepare(page, 'desktop');
+
+  const result = await placement(page);
+  expect(result.resolvedMode).toBe('desktop');
+  expect(result.moved).toBe(true);
+  expect(result.sameGroup).toBe(true);
+  expect(result.order).toEqual(['undoButton','redoButton','deleteButton']);
+  expect(result.undoInHeader).toBe(false);
+  expect(result.redoInHeader).toBe(false);
 
   const boxes = await page.evaluate(() => ['undoButton','redoButton','deleteButton'].map(id => {
     const rect = document.getElementById(id).getBoundingClientRect();
@@ -69,28 +77,27 @@ test('mouse desktop places Undo and Redo directly beside Delete', async ({ page 
   expect(await page.evaluate(() => state.objects.length)).toBe(before + 1);
 });
 
-test('coarse-touch desktop interface keeps the header controls unchanged', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'coarse-touch protection');
+test('desktop interface on a coarse-touch device still moves the controls', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'coarse-touch desktop interface');
   await prepare(page, 'desktop');
 
-  const result = await page.evaluate(() => {
-    const undo = document.getElementById('undoButton');
-    const redo = document.getElementById('redoButton');
-    const remove = document.getElementById('deleteButton');
-    const titleActions = document.querySelector('.title-actions');
-    return {
-      coarseTouch:matchMedia('(pointer: coarse) and (hover: none)').matches,
-      resolvedMode:document.documentElement.dataset.figureloomResolvedMode,
-      moved:document.documentElement.dataset.figureloomDesktopHistoryActions === '1',
-      undoInHeader:undo.parentElement === titleActions,
-      redoInHeader:redo.parentElement === titleActions,
-      deleteSeparate:remove.parentElement !== titleActions
-    };
-  });
-  expect(result.coarseTouch).toBe(true);
+  const result = await placement(page);
+  expect(await page.evaluate(() => matchMedia('(pointer: coarse) and (hover: none)').matches)).toBe(true);
   expect(result.resolvedMode).toBe('desktop');
+  expect(result.moved).toBe(true);
+  expect(result.sameGroup).toBe(true);
+  expect(result.order).toEqual(['undoButton','redoButton','deleteButton']);
+  expect(result.undoInHeader).toBe(false);
+  expect(result.redoInHeader).toBe(false);
+});
+
+test('phone interface keeps Undo and Redo in the header', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'phone interface protection');
+  await prepare(page, 'phone');
+
+  const result = await placement(page);
+  expect(result.resolvedMode).toBe('phone');
   expect(result.moved).toBe(false);
   expect(result.undoInHeader).toBe(true);
   expect(result.redoInHeader).toBe(true);
-  expect(result.deleteSeparate).toBe(true);
 });

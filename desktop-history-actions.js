@@ -1,13 +1,13 @@
 (() => {
-  if (window.__figureLoomDesktopHistoryActionsV1) return;
+  if (window.__figureLoomDesktopHistoryActionsV2) return;
+  window.__figureLoomDesktopHistoryActionsV2 = true;
   window.__figureLoomDesktopHistoryActionsV1 = true;
 
   const root = document.documentElement;
-  const coarseTouch = window.matchMedia?.('(pointer: coarse) and (hover: none)');
   let scheduled = false;
 
-  function desktopMouseMode() {
-    return root.dataset.figureloomResolvedMode === 'desktop' && !coarseTouch?.matches;
+  function desktopInterfaceMode() {
+    return root.dataset.figureloomResolvedMode === 'desktop';
   }
 
   function restoreHeader(undoButton, redoButton) {
@@ -47,7 +47,7 @@
     const redoButton = document.getElementById('redoButton');
     const deleteButton = document.getElementById('deleteButton');
     if (!undoButton || !redoButton) return;
-    if (desktopMouseMode() && deleteButton && placeBesideDelete(undoButton, redoButton, deleteButton)) return;
+    if (desktopInterfaceMode() && deleteButton && placeBesideDelete(undoButton, redoButton, deleteButton)) return;
     restoreHeader(undoButton, redoButton);
   }
 
@@ -73,6 +73,7 @@
       outline:2px solid color-mix(in srgb,var(--figureloom-ui-accent,#2f7468) 55%,transparent);outline-offset:2px;
     }
   `;
+  document.getElementById(style.id)?.remove();
   document.head.appendChild(style);
 
   const observer = new MutationObserver(scheduleSync);
@@ -80,8 +81,7 @@
   addEventListener('figureloom-settings-change', scheduleSync);
   addEventListener('figureloom-stable-ready', scheduleSync);
   addEventListener('resize', scheduleSync);
-  coarseTouch?.addEventListener?.('change', scheduleSync);
 
   sync();
-  window.FigureLoomDesktopHistoryActions = Object.freeze({ sync, active:desktopMouseMode });
+  window.FigureLoomDesktopHistoryActions = Object.freeze({ sync, active:desktopInterfaceMode });
 })();
