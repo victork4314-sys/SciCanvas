@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsGentleFixV3) return;
-  window.__figureLoomSettingsGentleFixV3 = true;
+  if (window.__figureLoomSettingsGentleFixV4) return;
+  window.__figureLoomSettingsGentleFixV4 = true;
 
   const translationLanguages = ["en", "nb", "pl", "de", "fr", "es", "it", "pt", "nl"];
   const translationRows = [
@@ -585,14 +585,16 @@
     dispatchEvent(new CustomEvent('figureloom-interface-phrases-ready'));
   }
 
-  function placeSettingsBesideCheck() {
+  function placeSettingsBeforeProjects() {
     const tabs = document.querySelector('.ribbon-tabs');
-    const check = tabs?.querySelector('.ribbon-tab[data-tab="review"]');
+    const projects = tabs?.querySelector('.ribbon-tab[data-tab="projects"]');
     const settings = document.getElementById('settingsRibbonButton');
-    if (!tabs || !check || !settings) return false;
+    if (!tabs || !settings) return false;
 
     settings.classList.add('settings-ribbon-button');
-    if (check.nextElementSibling !== settings) check.insertAdjacentElement('afterend', settings);
+    const target = projects || [...tabs.children].find(child => child !== settings) || null;
+    if (target && settings.nextElementSibling !== target) tabs.insertBefore(settings, target);
+    else if (!target && tabs.firstElementChild !== settings) tabs.prepend(settings);
     return true;
   }
 
@@ -650,9 +652,9 @@
   }
 
   function placeSoon() {
-    requestAnimationFrame(placeSettingsBesideCheck);
-    setTimeout(placeSettingsBesideCheck, 100);
-    setTimeout(placeSettingsBesideCheck, 500);
+    requestAnimationFrame(placeSettingsBeforeProjects);
+    setTimeout(placeSettingsBeforeProjects, 100);
+    setTimeout(placeSettingsBeforeProjects, 500);
   }
 
   function init() {
@@ -661,7 +663,7 @@
     placeSoon();
 
     const tabs = document.querySelector('.ribbon-tabs');
-    if (tabs) new MutationObserver(placeSettingsBesideCheck).observe(tabs, { childList:true });
+    if (tabs) new MutationObserver(placeSettingsBeforeProjects).observe(tabs, { childList:true });
 
     addEventListener('figureloom-settings-ready', () => {
       installTranslationCorrections();
