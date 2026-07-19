@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneModeV2) return;
-  window.__figureLoomPhoneModeV2 = true;
+  if (window.__figureLoomPhoneModeV3) return;
+  window.__figureLoomPhoneModeV3 = true;
 
   const root = document.documentElement;
   const SHEETS = ['tools', 'pages', 'edit', 'more'];
@@ -168,6 +168,7 @@
     if (action === 'templates') {
       closeSheet({ restoreFocus:false });
       $('.ribbon-tab[data-tab="insert"]')?.click();
+      setTimeout(() => closeSheet({ restoreFocus:false }), 0);
       return;
     }
     if (action === 'settings') {
@@ -253,18 +254,13 @@
     longPress = null;
   }
 
-  function tabUsesOwnPanel(tab) {
-    return tab?.dataset.tab === 'insert';
-  }
-
   function settleRibbonTab(tab) {
-    requestAnimationFrame(() => {
-      if (tabUsesOwnPanel(tab) || document.querySelector('.utility-drawer.open,[id$="Drawer"].open')) {
-        closeSheet({ restoreFocus:false });
-        return;
-      }
-      openSheet('tools');
-    });
+    if (tab?.dataset.tab === 'insert') {
+      closeSheet({ restoreFocus:false });
+      setTimeout(() => closeSheet({ restoreFocus:false }), 0);
+      return;
+    }
+    requestAnimationFrame(() => openSheet('tools'));
   }
 
   function bindGlobalEvents() {
@@ -328,9 +324,8 @@
     const observer = new MutationObserver(() => {
       if (!active) return;
       prepareTargets();
-      if (document.querySelector('.utility-drawer.open,[id$="Drawer"].open')) closeSheet({ restoreFocus:false });
     });
-    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
+    observer.observe(document.body, { childList:true, subtree:true });
     apply();
     window.FigureLoomPhoneMode = Object.freeze({ open:openSheet, close:closeSheet, apply, active:() => active });
   }
