@@ -148,11 +148,19 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Capture rendered interface strings
         run: node scripts/capture-interface-dom.mjs
+      - name: Generate complete nine-language draft
+        run: node scripts/generate-complete-translations.mjs
       - name: Upload rendered interface audit
         uses: actions/upload-artifact@v6
         with:
           name: rendered-interface-audit
           path: artifacts/rendered-interface-audit.json
+          if-no-files-found: error
+      - name: Upload complete translation draft
+        uses: actions/upload-artifact@v6
+        with:
+          name: complete-translation-draft
+          path: artifacts/complete-translations.json
           if-no-files-found: error
 
   browser:
