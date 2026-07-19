@@ -1,5 +1,5 @@
-# Deploy the dependency-free SciCanvas app to GitHub Pages.
-name: Deploy SciCanvas to GitHub Pages
+# Deploy the dependency-free FigureLoom app to GitHub Pages.
+name: Deploy FigureLoom to GitHub Pages
 
 on:
   push:
@@ -25,6 +25,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate cross-platform icons
+        run: python3 scripts/generate-platform-icons.py
+
+      - name: Verify generated icon files
+        run: |
+          test -s favicon.ico
+          test -s figureloom-icon-32-v1.png
+          test -s figureloom-apple-touch-180-v1.png
+          test -s figureloom-app-192-v1.png
+          test -s figureloom-app-512-v1.png
+          test -s mstile-150x150-v1.png
+          test -s mstile-310x310-v1.png
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -36,5 +49,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-
-# Production deployment retriggered after Pages was enabled.
