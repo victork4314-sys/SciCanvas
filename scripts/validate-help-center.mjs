@@ -15,7 +15,6 @@ const requireText = (source, marker, label) => {
 const required = [
   'help-center.js',
   'figureloom-sage-theme.js',
-  'phone-sage-theme-fix.js',
   'tests/help-center-theme.spec.js',
   'wiki/index.html',
   'wiki/wiki.css',
@@ -31,11 +30,14 @@ const required = [
 ];
 required.forEach(requireFile);
 
+if (exists('phone-sage-theme-fix.js')) {
+  errors.push('The sage palette must stay in one shared theme file; remove phone-sage-theme-fix.js');
+}
+
 if (!errors.length) {
   const appHtml = read('index.html');
   const help = read('help-center.js');
   const theme = read('figureloom-sage-theme.js');
-  const phoneThemeFix = read('phone-sage-theme-fix.js');
   const browserTest = read('tests/help-center-theme.spec.js');
   const wikiHtml = read('wiki/index.html');
   const wikiJs = read('wiki/wiki.js');
@@ -60,10 +62,9 @@ if (!errors.length) {
     requireText(help, marker, 'help-center.js persistent question-mark binding');
   }
   if (help.includes('cloneNode(true)')) errors.push('help-center.js must not rely on cloning a Help button that can be replaced later');
+  if (help.includes('phone-sage-theme-fix')) errors.push('help-center.js must not load or manage theme files');
   requireText(help, 'env(safe-area-inset-bottom)', 'help-center.js phone safe area');
   requireText(help, '--figureloom-ui-accent', 'help-center.js shared palette');
-  requireText(help, './phone-sage-theme-fix.js?v=1', 'help-center.js phone theme loader');
-  requireText(help, 'data-figureloom-phone-sage-theme-fix', 'help-center.js phone theme duplicate guard');
 
   const paletteMarkers = [
     '--figureloom-ui-bg:#f4f7f6',
@@ -76,15 +77,14 @@ if (!errors.length) {
     '--figureloom-ui-text:#eef7f4',
     '--figureloom-phone-surface',
     '.selection-box',
-    'meta[name="theme-color"]'
+    'meta[name="theme-color"]',
+    ':not(.ribbon-tab)',
+    'data-figureloom-resolved-mode="phone"',
+    'border-bottom-color:transparent!important'
   ];
   paletteMarkers.forEach(marker => requireText(theme, marker, 'figureloom-sage-theme.js'));
   for (const oldAccent of ['#2563eb', '#7c3aed', '#5c72bf']) {
     if (theme.includes(oldAccent)) errors.push(`figureloom-sage-theme.js still contains the old accent ${oldAccent}`);
-  }
-
-  for (const marker of ['data-figureloom-resolved-mode="phone"', 'button.ribbon-tab.active[data-tab]', 'border-bottom-color:transparent!important']) {
-    requireText(phoneThemeFix, marker, 'phone-sage-theme-fix.js');
   }
 
   for (const marker of ['opens Help rather than starting the passive guide', 'FigureLoomSageTheme', '#figureloomHelpMenu', '#tourHelpButton']) {
@@ -109,7 +109,6 @@ if (!errors.length) {
   const cached = [
     './help-center.js',
     './figureloom-sage-theme.js',
-    './phone-sage-theme-fix.js',
     './wiki/',
     './wiki/index.html',
     './wiki/wiki.css',
@@ -124,6 +123,7 @@ if (!errors.length) {
     './wiki-assets/help-menu.svg'
   ];
   cached.forEach(file => requireText(worker, `"${file}"`, 'service-worker.js offline Help cache'));
+  if (worker.includes('phone-sage-theme-fix')) errors.push('service-worker.js must not cache a separate phone theme patch');
 
   for (const file of ['wiki-assets/editor-overview.svg','wiki-assets/phone-overview.svg','wiki-assets/help-menu.svg']) {
     const svg = read(file);
@@ -139,4 +139,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: persistent question-mark wiring, shared sage themes, phone tab safety, manual routes, search, safe areas, visual guides, and offline core pages are present.');
+console.log('Help center validation passed: persistent question-mark wiring, one shared sage theme, manual routes, search, phone safety, visual guides, and offline core pages are present.');
