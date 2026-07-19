@@ -52,15 +52,16 @@ test('workspace tabs use clearer names and descriptions', async ({ page }, testI
 test('uploaded profile picture appears in Account and Share', async ({ page }, testInfo) => {
   await prepare(page, testInfo.project.name === 'mobile' ? 'phone' : 'desktop');
   await page.locator('#accountProfileButton').click();
-  await expect(page.locator('#scAccountProfileCard')).toBeVisible();
-  await expect(page.locator('.scientific-avatar-picker [data-sc-avatar-plus]')).toHaveCount(6);
-  await expect(page.locator('.scientific-avatar-picker [data-sc-avatar-upload]').first()).toBeVisible();
+  const card = page.locator('#scAccountProfileCard');
+  await expect(card).toBeVisible();
+  await expect(card.locator('.scientific-avatar-picker [data-sc-avatar-plus]')).toHaveCount(6);
+  await expect(card.locator('.scientific-avatar-picker [data-sc-avatar-upload]')).toBeVisible();
 
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR42mP8z8AARAwMDAxQAAAJAgEAff3vWQAAAABJRU5ErkJggg==', 'base64');
   await page.locator('#figureloomProfilePictureUpload').setInputFiles({ name:'profile.png', mimeType:'image/png', buffer:png });
   await page.waitForFunction(() => localStorage.getItem('scicanvas-profile-avatar-v1') === 'custom');
   await expect(page.locator('#accountProfileButton img.figureloom-profile-image')).toBeVisible();
-  await expect(page.locator('#scAccountProfileCard [data-sc-avatar-preview] img.figureloom-profile-image')).toBeVisible();
+  await expect(card.locator('[data-sc-avatar-preview] img.figureloom-profile-image')).toBeVisible();
 
   await page.evaluate(() => {
     document.getElementById('collaborationDrawer')?.classList.add('open');
