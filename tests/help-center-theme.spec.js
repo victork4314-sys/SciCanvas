@@ -17,7 +17,7 @@ async function prepare(page, theme = 'light') {
   await expect(page.locator('#canvas')).toBeVisible();
   await page.waitForFunction(() => Boolean(
     window.FigureLoomHelpCenter && window.FigureLoomSageTheme &&
-    window.__figureLoomPlatformIconsV2 && window.__figureLoomInteractionStabilityV1
+    window.__figureLoomInteractionStabilityV1
   ));
   await page.waitForTimeout(250);
 }
@@ -53,42 +53,25 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('cross-platform icon files are served and declared', async ({ page }, testInfo) => {
+test('single FigureLoom SVG favicon is declared', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop icon audit');
   await prepare(page);
   const declarations = await page.evaluate(() => ({
-    icons:[...document.querySelectorAll('link[rel="icon"]')].map(link => `${link.getAttribute('sizes') || ''}:${link.getAttribute('href')}`),
-    apple:document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href'),
-    precomposed:document.querySelector('link[rel="apple-touch-icon-precomposed"]')?.getAttribute('href'),
-    mask:document.querySelector('link[rel="mask-icon"]')?.getAttribute('href'),
-    manifest:document.querySelector('link[rel="manifest"]')?.getAttribute('href'),
-    windows:document.querySelector('meta[name="msapplication-config"]')?.content
+    icons:[...document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]')].map(link => ({
+      href:link.getAttribute('href'),
+      type:link.getAttribute('type')
+    })),
+    apple:document.querySelectorAll('link[rel="apple-touch-icon"],link[rel="apple-touch-icon-precomposed"]').length,
+    mask:document.querySelectorAll('link[rel="mask-icon"]').length,
+    windows:document.querySelectorAll('meta[name="msapplication-config"],meta[name="msapplication-TileImage"]').length
   }));
-  expect(declarations.icons.join('|')).toContain('16x16:./figureloom-tab-16.png?v=2');
-  expect(declarations.icons.join('|')).toContain('32x32:./figureloom-tab-32.png?v=2');
-  expect(declarations.icons.join('|')).toContain('./favicon.ico?v=2');
-  expect(declarations.apple).toBe('./apple-touch-icon.png?v=2');
-  expect(declarations.precomposed).toBe('./apple-touch-icon-precomposed.png?v=2');
-  expect(declarations.mask).toBe('./figureloom-pinned.svg?v=2');
-  expect(declarations.manifest).toContain('manifest.webmanifest?v=11');
-  expect(declarations.windows).toContain('browserconfig.xml?v=2');
-
-  const files = await page.evaluate(async () => {
-    const inspect = async path => {
-      const response = await fetch(path, { cache:'no-store' });
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      return { status:response.status, header:[...bytes.slice(0,8)] };
-    };
-    return {
-      ico:await inspect('./favicon.ico?v=2'),
-      apple:await inspect('./apple-touch-icon.png?v=2'),
-      android:await inspect('./figureloom-app-192.png?v=2')
-    };
-  });
-  expect(files.ico.status).toBe(200);
-  expect(files.ico.header.slice(0,4)).toEqual([0,0,1,0]);
-  expect(files.apple.header).toEqual([137,80,78,71,13,10,26,10]);
-  expect(files.android.header).toEqual([137,80,78,71,13,10,26,10]);
+  expect(declarations.icons).toEqual([{ href:'./figureloom-mark.svg?v=1', type:'image/svg+xml' }]);
+  expect(declarations.apple).toBe(0);
+  expect(declarations.mask).toBe(0);
+  expect(declarations.windows).toBe(0);
+  const response = await page.request.get('/figureloom-mark.svg?v=1');
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain('aria-label="FigureLoom"');
 });
 
 test('native Safari trackpad pinch zooms the page', async ({ page }, testInfo) => {
