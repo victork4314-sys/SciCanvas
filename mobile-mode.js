@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneModeV1) return;
-  window.__figureLoomPhoneModeV1 = true;
+  if (window.__figureLoomPhoneModeV2) return;
+  window.__figureLoomPhoneModeV2 = true;
 
   const root = document.documentElement;
   const SHEETS = ['tools', 'pages', 'edit', 'more'];
@@ -22,7 +22,7 @@
     const link = document.createElement('link');
     link.id = 'figureloomPhoneModeStylesheet';
     link.rel = 'stylesheet';
-    link.href = 'mobile-mode.css?v=20260719-v1';
+    link.href = 'mobile-mode.css?v=20260719-v2';
     document.head.appendChild(link);
   }
 
@@ -166,8 +166,8 @@
       return;
     }
     if (action === 'templates') {
+      closeSheet({ restoreFocus:false });
       $('.ribbon-tab[data-tab="insert"]')?.click();
-      requestAnimationFrame(() => openSheet('tools'));
       return;
     }
     if (action === 'settings') {
@@ -253,13 +253,27 @@
     longPress = null;
   }
 
+  function tabUsesOwnPanel(tab) {
+    return tab?.dataset.tab === 'insert';
+  }
+
+  function settleRibbonTab(tab) {
+    requestAnimationFrame(() => {
+      if (tabUsesOwnPanel(tab) || document.querySelector('.utility-drawer.open,[id$="Drawer"].open')) {
+        closeSheet({ restoreFocus:false });
+        return;
+      }
+      openSheet('tools');
+    });
+  }
+
   function bindGlobalEvents() {
     if (document.documentElement.dataset.figureloomPhoneEvents === '1') return;
     document.documentElement.dataset.figureloomPhoneEvents = '1';
     document.addEventListener('click', event => {
       if (!active) return;
       const tab = event.target.closest?.('.ribbon-tabs .ribbon-tab');
-      if (tab) requestAnimationFrame(() => openSheet('tools'));
+      if (tab && event.isTrusted) settleRibbonTab(tab);
       if (openName && event.target.closest?.('#canvasStage') && !event.target.closest?.('.canvas-toolbar')) closeSheet({ restoreFocus:false });
     }, true);
     document.addEventListener('pointerdown', beginLongPress, true);
@@ -314,8 +328,9 @@
     const observer = new MutationObserver(() => {
       if (!active) return;
       prepareTargets();
+      if (document.querySelector('.utility-drawer.open,[id$="Drawer"].open')) closeSheet({ restoreFocus:false });
     });
-    observer.observe(document.body, { childList:true, subtree:true });
+    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
     apply();
     window.FigureLoomPhoneMode = Object.freeze({ open:openSheet, close:closeSheet, apply, active:() => active });
   }
