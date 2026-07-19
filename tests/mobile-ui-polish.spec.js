@@ -22,6 +22,7 @@ async function preparePhone(page, theme = 'light') {
   }, theme);
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
+  await page.waitForFunction(() => document.documentElement.dataset.figureloomReady === '1');
   await page.waitForFunction(() => Boolean(window.FigureLoomPhoneMode && window.FigureLoomMobileUiPolish));
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-resolved-mode', 'phone');
 }
