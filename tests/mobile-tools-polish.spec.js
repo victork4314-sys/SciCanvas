@@ -101,3 +101,40 @@ test('mobile More uses one vector icon family and equal action heights', async (
     await expect(page.locator(`#figureloomPhoneDock [data-phone-action="${action}"] svg.figureloom-phone-action-icon`)).toHaveCount(1);
   }
 });
+
+test('mobile toast uses the active FigureLoom surface, text and sage accent', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'phone toast theme check');
+  await prepare(page, 'dark');
+  await page.waitForFunction(() => Boolean(window.__figureLoomMobileToastThemeV1 && window.SciCanvasToast));
+  await page.evaluate(() => window.SciCanvasToast('Theme check', 'success', 5000));
+
+  const toast = page.locator('.sc-toast').last();
+  await expect(toast).toBeVisible();
+  const result = await toast.evaluate(node => {
+    const style = getComputedStyle(node);
+    const stackStyle = getComputedStyle(node.parentElement);
+    const probe = document.createElement('span');
+    document.body.appendChild(probe);
+    probe.style.backgroundColor = 'var(--figureloom-ui-surface)';
+    const expectedSurface = getComputedStyle(probe).backgroundColor;
+    probe.style.color = 'var(--figureloom-ui-text)';
+    const expectedText = getComputedStyle(probe).color;
+    probe.style.color = 'var(--figureloom-ui-accent)';
+    const expectedAccent = getComputedStyle(probe).color;
+    probe.remove();
+    return {
+      background:style.backgroundColor,
+      color:style.color,
+      borderLeft:style.borderLeftColor,
+      expectedSurface,
+      expectedText,
+      expectedAccent,
+      stackBottom:parseFloat(stackStyle.bottom)
+    };
+  });
+
+  expect(result.background).toBe(result.expectedSurface);
+  expect(result.color).toBe(result.expectedText);
+  expect(result.borderLeft).toBe(result.expectedAccent);
+  expect(result.stackBottom).toBeGreaterThanOrEqual(70);
+});
