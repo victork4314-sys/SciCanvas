@@ -1,0 +1,48 @@
+name: Phone mode regression
+
+on:
+  pull_request:
+    paths:
+      - 'mobile-mode.js'
+      - 'mobile-mode.css'
+      - 'mobile-mode-canvas-fit.js'
+      - 'settings-core.js'
+      - 'settings-page.js'
+      - 'safe-refresh.js'
+      - 'service-worker.js'
+      - 'tests/phone-mode.spec.js'
+      - 'playwright.config.js'
+      - '.github/workflows/phone-mode.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phone-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Check phone JavaScript syntax
+        run: |
+          node --check mobile-mode.js
+          node --check mobile-mode-canvas-fit.js
+          node --check tests/phone-mode.spec.js
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run phone mode regressions
+        run: npx playwright test tests/phone-mode.spec.js
+      - name: Upload phone test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: phone-mode-results
+          path: test-results
+          if-no-files-found: warn
