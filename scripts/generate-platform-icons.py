@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Generate the small platform icon files used by the static FigureLoom site."""
+"""Generate the platform icon files used by the static FigureLoom site."""
 
 from __future__ import annotations
 
 import binascii
+import math
 import struct
 import zlib
 from pathlib import Path
@@ -27,11 +28,9 @@ def pixel(buf: bytearray, size: int, x: int, y: int, color: tuple[int, int, int,
 
 def disc(buf: bytearray, size: int, cx: float, cy: float, radius: float, color: tuple[int, int, int, int]) -> None:
     r = max(1, int(round(radius)))
-    x0, x1 = int(cx) - r, int(cx) + r
-    y0, y1 = int(cy) - r, int(cy) + r
     rr = radius * radius
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
+    for y in range(int(cy) - r, int(cy) + r + 1):
+        for x in range(int(cx) - r, int(cx) + r + 1):
             if (x - cx) ** 2 + (y - cy) ** 2 <= rr:
                 pixel(buf, size, x, y, color)
 
@@ -47,13 +46,12 @@ def thick_line(buf: bytearray, size: int, points: list[tuple[float, float]], wid
 
 def rounded_rect_outline(buf: bytearray, size: int, box: tuple[float, float, float, float], radius: float, width: float, color: tuple[int, int, int, int]) -> None:
     x0, y0, x1, y1 = box
-    r = radius
     points: list[tuple[float, float]] = []
     segments = 20
-    for cx, cy, start in ((x0 + r, y0 + r, 180), (x1 - r, y0 + r, 270), (x1 - r, y1 - r, 0), (x0 + r, y1 - r, 90)):
+    for cx, cy, start in ((x0 + radius, y0 + radius, 180), (x1 - radius, y0 + radius, 270), (x1 - radius, y1 - radius, 0), (x0 + radius, y1 - radius, 90)):
         for index in range(segments + 1):
-            angle = (start + index * 90 / segments) * 3.141592653589793 / 180
-            points.append((cx + r * __import__('math').cos(angle), cy + r * __import__('math').sin(angle)))
+            angle = math.radians(start + index * 90 / segments)
+            points.append((cx + radius * math.cos(angle), cy + radius * math.sin(angle)))
     points.append(points[0])
     thick_line(buf, size, points, width, color)
 
@@ -98,16 +96,22 @@ def png_bytes(size: int) -> bytes:
 
 def write_icons() -> None:
     files = {
+        'favicon-16x16.png': 16,
+        'favicon-32x32.png': 32,
         'figureloom-icon-32-v1.png': 32,
+        'apple-touch-icon.png': 180,
         'figureloom-apple-touch-180-v1.png': 180,
+        'android-chrome-192x192.png': 192,
         'figureloom-app-192-v1.png': 192,
+        'android-chrome-512x512.png': 512,
         'figureloom-app-512-v1.png': 512,
+        'mstile-150x150.png': 150,
         'mstile-150x150-v1.png': 150,
+        'mstile-310x310.png': 310,
         'mstile-310x310-v1.png': 310,
     }
-    generated = {name: png_bytes(size) for name, size in files.items()}
-    for name, data in generated.items():
-        (ROOT / name).write_bytes(data)
+    for name, size in files.items():
+        (ROOT / name).write_bytes(png_bytes(size))
 
     ico_sizes = (16, 32, 48, 64, 128, 256)
     images = [png_bytes(size) for size in ico_sizes]
@@ -118,6 +122,15 @@ def write_icons() -> None:
         entries.append(struct.pack('<BBBBHHII', encoded_size, encoded_size, 0, 0, 1, 32, len(data), offset))
         offset += len(data)
     (ROOT / 'favicon.ico').write_bytes(struct.pack('<HHH', 0, 1, len(images)) + b''.join(entries) + b''.join(images))
+
+    browser_config = '''<?xml version="1.0" encoding="utf-8"?>
+<browserconfig><msapplication><tile>
+<square150x150logo src="/mstile-150x150.png"/>
+<square310x310logo src="/mstile-310x310.png"/>
+<TileColor>#0c2e28</TileColor>
+</tile></msapplication></browserconfig>
+'''
+    (ROOT / 'browserconfig.xml').write_text(browser_config, encoding='utf-8')
 
 
 if __name__ == '__main__':
