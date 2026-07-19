@@ -46,13 +46,13 @@ if (!errors.length) {
 
   requireText(appHtml, 'help-center.js', 'index.html');
   requireText(appHtml, 'figureloom-sage-theme.js', 'index.html');
-  requireText(appHtml, '<link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon" />', 'index.html favicon');
+  requireText(appHtml, '<link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon" />', 'index.html fallback favicon');
   requireText(helpHtml, '<link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon">', 'Help favicon');
   requireText(legalHtml, '<link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon">', 'Legal favicon');
   rejectText(appHtml, 'Stable version', 'index.html loading copy');
 
   const appIconLinks = appHtml.match(/<link\s+rel=["']icon["'][^>]*>/g) || [];
-  if (appIconLinks.length !== 1) errors.push(`index.html must declare exactly one favicon, found ${appIconLinks.length}`);
+  if (appIconLinks.length !== 1) errors.push(`index.html must declare exactly one fallback favicon, found ${appIconLinks.length}`);
 
   for (const marker of [
     'figureloom-favicon.svg','favicon.ICO','platform-icons.js','apple-touch-icon',
@@ -60,8 +60,12 @@ if (!errors.length) {
   ]) rejectText(combinedIconWiring, marker, 'favicon wiring');
 
   for (const marker of [
-    'querySelectorAll(\'link[rel="icon"]','favicon.rel = \'icon\'','link[rel="manifest"]'
-  ]) rejectText(loader, marker, 'ai-chat-fixes.js favicon override');
+    '__figureLoomUnifiedAiChatFixesV14',
+    "const editorFaviconHref = '/favicon.ico?v=20260719-editor-v2'",
+    'link[rel="icon"],link[rel="shortcut icon"]',
+    "editorFavicon.type = 'image/x-icon'",
+    'editorFavicon.href = editorFaviconHref'
+  ]) requireText(loader, marker, 'editor favicon refresh');
 
   for (const marker of [
     "interaction-stability-fixes.js?v=1","interface-dark-mode.js?v=3","dark-mode-windows.js?v=2"
@@ -86,7 +90,7 @@ if (!errors.length) {
 
   for (const marker of [
     'native Safari trackpad pinch zooms the page','stale drag state cannot flood errors',
-    'welcome overlay stays translucent','editor, Help and Legal use the same canonical ICO favicon'
+    'welcome overlay stays translucent','editor forces a fresh ICO URL while Help and Legal keep the canonical ICO'
   ]) requireText(test, marker, 'tests/help-center-theme.spec.js');
 }
 
@@ -95,4 +99,4 @@ if (errors.length) {
   errors.forEach(error => console.error(`- ${error}`));
   process.exit(1);
 }
-console.log('FigureLoom polish validation passed: one real favicon.ico is wired across the editor, Help and Legal; old favicon files and runtime overrides are gone; cache v53 is present; native trackpad pinch, stale-drag recovery, toast flood control, translucent welcome screen, Help and shared sage UI are present.');
+console.log('FigureLoom polish validation passed: one real favicon.ico remains; the editor forces a fresh ICO URL on startup while Help and Legal use the canonical ICO; retired favicon files are gone; native trackpad pinch, stale-drag recovery, toast flood control, translucent welcome screen, Help and shared sage UI are present.');
