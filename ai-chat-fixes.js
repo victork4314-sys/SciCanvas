@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV10) return;
+  if (window.__figureLoomUnifiedAiChatFixesV11) return;
+  window.__figureLoomUnifiedAiChatFixesV11 = true;
   window.__figureLoomUnifiedAiChatFixesV10 = true;
   window.__figureLoomUnifiedAiChatFixesV9 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
@@ -14,6 +15,7 @@
 
   loadCompanion('interface-dark-mode.js?v=3', 'figureloom-dark-mode');
   loadCompanion('dark-mode-windows.js?v=2', 'figureloom-dark-windows');
+  loadCompanion('input-platform-polish.js?v=1', 'figureloom-input-platform-polish');
   loadCompanion('page-thumbnail-previews.js?v=1', 'figureloom-page-previews');
   loadCompanion('illustrations-ui-polish.js?v=1', 'figureloom-illustrations-polish');
   loadCompanion('collaboration-chat.js?v=2', 'figureloom-collaboration-chat');
