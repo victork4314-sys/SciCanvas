@@ -38,9 +38,23 @@ The bottom dock contains:
 - **Tools** for the current ribbon tools
 - **Pages** for pages and layers
 - **Edit** for the selected object's inspector
-- **More** for projects, settings, account, templates, Loomy, Pro Tools, guide, sharing, and other less frequent actions
+- **More** for projects, settings, account, templates, Loomy, Pro Tools, Help, sharing, and other less frequent actions
 
 The dock remains available while ordinary editing sheets are open so you can move directly from Pages to Edit or Tools.
+
+## Help on a phone
+
+Open **More** and press **Help**.
+
+This opens the real FigureLoom Help center with:
+
+- Search the full manual
+- Start here
+- Quick task guides
+- Visual interface guide
+- Passive interface tour
+
+The manual opens in a separate tab so the current project remains open. The passive tour stays inside the editor and does not open panels, move objects, select anything, or scroll the project.
 
 ## Adding objects on a phone
 
@@ -102,7 +116,7 @@ Do not hold a finger still when you intend to pan. Start the movement promptly s
 
 Phone mode respects the top status area, rounded corners, and the bottom browser or home-indicator area.
 
-Dialogs, the passive guide, export controls, and bottom sheets should keep their important buttons above these areas.
+Dialogs, the Help center, passive guide, export controls, and bottom sheets should keep their important buttons above these areas.
 
 ## Turning Phone mode off quickly
 
