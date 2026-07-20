@@ -106,12 +106,16 @@
 
   window.FigureLoomBuilderAPI = window.FigureLoomBuilderAPI || {buildFigure};
 
-  if (!window.__figureLoomMcpFeatureAdaptersV1 && !document.querySelector('script[data-figureloom-mcp-feature-adapters]')) {
+  function loadModule(flag, datasetName, path, errorText) {
+    if (window[flag] || document.querySelector(`script[data-${datasetName}]`)) return;
     const script=document.createElement('script');
-    script.dataset.figureloomMcpFeatureAdapters='1';
-    script.src=`mcp-feature-adapters.js?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v69')}`;
+    script.setAttribute(`data-${datasetName}`,'1');
+    script.src=`${path}?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v69')}`;
     script.async=false;
-    script.onerror=()=>console.error('FigureLoom MCP feature adapters could not be loaded.');
+    script.onerror=()=>console.error(errorText);
     document.head.appendChild(script);
   }
+
+  loadModule('__figureLoomMcpFeatureAdaptersV1','figureloom-mcp-feature-adapters','mcp-feature-adapters.js','FigureLoom MCP feature adapters could not be loaded.');
+  loadModule('__figureLoomMcpSecurityOverridesV1','figureloom-mcp-security-overrides','mcp-security-overrides.js','FigureLoom MCP security overrides could not be loaded.');
 })();
