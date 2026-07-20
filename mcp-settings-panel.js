@@ -130,15 +130,15 @@
 
     panel.querySelector('[data-mcp-connect]').addEventListener('click', () => {
       const tokenField = panel.querySelector('[data-mcp-token]');
-      const current = window.FigureLoomMCP.get();
-      window.FigureLoomMCP.set({
+      const next = {
         enabled:panel.querySelector('[data-mcp-enabled]').checked,
         url:panel.querySelector('[data-mcp-url]').value.trim(),
-        token:tokenField.value.trim() || (current.token ? undefined : ''),
         access:panel.querySelector('[data-mcp-access]').value,
         authorizeCurrentProject:panel.querySelector('[data-mcp-project]').checked,
         allowDestructive:panel.querySelector('[data-mcp-destructive]').checked
-      });
+      };
+      if (tokenField.value.trim()) next.token = tokenField.value.trim();
+      window.FigureLoomMCP.set(next);
       tokenField.value = '';
       sync(panel);
     });
@@ -150,8 +150,9 @@
       sync(panel);
     });
     panel.querySelector('[data-mcp-access]').addEventListener('change', () => {
-      if (panel.querySelector('[data-mcp-access]').value !== 'full') panel.querySelector('[data-mcp-destructive]').checked = false;
-      sync(panel);
+      const full = panel.querySelector('[data-mcp-access]').value === 'full';
+      panel.querySelector('[data-mcp-destructive]').disabled = !full;
+      if (!full) panel.querySelector('[data-mcp-destructive]').checked = false;
     });
     addEventListener('figureloom-mcp-settings-change', () => sync(panel));
     sync(panel);
