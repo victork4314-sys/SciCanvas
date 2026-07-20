@@ -87,6 +87,12 @@ The server uses a compact set of composable tools:
 
 `list_commands` exposes the editor command registry. New FigureLoom capabilities that register there can be called through `execute_command` without adding another single-purpose MCP endpoint.
 
+## Visual verification and agent presence
+
+Use `render_page` with `format: "png"` to receive a screenshot of the currently active FigureLoom page. Before capture, FigureLoom synchronizes the active page and performs one bounded text-layout pass so the image reflects the latest edits without running a permanent canvas observer. The editor command registry also exposes `view.screenshot` for clients using `list_commands` and `execute_command`.
+
+While an MCP client is acting, FigureLoom displays a small pointer near the area being used. The label comes from the MCP client identity when available. Claude uses orange, ChatGPT/OpenAI uses green, Gemini uses blue, Codex uses a neutral dark or light pointer, and unknown clients use the FigureLoom interface color. The pointer is informational and does not intercept clicks.
+
 ## Observability and undo
 
 Create and modify operations return the affected object ID and geometry:
