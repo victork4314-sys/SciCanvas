@@ -28,6 +28,7 @@ jobs:
           node --check tests/smoke.spec.js
           node --check tests/help-center-theme.spec.js
           node --check tests/today-ui-stability.spec.js
+          node --check tests/runtime-console.spec.js
 
       - name: Check required application files
         run: |
@@ -101,12 +102,14 @@ jobs:
           test -f help-center.js
           test -f figureloom-sage-theme.js
           test -f today-ui-stability.js
+          test -f passive-guide-expanded.js
           test -f wiki/index.html
           test -f wiki/wiki.css
           test -f wiki/wiki.js
           test -f scripts/validate-help-center.mjs
           test -f tests/help-center-theme.spec.js
           test -f tests/today-ui-stability.spec.js
+          test -f tests/runtime-console.spec.js
           test -f supabase/schema.sql
           test -f supabase/share-links.sql
           test -f docs/CLOUD_SETUP.md
