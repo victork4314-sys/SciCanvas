@@ -159,10 +159,21 @@
     return true;
   }
 
+  function loadFeatureBootstrap() {
+    if (window.__figureLoomMcpFeatureBootstrapV1 || document.querySelector('script[data-figureloom-mcp-feature-bootstrap]')) return;
+    const script = document.createElement('script');
+    script.dataset.figureloomMcpFeatureBootstrap = '1';
+    script.src = `mcp-feature-bootstrap.js?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v69')}`;
+    script.async = false;
+    script.onerror = () => console.error('FigureLoom MCP feature bootstrap could not be loaded.');
+    document.head.appendChild(script);
+  }
+
   function attempt() {
     if (install()) return;
     setTimeout(attempt, 100);
   }
 
+  loadFeatureBootstrap();
   attempt();
 })();
