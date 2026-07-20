@@ -35,7 +35,10 @@ class SessionController {
 
   constructor(readonly transport:'stdio'|'http') { activeSessions.set(this.id,this);refreshSessionBroadcast(); }
   close():void { activeSessions.delete(this.id);refreshSessionBroadcast(); }
-  info():SessionInfo { return {id:this.id,clientName:this.clientName,transport:this.transport,workspace:this.workspace,access:this.workspace==='scratch'?DEFAULT_ACCESS:'authorized in FigureLoom',createdAt:this.createdAt} as SessionInfo; }
+  info():SessionInfo {
+    const currentAccess=bridge.listConnections().find(item=>item.currentProject)?.access||'read';
+    return {id:this.id,clientName:this.clientName,transport:this.transport,workspace:this.workspace,access:this.workspace==='scratch'?DEFAULT_ACCESS:currentAccess,createdAt:this.createdAt};
+  }
 
   descriptors():CommandDescriptor[] {
     if(this.workspace==='scratch')return this.scratch.listCommands();
@@ -129,11 +132,12 @@ app.all('/mcp',requireHttpAuth,async(req:Request,res:Response)=>{
       if(req.method!=='POST'||!isInitializeRequest(req.body)){res.status(400).json({error:'A valid MCP initialize request is required.'});return;}
       const session=new SessionController('http');
       let transport:StreamableHTTPServerTransport;
+      let mcp:McpServer;
       transport=new StreamableHTTPServerTransport({
         sessionIdGenerator:()=>randomUUID(),
         onsessioninitialized:id=>{httpTransports.set(id,{transport,server:mcp,session});refreshSessionBroadcast();}
       });
-      const mcp=createMcpServer(session);
+      mcp=createMcpServer(session);
       transport.onclose=()=>{for(const[id,value]of httpTransports){if(value.transport===transport)httpTransports.delete(id);}session.close();};
       await mcp.connect(transport);
       record={transport,server:mcp,session};
