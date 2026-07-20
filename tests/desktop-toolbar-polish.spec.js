@@ -1,25 +1,12 @@
 const { test, expect } = require('@playwright/test');
 
-const TARGETS = [
-  'Text',
-  'Shapes',
-  'Draw',
-  'Fonts',
-  'Connect',
-  'Editable SVG',
-  'Bring forward',
-  'Send backward',
-  'Duplicate',
-  'Tidy',
-  'Select multiple'
-];
-
 async function prepare(page, interfaceMode) {
   await page.setViewportSize({ width:1440, height:900 });
   await page.addInitScript(mode => {
     localStorage.setItem('scicanvas-guided-tour-v2', '1');
     localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
     localStorage.setItem('scicanvas-welcome-v1', 'complete');
+    localStorage.removeItem('scicanvas-toolbar-bubble-v1');
     localStorage.setItem('figureloom-settings-v1', JSON.stringify({
       interfaceMode:mode,
       textSize:'standard',
@@ -35,128 +22,148 @@ async function prepare(page, interfaceMode) {
   await page.waitForFunction(() => document.documentElement.dataset.figureloomReady === '1');
 }
 
-async function waitForTargets(page) {
-  await page.waitForFunction(labels => {
-    const visible = node => {
-      if (!node) return false;
-      const style = getComputedStyle(node);
-      const box = node.getBoundingClientRect();
-      return style.display !== 'none' && style.visibility !== 'hidden' && box.width > 0 && box.height > 0;
+async function dimensions(locator) {
+  return locator.evaluate(node => {
+    const box = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    return {
+      left:box.left,
+      top:box.top,
+      right:box.right,
+      bottom:box.bottom,
+      width:box.width,
+      height:box.height,
+      fontSize:parseFloat(style.fontSize),
+      lineHeight:style.lineHeight,
+      paddingLeft:parseFloat(style.paddingLeft),
+      paddingRight:parseFloat(style.paddingRight),
+      clientWidth:node.clientWidth,
+      clientHeight:node.clientHeight,
+      scrollWidth:node.scrollWidth,
+      scrollHeight:node.scrollHeight
     };
-    const buttons = [...document.querySelectorAll('.ribbon .tool-group button')];
-    return labels.every(label => buttons.some(button => button.textContent.trim() === label && visible(button)));
-  }, TARGETS, { timeout:20000 });
+  });
 }
 
-test('desktop runtime toolbar actions fill the ribbon and Settings exactly matches Projects', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'desktop geometry check');
+test('desktop mode uses one compact, proportional interface system', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'desktop-only consistency check');
   await prepare(page, 'desktop');
+
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-device-class', 'desktop');
-  await waitForTargets(page);
-  await expect(page.locator('#settingsRibbonButton')).toHaveAttribute('data-figureloom-desktop-tab', '1');
+  await expect(page.locator('#figureloomDesktopCompleteConsistencyStyle')).toHaveCount(1);
+  await expect(page.locator('#figureloomDesktopSettingsProToolsFinalFixStyle')).toHaveCount(1);
 
-  const metrics = await page.evaluate(targets => {
-    const visible = node => {
-      const style = getComputedStyle(node);
-      const box = node.getBoundingClientRect();
-      return style.display !== 'none' && style.visibility !== 'hidden' && box.width > 0 && box.height > 0;
-    };
-    const details = node => {
-      const box = node.getBoundingClientRect();
-      const style = getComputedStyle(node);
-      return {
-        width:box.width,
-        height:box.height,
-        centerY:box.top + box.height / 2,
-        borderRadius:parseFloat(style.borderTopLeftRadius),
-        borderTopWidth:parseFloat(style.borderTopWidth),
-        borderBottomWidth:parseFloat(style.borderBottomWidth),
-        borderTopStyle:style.borderTopStyle,
-        backgroundColor:style.backgroundColor,
-        color:style.color,
-        paddingLeft:parseFloat(style.paddingLeft),
-        paddingRight:parseFloat(style.paddingRight),
-        fontSize:parseFloat(style.fontSize),
-        clientWidth:node.clientWidth,
-        clientHeight:node.clientHeight,
-        scrollWidth:node.scrollWidth,
-        scrollHeight:node.scrollHeight,
-        className:node.className
-      };
-    };
+  // Approved toolbar and inspector proportions remain intact.
+  const inspector = await dimensions(page.locator('.right-panel'));
+  expect(inspector.width).toBeGreaterThanOrEqual(227);
+  expect(inspector.width).toBeLessThanOrEqual(233);
+  const textButton = await dimensions(page.locator('#addTextButton'));
+  expect(textButton.height).toBeGreaterThanOrEqual(26);
+  expect(textButton.height).toBeLessThanOrEqual(28);
 
-    const ribbon = document.querySelector('.ribbon');
-    const buttons = [...document.querySelectorAll('.ribbon .tool-group button')].filter(visible);
-    const ordinaryButtons = [...document.querySelectorAll('.ribbon > .tool-group > button')]
-      .filter(button => visible(button) && !button.classList.contains('figureloom-legacy-shape-action'));
-    const byLabel = Object.fromEntries(targets.map(label => [
-      label,
-      details(buttons.find(button => button.textContent.trim() === label))
-    ]));
-    const ribbonRect = ribbon.getBoundingClientRect();
-    const occupiedWidth = ordinaryButtons.reduce((sum, button) => sum + button.getBoundingClientRect().width, 0);
+  // Help is a true circle and its glyph is not clipped.
+  const help = await dimensions(page.locator('#tourHelpButton'));
+  expect(Math.abs(help.width - help.height)).toBeLessThanOrEqual(1);
+  expect(help.width).toBeGreaterThanOrEqual(27);
+  expect(help.width).toBeLessThanOrEqual(29);
+  expect(help.scrollWidth).toBeLessThanOrEqual(help.clientWidth + 1);
+  expect(help.scrollHeight).toBeLessThanOrEqual(help.clientHeight + 1);
+  await page.locator('#tourHelpButton').click();
+  await expect(page.locator('#figureloomHelpMenu')).toBeVisible();
+  const helpMenu = await dimensions(page.locator('#figureloomHelpMenu'));
+  expect(helpMenu.width).toBeLessThanOrEqual(362);
+  await page.keyboard.press('Escape');
 
-    return {
-      settings:details(document.getElementById('settingsRibbonButton')),
-      projects:details(document.querySelector('.ribbon-tabs .ribbon-tab[data-tab="projects"]')),
-      exportButton:details(document.getElementById('exportButton')),
-      help:details(document.getElementById('tourHelpButton')),
-      titlebar:details(document.querySelector('.titlebar')),
-      ribbonWidth:ribbonRect.width,
-      occupiedWidth,
-      byLabel
-    };
-  }, TARGETS);
+  // Settings internals match the approved desktop density.
+  await page.locator('#settingsRibbonButton').click();
+  await expect(page.locator('#figureloomSettingsPage')).toBeVisible();
+  await expect(page.locator('#settingsRibbonButton')).toHaveClass(/active/);
+  const settingsNav = await dimensions(page.locator('.settings-navigation button').first());
+  const settingsSelect = await dimensions(page.locator('[data-interface-theme]'));
+  const settingsClose = await dimensions(page.locator('.settings-close'));
+  const settingsTitle = await dimensions(page.locator('#figureloomSettingsTitle'));
+  expect(settingsNav.height).toBeLessThanOrEqual(35);
+  expect(settingsSelect.height).toBeLessThanOrEqual(31);
+  expect(settingsClose.width).toBeLessThanOrEqual(31);
+  expect(settingsClose.height).toBeLessThanOrEqual(31);
+  expect(settingsTitle.fontSize).toBeLessThanOrEqual(18);
+  await page.locator('[data-settings-close]').click();
+  await expect(page.locator('#settingsRibbonButton')).not.toHaveClass(/active/);
 
-  expect(metrics.settings.className).toContain('ribbon-tab');
-  expect(metrics.settings.className).not.toContain('ribbon-command-tab');
-  expect(metrics.settings.className).not.toContain('settings-ribbon-button');
-  expect(Math.abs(metrics.settings.height - metrics.projects.height)).toBeLessThanOrEqual(0.5);
-  expect(Math.abs(metrics.settings.centerY - metrics.projects.centerY)).toBeLessThanOrEqual(0.5);
-  expect(Math.abs(metrics.settings.borderRadius - metrics.projects.borderRadius)).toBeLessThanOrEqual(0.5);
-  expect(Math.abs(metrics.settings.paddingLeft - metrics.projects.paddingLeft)).toBeLessThanOrEqual(0.5);
-  expect(Math.abs(metrics.settings.paddingRight - metrics.projects.paddingRight)).toBeLessThanOrEqual(0.5);
-  expect(Math.abs(metrics.settings.borderTopWidth - metrics.projects.borderTopWidth)).toBeLessThanOrEqual(0.1);
-  expect(Math.abs(metrics.settings.borderBottomWidth - metrics.projects.borderBottomWidth)).toBeLessThanOrEqual(0.1);
-  expect(metrics.settings.borderTopStyle).toBe(metrics.projects.borderTopStyle);
-  expect(metrics.settings.backgroundColor).toBe(metrics.projects.backgroundColor);
-  expect(metrics.settings.color).toBe(metrics.projects.color);
-  expect(Math.abs(metrics.settings.width - metrics.projects.width)).toBeLessThanOrEqual(7);
+  // Projects/account gallery uses the same outer shell and proportional controls.
+  await page.locator('#accountButton').click();
+  await expect(page.locator('#cloudGalleryDrawer')).toHaveClass(/open/);
+  const gallery = await dimensions(page.locator('#cloudGalleryDrawer'));
+  expect(gallery.width).toBeLessThanOrEqual(522);
+  const galleryButton = page.locator('#cloudGalleryDrawer .cloud-toolbar button').first();
+  await expect(galleryButton).toBeVisible();
+  const galleryButtonSize = await dimensions(galleryButton);
+  expect(galleryButtonSize.height).toBeLessThanOrEqual(31);
+  page.locator('#cloudGalleryDrawer [data-close]').first().click().catch(() => {});
 
-  expect(Math.abs(metrics.exportButton.centerY - metrics.titlebar.centerY)).toBeLessThanOrEqual(1.5);
-  expect(metrics.exportButton.height).toBeLessThanOrEqual(26);
-  expect(Math.abs(metrics.help.width - metrics.help.height)).toBeLessThanOrEqual(1);
-  expect(metrics.help.width).toBeLessThanOrEqual(26);
-  expect(Math.abs(metrics.help.centerY - metrics.titlebar.centerY)).toBeLessThanOrEqual(1.5);
+  // Pro Tools keeps the separately approved compact component.
+  await page.locator('#proToolsButton').click();
+  await expect(page.locator('#proToolsDrawer')).toHaveClass(/open/);
+  const proTools = await dimensions(page.locator('#proToolsDrawer'));
+  expect(proTools.width).toBeLessThanOrEqual(462);
+  const proIcon = await dimensions(page.locator('#proToolsDrawer .pro-workspace-icon').first());
+  expect(Math.abs(proIcon.width - proIcon.height)).toBeLessThanOrEqual(1);
+  expect(proIcon.width).toBeLessThanOrEqual(29);
+  page.locator('#proToolsDrawer [data-close]').first().click().catch(() => {});
 
-  expect(metrics.occupiedWidth / metrics.ribbonWidth).toBeGreaterThan(0.42);
+  // Layers use the same control scale.
+  const layerSearch = await dimensions(page.locator('#layerSearch'));
+  const layerFilter = await dimensions(page.locator('#layerFilter'));
+  expect(layerSearch.height).toBeLessThanOrEqual(30);
+  expect(layerFilter.height).toBeLessThanOrEqual(30);
 
-  for (const label of TARGETS) {
-    const tool = metrics.byLabel[label];
-    expect(tool.className, `${label} desktop marker`).toContain('figureloom-desktop-compact-action');
-    expect(tool.height, `${label} height`).toBeGreaterThanOrEqual(26);
-    expect(tool.height, `${label} height`).toBeLessThanOrEqual(28);
-    expect(tool.width, `${label} width`).toBeLessThanOrEqual(151);
-    expect(tool.paddingLeft, `${label} left padding`).toBeGreaterThanOrEqual(5.5);
-    expect(tool.paddingLeft, `${label} left padding`).toBeLessThanOrEqual(10.5);
-    expect(tool.paddingRight, `${label} right padding`).toBeGreaterThanOrEqual(5.5);
-    expect(tool.paddingRight, `${label} right padding`).toBeLessThanOrEqual(10.5);
-    expect(tool.borderRadius, `${label} radius`).toBeGreaterThanOrEqual(4.5);
-    expect(tool.borderRadius, `${label} radius`).toBeLessThanOrEqual(5.5);
-    expect(tool.fontSize, `${label} font size`).toBeGreaterThanOrEqual(8.5);
-    expect(tool.fontSize, `${label} font size`).toBeLessThanOrEqual(9.25);
-    expect(tool.scrollWidth, `${label} horizontal clipping`).toBeLessThanOrEqual(tool.clientWidth + 2);
-    expect(tool.scrollHeight, `${label} vertical clipping`).toBeLessThanOrEqual(tool.clientHeight + 2);
-  }
+  // Editable SVG controls remain fully inside the approved inspector.
+  const svgSection = await dimensions(page.locator('#editableSvgInspector'));
+  const svgMode = await dimensions(page.locator('#svgColorMode'));
+  const svgDownload = await dimensions(page.locator('#downloadSelectedSvg'));
+  expect(svgMode.left).toBeGreaterThanOrEqual(svgSection.left - 1);
+  expect(svgMode.right).toBeLessThanOrEqual(svgSection.right + 1);
+  expect(svgDownload.right).toBeLessThanOrEqual(svgSection.right + 1);
+  expect(svgMode.width).toBeLessThanOrEqual(svgSection.width + 1);
+
+  // The canvas controls are a real movable and collapsible bubble again.
+  const toolbar = page.locator('.canvas-toolbar');
+  const grip = toolbar.locator('.toolbar-grip');
+  const collapse = toolbar.locator('.toolbar-collapse');
+  await expect(toolbar).toHaveClass(/movable-toolbar-bubble/);
+  await expect(grip).toBeVisible();
+  await expect(collapse).toBeVisible();
+
+  const before = await dimensions(toolbar);
+  const gripBox = await grip.boundingBox();
+  await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(gripBox.x + gripBox.width / 2 + 70, gripBox.y + gripBox.height / 2 + 45, { steps:5 });
+  await page.mouse.up();
+  const after = await dimensions(toolbar);
+  expect(Math.abs(after.left - before.left) + Math.abs(after.top - before.top)).toBeGreaterThan(10);
+
+  await collapse.click();
+  await expect(toolbar).toHaveClass(/toolbar-collapsed/);
+  await collapse.click();
+  await expect(toolbar).not.toHaveClass(/toolbar-collapsed/);
 });
 
-test('tablet mode keeps the roomy toolbar and command-style Settings button', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'tablet isolation check uses desktop browser viewport');
+test('tablet mode is not changed by desktop consistency rules', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'tablet isolation uses desktop browser viewport');
   await prepare(page, 'tablet');
+
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-device-class', 'tablet');
   await expect(page.locator('#settingsRibbonButton')).toHaveClass(/settings-ribbon-button/);
   await expect(page.locator('#settingsRibbonButton')).toHaveClass(/ribbon-command-tab/);
-  await expect(page.locator('#settingsRibbonButton')).not.toHaveClass(/\bribbon-tab\b/);
-  const textHeight = await page.locator('#addTextButton').evaluate(button => button.getBoundingClientRect().height);
-  expect(textHeight).toBeGreaterThanOrEqual(30);
+
+  const help = await dimensions(page.locator('#tourHelpButton'));
+  expect(help.width).toBeGreaterThanOrEqual(33);
+  const layerSearch = await dimensions(page.locator('#layerSearch'));
+  expect(layerSearch.height).toBeGreaterThanOrEqual(31);
+
+  await page.locator('#accountButton').click();
+  await expect(page.locator('#cloudGalleryDrawer')).toHaveClass(/open/);
+  const gallery = await dimensions(page.locator('#cloudGalleryDrawer'));
+  expect(gallery.width).toBeGreaterThan(700);
 });
