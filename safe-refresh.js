@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV59) return;
+  if (window.__figureLoomStableRuntime71d36dfV60) return;
+  window.__figureLoomStableRuntime71d36dfV60 = true;
   window.__figureLoomStableRuntime71d36dfV59 = true;
   window.__figureLoomStableRuntime71d36dfV58 = true;
   window.__figureLoomStableRuntime71d36dfV57 = true;
@@ -23,7 +24,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v59";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v60";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
