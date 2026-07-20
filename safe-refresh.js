@@ -1,53 +1,10 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV83) return;
-  window.__figureLoomStableRuntime71d36dfV83 = true;
-  window.__figureLoomStableRuntime71d36dfV82 = true;
-  window.__figureLoomStableRuntime71d36dfV81 = true;
-  window.__figureLoomStableRuntime71d36dfV80 = true;
-  window.__figureLoomStableRuntime71d36dfV79 = true;
-  window.__figureLoomStableRuntime71d36dfV78 = true;
-  window.__figureLoomStableRuntime71d36dfV77 = true;
-  window.__figureLoomStableRuntime71d36dfV76 = true;
-  window.__figureLoomStableRuntime71d36dfV75 = true;
-  window.__figureLoomStableRuntime71d36dfV74 = true;
-  window.__figureLoomStableRuntime71d36dfV73 = true;
-  window.__figureLoomStableRuntime71d36dfV72 = true;
-  window.__figureLoomStableRuntime71d36dfV71 = true;
-  window.__figureLoomStableRuntime71d36dfV70 = true;
-  window.__figureLoomStableRuntime71d36dfV69 = true;
-  window.__figureLoomStableRuntime71d36dfV68 = true;
-  window.__figureLoomStableRuntime71d36dfV67 = true;
-  window.__figureLoomStableRuntime71d36dfV66 = true;
-  window.__figureLoomStableRuntime71d36dfV65 = true;
-  window.__figureLoomStableRuntime71d36dfV64 = true;
-  window.__figureLoomStableRuntime71d36dfV63 = true;
-  window.__figureLoomStableRuntime71d36dfV62 = true;
-  window.__figureLoomStableRuntime71d36dfV61 = true;
-  window.__figureLoomStableRuntime71d36dfV60 = true;
-  window.__figureLoomStableRuntime71d36dfV59 = true;
-  window.__figureLoomStableRuntime71d36dfV58 = true;
-  window.__figureLoomStableRuntime71d36dfV57 = true;
-  window.__figureLoomStableRuntime71d36dfV56 = true;
-  window.__figureLoomStableRuntime71d36dfV55 = true;
-  window.__figureLoomStableRuntime71d36dfV54 = true;
-  window.__figureLoomStableRuntime71d36dfV53 = true;
-  window.__figureLoomStableRuntime71d36dfV52 = true;
-  window.__figureLoomStableRuntime71d36dfV51 = true;
-  window.__figureLoomStableRuntime71d36dfV50 = true;
-  window.__figureLoomStableRuntime71d36dfV49 = true;
-  window.__figureLoomStableRuntime71d36dfV48 = true;
-  window.__figureLoomStableRuntime71d36dfV47 = true;
-  window.__figureLoomStableRuntime71d36dfV46 = true;
-  window.__figureLoomStableRuntime71d36dfV45 = true;
-  window.__figureLoomStableRuntime71d36dfV44 = true;
-  window.__figureLoomStableRuntime71d36dfV43 = true;
-  window.__figureLoomStableRuntime71d36dfV42 = true;
-  window.__figureLoomStableRuntime71d36dfV41 = true;
-  window.__figureLoomStableRuntime71d36dfV40 = true;
-  window.__figureLoomStableRuntime71d36dfV39 = true;
-  window.__figureLoomStableRuntime71d36dfV38 = true;
+  if (window.__figureLoomStableRuntime71d36dfV84) return;
+  for (let version = 38; version <= 84; version += 1) {
+    window[`__figureLoomStableRuntime71d36dfV${version}`] = true;
+  }
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v83";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v84";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -130,6 +87,11 @@
     "text-editing-stability-fix.js",
     "text-editing-gentle-polish.js"
   ];
+  const FINAL_ADDONS = [
+    "final-session-polish.js",
+    "final-session-polish-v2.js",
+    "mcp-current-screenshot.js"
+  ];
 
   const root = document.documentElement;
   root.dataset.figureloomStableLoading = "1";
@@ -197,9 +159,11 @@
     } catch (error) {
       console.warn("FigureLoom text layout finished with an error.", error);
     }
-    await loadAddon(TEXT_ADDONS[1]);
-    await loadAddon(TEXT_ADDONS[2]);
-    await loadAddon(TEXT_ADDONS[3]);
+    for (const path of TEXT_ADDONS.slice(1)) await loadAddon(path);
+  }
+
+  async function loadFinalStackInOrder() {
+    for (const path of FINAL_ADDONS) await loadAddon(path);
   }
 
   function revealStableApp() {
@@ -221,7 +185,7 @@
   void Promise.all([
     Promise.all(GENERAL_ADDONS.map(loadAddon)),
     loadTextStackInOrder()
-  ]).then(() => loadAddon("final-session-polish.js")).finally(() => {
+  ]).then(loadFinalStackInOrder).finally(() => {
     clearTimeout(fallback);
     revealStableApp();
   });
