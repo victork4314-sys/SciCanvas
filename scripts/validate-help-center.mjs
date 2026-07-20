@@ -11,9 +11,10 @@ const rejectText = (source, marker, label) => { if (source.includes(marker)) err
 
 const requiredFiles = [
   'help-center.js','figureloom-sage-theme.js','interface-dark-mode.js','dark-mode-windows.js',
-  'ai-chat-fixes.js','interaction-stability-fixes.js','safe-refresh.js',
-  'text-editing-gentle-polish.js','manifest.webmanifest','figureloom-mark.svg','favicon.ico','tour-mobile-safe.js',
-  'tests/help-center-theme.spec.js','legal.html','wiki/index.html','wiki/wiki.css','wiki/wiki.js'
+  'ai-chat-fixes.js','interaction-stability-fixes.js','safe-refresh.js','today-ui-stability.js',
+  'passive-guide-expanded.js','text-editing-gentle-polish.js','manifest.webmanifest','figureloom-mark.svg',
+  'favicon.ico','tour-mobile-safe.js','tests/help-center-theme.spec.js','tests/runtime-console.spec.js',
+  'legal.html','wiki/index.html','wiki/wiki.css','wiki/wiki.js'
 ];
 requiredFiles.forEach(requireFile);
 
@@ -39,9 +40,13 @@ if (!errors.length) {
   const legalHtml = read('legal.html');
   const loader = read('ai-chat-fixes.js');
   const stability = read('interaction-stability-fixes.js');
+  const today = read('today-ui-stability.js');
+  const passiveGuide = read('passive-guide-expanded.js');
+  const safeRefresh = read('safe-refresh.js');
   const worker = read('service-worker.js');
   const manifest = read('manifest.webmanifest');
-  const test = read('tests/help-center-theme.spec.js');
+  const helpTest = read('tests/help-center-theme.spec.js');
+  const runtimeTest = read('tests/runtime-console.spec.js');
   const combinedIconWiring = appHtml + helpHtml + legalHtml + loader + worker + manifest;
 
   requireText(appHtml, 'help-center.js', 'index.html');
@@ -68,7 +73,7 @@ if (!errors.length) {
   ]) requireText(loader, marker, 'editor favicon refresh');
 
   for (const marker of [
-    "interaction-stability-fixes.js?v=1","interface-dark-mode.js?v=3","dark-mode-windows.js?v=2"
+    'interaction-stability-fixes.js?v=1','interface-dark-mode.js?v=3','dark-mode-windows.js?v=2'
   ]) requireText(loader, marker, 'ai-chat-fixes.js companion loader');
 
   for (const marker of [
@@ -78,7 +83,23 @@ if (!errors.length) {
   ]) requireText(stability, marker, 'interaction-stability-fixes.js');
 
   for (const marker of [
-    'stable-71d36df-locked-20260719-v53','./ai-chat-fixes.js?v=13',
+    '__figureLoomTodayUiStabilityV2','projects-chip-wrap','project-tab-close',
+    '[data-phone-action="guide"]','Open FigureLoom help','stopImmediatePropagation'
+  ]) requireText(today, marker, 'today-ui-stability.js');
+
+  for (const marker of [
+    '__figureLoomExpandedPassiveGuide20260720','Projects and open tabs','Settings and appearance',
+    'Canvas control bar','Share and collaboration','Help and manuals','Export and backup',
+    'never opens panels, moves objects, changes selections, or scrolls your project'
+  ]) requireText(passiveGuide, marker, 'passive-guide-expanded.js');
+
+  for (const marker of [
+    'stable-71d36df-locked-20260720-v80','today-ui-stability.js','passive-guide-expanded.js'
+  ]) requireText(safeRefresh, marker, 'safe-refresh.js');
+
+  for (const marker of [
+    'stable-71d36df-locked-20260720-v80','./today-ui-stability.js',
+    './passive-guide-expanded.js','./ai-chat-fixes.js?v=13',
     './favicon.ico','./favicon.ico?v=20260719-final'
   ]) requireText(worker, marker, 'service-worker.js');
 
@@ -91,7 +112,13 @@ if (!errors.length) {
   for (const marker of [
     'native Safari trackpad pinch zooms the page','stale drag state cannot flood errors',
     'welcome overlay stays translucent','editor forces a fresh ICO URL while Help and Legal keep the canonical ICO'
-  ]) requireText(test, marker, 'tests/help-center-theme.spec.js');
+  ]) requireText(helpTest, marker, 'tests/help-center-theme.spec.js');
+
+  for (const marker of [
+    'project close controls, passive guide and runtime stay clean',
+    'Help opens from More and runtime stays clean','pageerror:','console.error:',
+    'request failed:','http ${response.status()}','1 of 13'
+  ]) requireText(runtimeTest, marker, 'tests/runtime-console.spec.js');
 }
 
 if (errors.length) {
@@ -99,4 +126,5 @@ if (errors.length) {
   errors.forEach(error => console.error(`- ${error}`));
   process.exit(1);
 }
-console.log('FigureLoom polish validation passed: one real favicon.ico remains; the editor forces a fresh ICO URL on startup while Help and Legal use the canonical ICO; retired favicon files are gone; native trackpad pinch, stale-drag recovery, toast flood control, translucent welcome screen, Help and shared sage UI are present.');
+
+console.log('FigureLoom polish validation passed: the current stable build includes working phone Help, inline project-tab close controls, the expanded passive guide, focused console checks, one real favicon, and the shared sage interface.');
