@@ -1,0 +1,41 @@
+name: PowerPoint final-page regression
+
+on:
+  pull_request:
+    paths:
+      - 'pptx-export-rebuilt.js'
+      - 'safe-refresh.js'
+      - 'tests/pptx-final-page.spec.js'
+      - '.github/workflows/pptx-final-page.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  three-page-export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Check exporter and test syntax
+        run: |
+          node --check pptx-export-rebuilt.js
+          node --check tests/pptx-final-page.spec.js
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Prove the third slide exists in a three-page PowerPoint
+        run: npx playwright test tests/pptx-final-page.spec.js --project=desktop
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pptx-final-page-results
+          path: test-results
+          if-no-files-found: warn
