@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v86";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260721-v87";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -20,41 +20,41 @@ self.addEventListener("install", event => {
       cache.add(new Request("./export-menu-final.js?v=20260720-v3", { cache:"reload" })),
       cache.add(new Request("./export-svg-placement.js", { cache:"reload" })),
       cache.add(new Request("./safe-refresh.js", { cache:"reload" })),
-      cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./settings-core.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./settings-page.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./desktop-density-mode.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./desktop-final-toolbar-polish.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./desktop-mode-tab-parity.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./desktop-settings-protools-final-fix.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./desktop-complete-consistency.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./settings-core.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./settings-page.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./desktop-density-mode.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./desktop-final-toolbar-polish.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./desktop-mode-tab-parity.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./desktop-settings-protools-final-fix.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./desktop-complete-consistency.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./today-ui-stability.js", { cache:"reload" })),
-      cache.add(new Request("./today-ui-stability.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./today-ui-stability.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./passive-guide-expanded.js", { cache:"reload" })),
-      cache.add(new Request("./passive-guide-expanded.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./passive-guide-expanded.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./desktop-tab-recovery-final.js", { cache:"reload" })),
-      cache.add(new Request("./desktop-tab-recovery-final.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./desktop-tab-recovery-final.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./final-session-core.js", { cache:"reload" })),
-      cache.add(new Request("./final-session-core.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./final-session-core.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./projects-tab-close-final.js", { cache:"reload" })),
-      cache.add(new Request("./projects-tab-close-final.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./projects-tab-close-final.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./final-session-polish-v2.js", { cache:"reload" })),
-      cache.add(new Request("./final-session-polish-v2.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./final-session-polish-v2.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./mcp-current-screenshot.js", { cache:"reload" })),
-      cache.add(new Request("./mcp-current-screenshot.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-command-registry.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-project-command-adapter.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-browser-bridge.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-settings-panel.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-simple-connect.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-settings-polish.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-command-extensions.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-feature-bootstrap.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-feature-adapters.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-security-overrides.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-office-command-adapter.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-hosted-only.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
-      cache.add(new Request("./mcp-hosted-bridge.js?v=stable-71d36df-locked-20260720-v86", { cache:"reload" })),
+      cache.add(new Request("./mcp-current-screenshot.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-command-registry.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-project-command-adapter.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-browser-bridge.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-settings-panel.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-simple-connect.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-settings-polish.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-command-extensions.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-feature-bootstrap.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-feature-adapters.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-security-overrides.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-office-command-adapter.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-hosted-only.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
+      cache.add(new Request("./mcp-hosted-bridge.js?v=stable-71d36df-locked-20260721-v87", { cache:"reload" })),
       cache.add(new Request("./pptx-export-rebuilt.js", { cache:"reload" })),
       cache.add(new Request("./pptx-export-rebuilt.js?v=stable-71d36df-locked-20260720-v64", { cache:"reload" })),
       cache.add(new Request("./svg-all-pages-only.js", { cache:"reload" })),
@@ -68,7 +68,9 @@ self.addEventListener("install", event => {
       cache.add(new Request("./tour-mobile-safe.js", { cache:"reload" })),
       cache.add(new Request("./visible-brand-finalizer.js", { cache:"reload" })),
       cache.add(new Request("./ai-chat-fixes.js", { cache:"reload" })),
-      cache.add(new Request("./ai-chat-fixes.js?v=13", { cache:"reload" })),
+      cache.add(new Request("./ai-chat-fixes.js?v=15", { cache:"reload" })),
+      cache.add(new Request("./loomy-mcp-note.js", { cache:"reload" })),
+      cache.add(new Request("./loomy-mcp-note.js?v=1", { cache:"reload" })),
       cache.add(new Request("./interface-dark-mode.js", { cache:"reload" })),
       cache.add(new Request("./interface-dark-mode.js?v=3", { cache:"reload" })),
       cache.add(new Request("./dark-mode-windows.js", { cache:"reload" })),
@@ -131,9 +133,7 @@ async function networkFirst(request) {
   const cache = await caches.open(FIGURELOOM_CACHE_NAME);
   try {
     const response = await fetch(request, { cache:"no-store" });
-    if (response?.ok && request.method === "GET") {
-      await cache.put(request, response.clone());
-    }
+    if (response?.ok && request.method === "GET") await cache.put(request, response.clone());
     return response;
   } catch (error) {
     const cached = await cache.match(request, { ignoreSearch:false });
@@ -146,10 +146,20 @@ async function networkFirst(request) {
   }
 }
 
+async function cacheFirst(request) {
+  const cache = await caches.open(FIGURELOOM_CACHE_NAME);
+  const cached = await cache.match(request, { ignoreSearch:false });
+  if (cached) return cached;
+  const response = await fetch(request, { cache:"no-store" });
+  if (response?.ok && request.method === "GET") await cache.put(request, response.clone());
+  return response;
+}
+
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  event.respondWith(networkFirst(request));
+  const staticDestination = ["script","style","font","image","manifest"].includes(request.destination);
+  event.respondWith(staticDestination ? cacheFirst(request) : networkFirst(request));
 });
