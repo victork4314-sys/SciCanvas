@@ -110,7 +110,7 @@
     if (window[flag] || document.querySelector(`script[data-${datasetName}]`)) return;
     const script=document.createElement('script');
     script.setAttribute(`data-${datasetName}`,'1');
-    script.src=`${path}?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v70')}`;
+    script.src=`${path}?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v72')}`;
     script.async=false;
     script.onerror=()=>console.error(errorText);
     document.head.appendChild(script);
@@ -123,4 +123,5 @@
   loadModule('__figureLoomHostedMcpBridgeV1','figureloom-hosted-mcp-bridge','mcp-hosted-bridge.js','FigureLoom hosted MCP bridge could not be loaded.');
   loadModule('__figureLoomMcpSimpleConnectV2','figureloom-mcp-simple-connect','mcp-simple-connect.js','FigureLoom hosted MCP connection controls could not be loaded.');
   loadModule('__figureLoomMcpSettingsPolishV1','figureloom-mcp-settings-polish','mcp-settings-polish.js','FigureLoom MCP Settings polish could not be loaded.');
+  loadModule('__figureLoomDesktopDensityModeV1','figureloom-desktop-density-mode','desktop-density-mode.js','FigureLoom compact desktop mode could not be loaded.');
 })();
