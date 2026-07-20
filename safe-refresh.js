@@ -117,7 +117,8 @@
     "desktop-mode-tab-parity.js",
     "desktop-settings-protools-final-fix.js",
     "desktop-complete-consistency.js",
-    "today-ui-stability.js"
+    "today-ui-stability.js",
+    "passive-guide-expanded.js"
   ];
   const TEXT_ADDONS = [
     "text-layout-bundle.js",
