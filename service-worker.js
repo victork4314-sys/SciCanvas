@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v81";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v82";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -20,7 +20,7 @@ self.addEventListener("install", event => {
       cache.add(new Request("./export-menu-final.js?v=20260720-v3", { cache:"reload" })),
       cache.add(new Request("./export-svg-placement.js", { cache:"reload" })),
       cache.add(new Request("./safe-refresh.js", { cache:"reload" })),
-      cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
+      cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260720-v82", { cache:"reload" })),
       cache.add(new Request("./settings-core.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
       cache.add(new Request("./settings-page.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
       cache.add(new Request("./desktop-density-mode.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
@@ -32,6 +32,8 @@ self.addEventListener("install", event => {
       cache.add(new Request("./today-ui-stability.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
       cache.add(new Request("./passive-guide-expanded.js", { cache:"reload" })),
       cache.add(new Request("./passive-guide-expanded.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
+      cache.add(new Request("./desktop-tab-recovery-final.js", { cache:"reload" })),
+      cache.add(new Request("./desktop-tab-recovery-final.js?v=stable-71d36df-locked-20260720-v82", { cache:"reload" })),
       cache.add(new Request("./mcp-command-registry.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
       cache.add(new Request("./mcp-project-command-adapter.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
       cache.add(new Request("./mcp-browser-bridge.js?v=stable-71d36df-locked-20260720-v81", { cache:"reload" })),
