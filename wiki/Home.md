@@ -12,6 +12,10 @@ Use the [Visual interface guide](Visual-Interface-Guide) to learn where everythi
 
 The sidebar keeps the full manual organized by editing, scientific tools, files, sharing, tutorials, and troubleshooting.
 
+## Current interface update
+
+The [20 July 2026 interface update](Updates-2026-07-20) documents the current compact desktop controls, project-tab close placement, draggable canvas control bar, phone Help behavior, expanded passive guide, light and dark appearance pass, and targeted stability checks.
+
 ## Find a topic
 
 ### Core editing
