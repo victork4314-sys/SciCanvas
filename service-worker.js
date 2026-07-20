@@ -34,6 +34,7 @@ self.addEventListener("install", event => {
       cache.add(new Request("./final-session-polish-v2.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
       cache.add(new Request("./text-emergency-state-recovery.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
       cache.add(new Request("./mcp-current-screenshot.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
+      cache.add(new Request("./final-ui-interaction-fix-v1.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
       cache.add(new Request("./settings-core.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
       cache.add(new Request("./settings-page.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
       cache.add(new Request("./desktop-density-mode.js?v=stable-71d36df-locked-20260721-v89", { cache:"reload" })),
