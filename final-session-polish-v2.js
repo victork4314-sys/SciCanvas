@@ -12,26 +12,13 @@
   const style = document.createElement('style');
   style.id = 'figureloomFinalSessionPolishV2Style';
   style.textContent = `
-    .figureloom-mcp-agent-cursor{--mcp-agent-color:var(--figureloom-ui-accent,#2f7468)}
-    .figureloom-mcp-agent-cursor .mcp-paw{
-      position:relative!important;display:block!important;width:18px!important;min-width:18px!important;
-      height:24px!important;min-height:24px!important;margin:0!important;padding:0!important;overflow:visible!important;
-      border:0!important;border-radius:0!important;background:transparent!important;color:var(--mcp-agent-color)!important;
-      box-shadow:none!important;transform:none!important;
-      filter:drop-shadow(0 1px 0 rgba(255,255,255,.92)) drop-shadow(0 2px 3px rgba(0,0,0,.28))
-    }
-    .figureloom-mcp-agent-cursor .mcp-paw svg{display:none!important}
-    .figureloom-mcp-agent-cursor .mcp-paw::before{
-      content:"";position:absolute;inset:0;display:block;background:var(--mcp-agent-color);
-      clip-path:polygon(0 0,0 21px,5.8px 15.7px,10.2px 24px,14.2px 21.8px,9.8px 13.8px,18px 13.8px)
-    }
+    .figureloom-mcp-agent-cursor{--mcp-agent-color:var(--figureloom-ui-accent,#2f7468);gap:0!important}
+    .figureloom-mcp-agent-cursor .mcp-paw,
+    .figureloom-mcp-agent-cursor .mcp-pointer{display:none!important}
     .figureloom-mcp-agent-cursor .mcp-agent-label{
       border-color:color-mix(in srgb,var(--mcp-agent-color) 45%,var(--figureloom-ui-line,#cddbd7))!important
     }
     .figureloom-mcp-agent-cursor .mcp-agent-label b{color:var(--mcp-agent-color)!important}
-    html[data-figureloom-theme="dark"] .figureloom-mcp-agent-cursor .mcp-paw{
-      filter:drop-shadow(0 1px 0 rgba(0,0,0,.8)) drop-shadow(0 2px 4px rgba(0,0,0,.52))
-    }
     .figureloom-direct-label-editor[data-figureloom-text-id]{
       overflow:auto!important;padding-right:max(8px,.32em)!important;padding-bottom:max(8px,.32em)!important;
       box-sizing:border-box!important
@@ -69,8 +56,6 @@
     const theme = agentTheme(detail.clientName);
     cursor.dataset.agent = theme.key;
     cursor.style.setProperty('--mcp-agent-color', theme.color);
-    const marker = cursor.querySelector('.mcp-paw');
-    if (marker) marker.setAttribute('aria-label', `${cursor.querySelector('b')?.textContent || 'MCP agent'} pointer`);
   }
 
   function currentTextItem(id) {
@@ -192,6 +177,16 @@
     ));
   }
 
+  function persistAgentWrite() {
+    try { window.syncPage?.(); } catch {}
+    try {
+      const pending = window.saveSciCanvasImmediately?.('mcp');
+      pending?.catch?.(error => console.error('FigureLoom could not finish saving an MCP change.', error));
+    } catch (error) {
+      console.error('FigureLoom could not save an MCP change.', error);
+    }
+  }
+
   document.getElementById(style.id)?.remove();
   document.head.appendChild(style);
   keepStyleLast();
@@ -210,6 +205,7 @@
   addEventListener('scicanvas-cloud-opened', scheduleTextRepair);
   addEventListener('figureloom-command-executed', event => {
     const name = String(event.detail?.name || '');
+    if (event.detail?.write) persistAgentWrite();
     if (/text|import|template|page\.(create|activate|update)|object\.(create|modify)/i.test(name)) scheduleTextRepair();
   });
   document.addEventListener('input', event => { if (isTextInteraction(event.target)) scheduleTextRepair(); }, true);
