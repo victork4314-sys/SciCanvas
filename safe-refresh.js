@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV77) return;
+  if (window.__figureLoomStableRuntime71d36dfV78) return;
+  window.__figureLoomStableRuntime71d36dfV78 = true;
   window.__figureLoomStableRuntime71d36dfV77 = true;
   window.__figureLoomStableRuntime71d36dfV76 = true;
   window.__figureLoomStableRuntime71d36dfV75 = true;
@@ -41,7 +42,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v77";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v78";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -111,7 +112,8 @@
     "pptx-export-rebuilt.js",
     "svg-all-pages-only.js",
     "desktop-final-toolbar-polish.js",
-    "desktop-mode-tab-parity.js"
+    "desktop-mode-tab-parity.js",
+    "desktop-settings-protools-final-fix.js"
   ];
   const TEXT_ADDONS = [
     "text-layout-bundle.js",
