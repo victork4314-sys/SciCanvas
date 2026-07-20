@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomExportMenuFinalV1) return;
-  window.__figureLoomExportMenuFinalV1 = true;
+  if (window.__figureLoomExportMenuFinalV2) return;
+  window.__figureLoomExportMenuFinalV2 = true;
 
   const ALL_SVG_ID = 'figureloomExportAllPagesPptxV6';
   const ALL_PNG_ID = 'figureloomExportAllPagesPngV1';
@@ -19,13 +19,25 @@
     return button;
   }
 
+  function restoreEditableSvgTool() {
+    const menu = exportMenuElement();
+    const button = menu?.querySelector('.export-svg-library-button');
+    if (!button) return;
+
+    button.classList.remove('export-svg-library-button');
+    button.textContent = 'Editable SVG';
+    const firstToolGroup = document.querySelectorAll('.tool-group')[0];
+    if (firstToolGroup) firstToolGroup.appendChild(button);
+    else button.remove();
+  }
+
   function installButtons() {
     const menu = exportMenuElement();
     if (!menu) return false;
 
-    if (!document.getElementById(ALL_PNG_ID)) {
-      menu.appendChild(createActionButton(ALL_PNG_ID, 'Export all pages as PNG'));
-    }
+    document.getElementById(ALL_PNG_ID)?.remove();
+    restoreEditableSvgTool();
+
     if (!document.getElementById(ALL_PDF_ID)) {
       menu.appendChild(createActionButton(ALL_PDF_ID, 'Export all pages as PDF'));
     }
@@ -45,87 +57,11 @@
     return allPageExporter().captureAllEditableSvgPages({ includeGrid, transparent:false });
   }
 
-  function svgDimensions(source) {
-    const parsed = new DOMParser().parseFromString(source, 'image/svg+xml');
-    if (parsed.querySelector('parsererror')) throw new Error('An exported page contained invalid SVG.');
-    const svg = parsed.documentElement;
-    const viewBox = String(svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
-    const width = viewBox.length === 4 && Number.isFinite(viewBox[2]) && viewBox[2] > 0
-      ? viewBox[2]
-      : Number.parseFloat(svg.getAttribute('width')) || 1200;
-    const height = viewBox.length === 4 && Number.isFinite(viewBox[3]) && viewBox[3] > 0
-      ? viewBox[3]
-      : Number.parseFloat(svg.getAttribute('height')) || 750;
-    return { width, height };
-  }
-
-  function loadSvgImage(source) {
-    return new Promise((resolve, reject) => {
-      const blobUrl = URL.createObjectURL(new Blob([source], { type:'image/svg+xml;charset=utf-8' }));
-      const image = new Image();
-      image.onload = () => resolve({ image, blobUrl });
-      image.onerror = () => {
-        URL.revokeObjectURL(blobUrl);
-        reject(new Error('A page could not be rendered as PNG.'));
-      };
-      image.src = blobUrl;
-    });
-  }
-
-  async function pngBlobForPage(page) {
-    const dimensions = svgDimensions(page.source);
-    const scale = Math.max(1, Math.min(
-      2,
-      4096 / dimensions.width,
-      4096 / dimensions.height,
-      Math.sqrt(12_000_000 / (dimensions.width * dimensions.height))
-    ));
-    const pixelWidth = Math.max(1, Math.round(dimensions.width * scale));
-    const pixelHeight = Math.max(1, Math.round(dimensions.height * scale));
-    const { image, blobUrl } = await loadSvgImage(page.source);
-
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = pixelWidth;
-      canvas.height = pixelHeight;
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('This browser could not create the PNG canvas.');
-      context.drawImage(image, 0, 0, pixelWidth, pixelHeight);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('This browser could not finish the PNG file.');
-      return blob;
-    } finally {
-      URL.revokeObjectURL(blobUrl);
-    }
-  }
-
   function safeBaseName() {
     return String(document.getElementById('documentName')?.value || 'FigureLoom')
       .replace(/[\\/:*?"<>|]+/g, '-')
       .replace(/\s+/g, ' ')
       .trim() || 'FigureLoom';
-  }
-
-  function downloadBlob(blob, fileName) {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-  }
-
-  async function exportAllPagesAsPng() {
-    const pages = await captureAllPages();
-    const base = safeBaseName();
-    for (let index = 0; index < pages.length; index += 1) {
-      const blob = await pngBlobForPage(pages[index]);
-      downloadBlob(blob, `${base}-page-${String(index + 1).padStart(3, '0')}.png`);
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
   }
 
   function printableSvg(source) {
@@ -167,7 +103,7 @@
   }
 
   function setBusy(active) {
-    [ALL_SVG_ID, ALL_PNG_ID, ALL_PDF_ID].forEach(id => {
+    [ALL_SVG_ID, ALL_PDF_ID].forEach(id => {
       const button = document.getElementById(id);
       if (button) button.disabled = active;
     });
@@ -190,12 +126,11 @@
   }
 
   document.addEventListener('click', event => {
-    const button = event.target.closest?.(`#${ALL_PNG_ID},#${ALL_PDF_ID}`);
+    const button = event.target.closest?.(`#${ALL_PDF_ID}`);
     if (!button) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (button.id === ALL_PNG_ID) void runExport(exportAllPagesAsPng);
-    if (button.id === ALL_PDF_ID) void runExport(exportAllPagesAsPdf);
+    void runExport(exportAllPagesAsPdf);
   }, true);
 
   const style = document.createElement('style');
@@ -205,13 +140,14 @@
     #exportMenu>strong{order:0}
     #exportMenu>label{order:1}
     #figureloomExportAllPagesPptxV6{order:2}
-    #figureloomExportAllPagesPngV1{order:3}
-    #figureloomExportAllPagesPdfV1{order:4}
+    #figureloomExportAllPagesPdfV1{order:3}
     #exportMenu>button[data-export="svg"]{order:10}
     #exportMenu>button[data-export="png1"]{order:11}
     #exportMenu>button[data-export="png2"]{order:12}
     #exportMenu>button[data-export="print150"]{order:13}
-    #exportMenu>#figureloomExportAllPagesSvgZipV2{display:none!important}
+    #exportMenu>#figureloomExportAllPagesPngV1,
+    #exportMenu>#figureloomExportAllPagesSvgZipV2,
+    #exportMenu>.export-svg-library-button{display:none!important}
     #exportMenu>small{display:none!important}
     #exportMenu>button{
       box-sizing:border-box!important;
@@ -235,6 +171,6 @@
   document.head.appendChild(style);
 
   installButtons();
-  const observer = new MutationObserver(() => installButtons());
+  const observer = new MutationObserver(installButtons);
   observer.observe(document.body, { childList:true, subtree:true });
 })();
