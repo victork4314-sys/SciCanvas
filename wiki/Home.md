@@ -12,6 +12,13 @@ Use the [Visual interface guide](Visual-Interface-Guide) to learn where everythi
 
 The sidebar keeps the full manual organized by editing, scientific tools, files, sharing, tutorials, and troubleshooting.
 
+## Current interface notes
+
+- Open project tabs keep the close control beside each project title.
+- The desktop Pages, Hand, zoom, Format, and Navigation bar can be moved as one complete bar and still uses its existing collapse control.
+- In Phone mode, open **More → Guide** to reach Help, the manual, quick task guides, the visual guide, and the passive interface tour.
+- The passive tour now covers project tabs, adding content, real page bounds, the movable canvas controls, pages and layers, the inspector, Pro Tools, Help, export, and backups.
+
 ## Find a topic
 
 ### Core editing
