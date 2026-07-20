@@ -118,4 +118,5 @@
 
   loadModule('__figureLoomMcpFeatureAdaptersV1','figureloom-mcp-feature-adapters','mcp-feature-adapters.js','FigureLoom MCP feature adapters could not be loaded.');
   loadModule('__figureLoomMcpSecurityOverridesV1','figureloom-mcp-security-overrides','mcp-security-overrides.js','FigureLoom MCP security overrides could not be loaded.');
+  loadModule('__figureLoomMcpOfficeCommandAdapterV1','figureloom-mcp-office-command-adapter','mcp-office-command-adapter.js','FigureLoom MCP presentation import adapter could not be loaded.');
 })();
