@@ -63,7 +63,8 @@ async function prepare(page, interfaceMode, theme) {
   await page.waitForFunction(() =>
     document.documentElement.dataset.figureloomReady === '1' &&
     Boolean(window.FigureLoomTodayUiStability) &&
-    Boolean(window.FigureLoomPassiveGuide)
+    Boolean(window.FigureLoomPassiveGuide) &&
+    Boolean(window.FigureLoomProjectsTabCloseFinal)
   );
   await page.waitForTimeout(250);
 }
@@ -77,18 +78,26 @@ for (const theme of ['light', 'dark']) {
     await page.locator('.ribbon-tab[data-tab="projects"]').click();
     await expect(page.locator('#projectsRibbonHost')).toBeVisible();
     await page.locator('#projectsRibbonHost [data-project-action="new"]').click();
-    await expect(page.locator('#projectsRibbonHost .projects-chip-wrap').first()).toBeVisible();
+    const wrapper = page.locator('#projectsRibbonHost .projects-chip-wrap').first();
+    await expect(wrapper).toBeVisible();
 
-    const alignment = await page.locator('#projectsRibbonHost .projects-chip-wrap').first().evaluate(wrapper => {
-      const close = wrapper.querySelector('.projects-chip-close');
-      const chip = wrapper.querySelector('.projects-open-chip');
-      const wrapperRect = wrapper.getBoundingClientRect();
+    const alignment = await wrapper.evaluate(node => {
+      const close = node.querySelector('.projects-chip-close');
+      const chip = node.querySelector('.projects-open-chip');
+      const wrapperRect = node.getBoundingClientRect();
       const closeRect = close.getBoundingClientRect();
       const chipRect = chip.getBoundingClientRect();
+      const wrapperStyle = getComputedStyle(node);
+      const chipStyle = getComputedStyle(chip);
       return {
         wrapper:{ left:wrapperRect.left, right:wrapperRect.right, top:wrapperRect.top, bottom:wrapperRect.bottom },
         close:{ left:closeRect.left, right:closeRect.right, top:closeRect.top, bottom:closeRect.bottom },
-        chip:{ left:chipRect.left, right:chipRect.right, top:chipRect.top, bottom:chipRect.bottom }
+        chip:{ left:chipRect.left, right:chipRect.right, top:chipRect.top, bottom:chipRect.bottom },
+        wrapperBorder:Number.parseFloat(wrapperStyle.borderTopWidth),
+        wrapperBackground:wrapperStyle.backgroundColor,
+        chipBorder:Number.parseFloat(chipStyle.borderTopWidth),
+        chipBackground:chipStyle.backgroundColor,
+        wrapperActive:node.classList.contains('active')
       };
     });
 
@@ -97,6 +106,22 @@ for (const theme of ['light', 'dark']) {
     expect(Math.abs(wrapperCenter - closeCenter)).toBeLessThanOrEqual(1.5);
     expect(alignment.close.left).toBeGreaterThanOrEqual(alignment.chip.right - 1);
     expect(alignment.close.right).toBeLessThanOrEqual(alignment.wrapper.right + 1);
+    expect(alignment.close.top).toBeGreaterThanOrEqual(alignment.wrapper.top - 1);
+    expect(alignment.close.bottom).toBeLessThanOrEqual(alignment.wrapper.bottom + 1);
+    expect(alignment.wrapperBorder).toBeGreaterThanOrEqual(1);
+    expect(alignment.wrapperBackground).not.toBe('rgba(0, 0, 0, 0)');
+    expect(alignment.chipBorder).toBe(0);
+    expect(alignment.chipBackground).toBe('rgba(0, 0, 0, 0)');
+    expect(alignment.wrapperActive).toBe(true);
+
+    await wrapper.locator('.projects-chip-close').click();
+    const closeDialog = page.locator('#projectTabCloseOverlay');
+    await expect(closeDialog).toBeVisible();
+    await expect(closeDialog.locator('[data-close-choice="export"]')).toHaveCount(0);
+    await expect(closeDialog.locator('[data-close-choice="save"]')).toBeVisible();
+    await expect(closeDialog.locator('[data-close-choice="delete"]')).toBeVisible();
+    await closeDialog.locator('[data-close-choice="cancel"]').click();
+    await expect(closeDialog).toBeHidden();
 
     await page.evaluate(() => window.openSciCanvasTour());
     await expect(page.locator('#scicanvasTour')).toHaveClass(/open/);
