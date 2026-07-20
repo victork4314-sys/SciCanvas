@@ -193,5 +193,7 @@
 
   apply();
   addEventListener('resize', apply, { passive:true });
+  addEventListener('figureloom-settings-ready', apply);
   addEventListener('figureloom-settings-change', apply);
+  requestAnimationFrame(apply);
 })();
