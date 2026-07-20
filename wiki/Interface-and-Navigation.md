@@ -17,6 +17,12 @@ Common controls include:
 
 On a phone, the header is deliberately compact. Less common actions move into **More** so the project name, undo, redo, and export controls remain usable.
 
+## Open project tabs
+
+Open cloud projects appear in the project-tab row. Each tab shows its project title and keeps its own **×** close control directly beside the title.
+
+Closing a tab closes that workspace tab. It does not silently delete the project. FigureLoom shows the available save, export, or delete choices when a close action needs confirmation.
+
 ## Main tabs
 
 The visible tabs organize the normal editing workflow.
@@ -108,6 +114,8 @@ The canvas toolbar keeps navigation and page controls available without occupyin
 
 Depending on the current mode, it can include:
 
+- Pages
+- Hand or navigation mode
 - Zoom out
 - Current zoom
 - Zoom in
@@ -116,7 +124,7 @@ Depending on the current mode, it can include:
 - Navigator
 - Check
 
-The toolbar can be repositioned or collapsed in layouts that support it.
+On supported desktop layouts, the complete toolbar can be dragged as one unit. Start the drag from the bar or its grip rather than from a working button. Its existing collapse control remains separate and still collapses the bar.
 
 ## Pro Tools
 
@@ -136,11 +144,24 @@ To leave one of these areas:
 - Press Escape on a keyboard when supported.
 - On a phone, use the visible close control or swipe down on a bottom sheet when available.
 
-## Passive guide
+## Help and passive guide
 
-The passive guide explains the interface without clicking controls, moving objects, or scrolling the project for you.
+Press the desktop Help button or open **More → Guide** in Phone mode. This opens the FigureLoom Help menu with links to the manual, Start here, quick task guides, the visual interface guide, and the passive tour.
 
-Use **Next**, **Back**, or **Close** at the bottom of the guide. On a phone, the action row stays above the browser safe area and the FigureLoom dock.
+The passive guide now explains:
+
+- Main sections
+- Project names and project tabs
+- Add and Illustrations
+- Real page bounds and canvas navigation
+- The movable and collapsible canvas toolbar
+- Pages and layers
+- The inspector
+- Pro Tools
+- Help and the manual
+- Export, checks, and backups
+
+The guide does not click controls, open panels, move objects, scroll the project, or change the document. Use **Next**, **Back**, or **Close** at the bottom. On a phone, the action row stays above the browser safe area and the FigureLoom dock.
 
 ## Useful navigation habits
 
