@@ -122,4 +122,5 @@
   loadModule('__figureLoomHostedMcpOnlyV1','figureloom-hosted-mcp-only','mcp-hosted-only.js','FigureLoom could not disable the old local MCP bridge.');
   loadModule('__figureLoomHostedMcpBridgeV1','figureloom-hosted-mcp-bridge','mcp-hosted-bridge.js','FigureLoom hosted MCP bridge could not be loaded.');
   loadModule('__figureLoomMcpSimpleConnectV2','figureloom-mcp-simple-connect','mcp-simple-connect.js','FigureLoom hosted MCP connection controls could not be loaded.');
+  loadModule('__figureLoomMcpSettingsPolishV1','figureloom-mcp-settings-polish','mcp-settings-polish.js','FigureLoom MCP Settings polish could not be loaded.');
 })();
