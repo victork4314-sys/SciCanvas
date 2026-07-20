@@ -104,7 +104,7 @@ test('desktop project tab and Projects chip close controls stay beside their tit
   expectNoRuntimeErrors(errors);
 });
 
-test('Phone More Guide opens Help and the expanded passive tour without runtime errors', async ({ page }, testInfo) => {
+test('Phone More Help opens Help and the expanded passive guide without runtime errors', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone Help regression check');
   const errors = await prepare(page, 'phone');
 
@@ -120,11 +120,13 @@ test('Phone More Guide opens Help and the expanded passive tour without runtime 
 
   const tour = page.locator('#scicanvasTour');
   await expect(tour).toHaveClass(/open/);
-  await expect(tour.locator('.tour-progress')).toHaveText('1 of 10');
+  const stepCount = await page.evaluate(() => window.FigureLoomPassiveGuide?.steps || 0);
+  expect(stepCount).toBeGreaterThanOrEqual(10);
+  await expect(tour.locator('.tour-progress')).toHaveText(`1 of ${stepCount}`);
 
-  for (let step = 2; step <= 10; step += 1) {
+  for (let step = 2; step <= stepCount; step += 1) {
     await tour.locator('[data-tour="next"]').click();
-    await expect(tour.locator('.tour-progress')).toHaveText(`${step} of 10`);
+    await expect(tour.locator('.tour-progress')).toHaveText(`${step} of ${stepCount}`);
   }
   await tour.locator('[data-tour="next"]').click();
   await expect(tour).not.toHaveClass(/open/);
