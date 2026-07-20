@@ -37,6 +37,11 @@ jobs:
           node --check mcp-project-command-adapter.js
           node --check mcp-browser-bridge.js
           node --check mcp-settings-panel.js
+          node --check mcp-command-extensions.js
+          node --check mcp-feature-bootstrap.js
+          node --check mcp-feature-adapters.js
+          node --check safe-refresh.js
+          node --check service-worker.js
       - name: Install MCP server dependencies
         working-directory: mcp-server
         run: npm install --no-audit --no-fund
