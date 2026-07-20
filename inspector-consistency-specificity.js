@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomInspectorConsistencySpecificityV2) return;
+  if (window.__figureLoomInspectorConsistencySpecificityV3) return;
+  window.__figureLoomInspectorConsistencySpecificityV3 = true;
   window.__figureLoomInspectorConsistencySpecificityV2 = true;
   window.__figureLoomInspectorConsistencySpecificityV1 = true;
 
@@ -9,6 +10,7 @@
     html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls{
       margin:12px 0 0!important;
       padding:12px 0 0!important;
+      min-width:0!important;
       color:var(--figureloom-ui-text,#172321)!important;
       background:transparent!important;
       border:0!important;
@@ -27,7 +29,9 @@
       text-transform:uppercase!important;
     }
     html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #openFigureLoomRichText{
+      box-sizing:border-box!important;
       width:100%!important;
+      min-width:0!important;
       min-height:36px!important;
       margin:0 0 9px!important;
       padding:8px 9px!important;
@@ -41,7 +45,16 @@
       line-height:1.25!important;
       box-shadow:none!important;
     }
+    html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls .rich-inspector-grid{
+      display:grid!important;
+      grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      gap:8px!important;
+      min-width:0!important;
+    }
     html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls .rich-inspector-grid label{
+      display:grid!important;
+      gap:5px!important;
+      min-width:0!important;
       color:var(--figureloom-ui-muted,#60706c)!important;
       font-family:inherit!important;
       font-size:11px!important;
@@ -49,6 +62,10 @@
       line-height:1.35!important;
     }
     html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls .rich-inspector-grid :where(input,select){
+      box-sizing:border-box!important;
+      width:100%!important;
+      max-width:100%!important;
+      min-width:0!important;
       min-height:36px!important;
       padding:8px 9px!important;
       color:var(--figureloom-ui-text,#172321)!important;
