@@ -122,10 +122,12 @@ export class BrowserBridgeHub {
     const requestId=randomUUID();
     const projectId=record.info.projectId;
     const connectionId=record.info.id;
+    const session=this.sessions.find(item=>item.id===sessionId);
+    const clientName=session?.clientName||'MCP client';
     return new Promise((resolve,reject)=>{
       const timer=setTimeout(()=>{this.pending.delete(requestId);reject(new Error(`FigureLoom did not answer ${command} within the timeout.`));},options.timeoutMs||30000);
       this.pending.set(requestId,{resolve,reject,timer,projectId,connectionId});
-      this.send(record.socket,{type:'browser_request',requestId,sessionId,workspace:'current',projectId,command,args});
+      this.send(record.socket,{type:'browser_request',requestId,sessionId,clientName,workspace:'current',projectId,command,args});
     });
   }
 }
