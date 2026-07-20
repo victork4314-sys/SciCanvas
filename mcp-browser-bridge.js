@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomMcpBrowserBridgeV2) return;
+  if (window.__figureLoomMcpBrowserBridgeV3) return;
+  window.__figureLoomMcpBrowserBridgeV3 = true;
   window.__figureLoomMcpBrowserBridgeV2 = true;
   window.__figureLoomMcpBrowserBridgeV1 = true;
 
@@ -97,6 +98,23 @@
     });
   }
 
+  function activityIdentity(message) {
+    const sessionId = String(message.sessionId || 'mcp-agent');
+    const session = sessions.find(item => String(item?.id || '') === sessionId);
+    return {
+      sessionId,
+      clientName:String(message.clientName || session?.clientName || 'MCP client'),
+      command:String(message.command || ''),
+      args:message.args && typeof message.args === 'object' ? message.args : {}
+    };
+  }
+
+  function dispatchAgentActivity(phase, identity, extra = {}) {
+    dispatchEvent(new CustomEvent('figureloom-mcp-agent-activity', {
+      detail:{ phase, ...identity, ...extra }
+    }));
+  }
+
   async function handleRequest(message) {
     const command = String(message.command || '');
     const requestId = message.requestId;
@@ -122,6 +140,11 @@
       send({ type:'browser_response', requestId, ok:false, error:'Destructive MCP actions are disabled in FigureLoom Settings.' });
       return;
     }
+
+    const identity = activityIdentity(message);
+    let ok = false;
+    let errorText = '';
+    dispatchAgentActivity('start', identity);
     try {
       const result = await window.FigureLoomCommands.execute(command, message.args || {}, {
         source:'mcp',
@@ -130,9 +153,13 @@
         readOnly:settings.access !== 'full',
         allowDestructive:Boolean(settings.allowDestructive)
       });
+      ok = true;
       send({ type:'browser_response', requestId, ok:true, projectId:project.id, result });
     } catch (error) {
-      send({ type:'browser_response', requestId, ok:false, error:error?.message || String(error) });
+      errorText = error?.message || String(error);
+      send({ type:'browser_response', requestId, ok:false, error:errorText });
+    } finally {
+      dispatchAgentActivity('end', identity, { ok, error:errorText });
     }
   }
 
