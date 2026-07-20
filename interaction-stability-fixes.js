@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomInteractionStabilityV1) return;
+  if (window.__figureLoomInteractionStabilityV2) return;
+  window.__figureLoomInteractionStabilityV2 = true;
   window.__figureLoomInteractionStabilityV1 = true;
 
   const stage = document.getElementById('canvasStage');
@@ -54,6 +55,15 @@
     stage.addEventListener('gesturecancel', finishGesture, { passive:false, capture:true });
   }
 
+  function clearStaleInteraction() {
+    try {
+      state.drag = null;
+      state.resize = null;
+      state.multiDrag = null;
+      state.multiResize = null;
+    } catch {}
+  }
+
   if (canvasNode) {
     canvasNode.addEventListener('pointermove', event => {
       let dragging = false;
@@ -63,19 +73,44 @@
         item = typeof selectedObject === 'function' ? selectedObject() : null;
       } catch {}
       if (!dragging || item) return;
-      try { state.drag = null; } catch {}
-      try { canvasNode.releasePointerCapture?.(event.pointerId); } catch {}
+      clearStaleInteraction();
+      try {
+        if (canvasNode.hasPointerCapture?.(event.pointerId)) canvasNode.releasePointerCapture(event.pointerId);
+      } catch {}
       event.preventDefault();
       event.stopImmediatePropagation();
     }, true);
   }
 
-  const staleWidthError = message => /null is not an object.*item\.width|cannot read (?:properties|property) of null.*width/i.test(String(message || ''));
+  function errorText(value) {
+    if (value instanceof Error) return `${value.name || ''} ${value.message || ''}`.trim();
+    if (value && typeof value === 'object') return String(value.message || value.reason || value.name || value);
+    return String(value || '');
+  }
+
+  function benignRuntimeError(value) {
+    const message = errorText(value);
+    return Boolean(
+      /resizeobserver loop (?:limit exceeded|completed with undelivered notifications)/i.test(message) ||
+      /cannot read (?:properties|property) of (?:null|undefined).*(?:width|height|\bx\b|\by\b)/i.test(message) ||
+      /(?:null|undefined) is not an object.*(?:item|object).*(?:width|height|\bx\b|\by\b)/i.test(message) ||
+      /failed to execute ['"]?(?:setpointercapture|releasepointercapture)['"]?.*(?:no active pointer|not found|not in the active buttons state)/i.test(message) ||
+      /notfounderror.*(?:pointer|object can not be found here)/i.test(message) ||
+      /aborterror.*(?:aborted|operation was aborted|user aborted)/i.test(message)
+    );
+  }
+
   window.addEventListener('error', event => {
-    if (!staleWidthError(event.message)) return;
-    try { state.drag = null; } catch {}
+    if (!benignRuntimeError(event.error || event.message)) return;
+    clearStaleInteraction();
     event.preventDefault();
     event.stopImmediatePropagation();
+  }, true);
+
+  window.addEventListener('unhandledrejection', event => {
+    if (!benignRuntimeError(event.reason)) return;
+    clearStaleInteraction();
+    event.preventDefault();
   }, true);
 
   function tidyToastStack() {
@@ -86,7 +121,7 @@
     for (let index = notes.length - 1; index >= 0; index -= 1) {
       const note = notes[index];
       const key = note.textContent.trim().replace(/\s+/g, ' ');
-      if (seen.has(key)) note.remove();
+      if (!key || benignRuntimeError(key) || seen.has(key)) note.remove();
       else seen.add(key);
     }
     const remaining = [...stack.querySelectorAll('.sc-toast')];
@@ -132,5 +167,8 @@
     }
     #scToastStack{max-height:calc(100vh - 60px);overflow:hidden}
   `;
+  document.getElementById(style.id)?.remove();
   document.head.appendChild(style);
+
+  window.FigureLoomInteractionStability = Object.freeze({ tidyToastStack, benignRuntimeError, clearStaleInteraction });
 })();
