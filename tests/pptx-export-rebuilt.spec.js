@@ -61,7 +61,7 @@ test('all-pages PowerPoint captures and exports every page once in order', async
   expect(captured.snapshots.map(snapshot => snapshot.captureMethod)).toEqual(Array(4).fill('isolated'));
   for (let index = 1; index <= 4; index += 1) {
     expect(captured.snapshots[index - 1].source).toContain(`UNIQUE EXPORT PAGE ${index}`);
-    expect(captured.snapshots[index - 1].source).toContain(`&quot;pageIndex&quot;:${index}`);
+    expect(captured.snapshots[index - 1].source).toContain(`"pageIndex":${index}`);
   }
   expect(new Set(captured.snapshots.map(snapshot => snapshot.source)).size).toBe(4);
 
