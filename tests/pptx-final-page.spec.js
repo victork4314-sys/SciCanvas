@@ -18,13 +18,15 @@ async function openApp(page) {
 }
 
 async function addPageMarker(page, number) {
-  if (number > 1) await page.locator('#addPageButton').click();
-  await page.locator('#addTextButton').click();
   await page.evaluate(index => {
+    if (index > 1) {
+      if (typeof addPage !== 'function') throw new Error('FigureLoom addPage is unavailable');
+      addPage();
+    }
     if (typeof makeObject !== 'function') throw new Error('FigureLoom makeObject is unavailable');
-    makeObject('shape');
 
-    const text = state.objects.at(-2);
+    makeObject('text');
+    const text = state.objects.at(-1);
     text.text = `EXACT ISOLATED PAGE ${index}`;
     text.name = `Isolated marker ${index}`;
     text.fill = ['#b42318', '#28745f', '#2454ad', '#7a3e9d', '#98600a', '#006d77'][index - 1];
@@ -32,6 +34,7 @@ async function addPageMarker(page, number) {
     text.x = 70 + index * 45;
     text.y = 80 + index * 55;
 
+    makeObject('shape');
     const shape = state.objects.at(-1);
     shape.name = `Unique shape ${index}`;
     shape.fill = text.fill;
