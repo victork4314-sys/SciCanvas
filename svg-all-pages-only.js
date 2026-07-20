@@ -1,13 +1,13 @@
 (() => {
-  if (window.__figureLoomSvgOnlyAllPagesV1) return;
-  window.__figureLoomSvgOnlyAllPagesV1 = true;
+  if (window.__figureLoomSvgOnlyAllPagesV2) return;
+  window.__figureLoomSvgOnlyAllPagesV2 = true;
 
   const PPTX_BUTTON_ID = 'figureloomExportAllPagesPptxV6';
   const SVG_ZIP_BUTTON_ID = 'figureloomExportAllPagesSvgZipV2';
   const JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
-  const READY_LABEL = '<strong>Export all pages as SVG (.zip)</strong><small>One separate editable SVG file per page</small>';
-  const PACKING_LABEL = '<strong>Packing SVG pages…</strong><small>Creating one separate SVG file per page</small>';
-  const SAVING_LABEL = '<strong>Saving SVG pages…</strong><small>Creating one separate SVG file per page</small>';
+  const READY_LABEL = '<strong>Export all pages as SVG</strong>';
+  const WORKING_LABEL = '<strong>Exporting SVG pages…</strong>';
+  const FALLBACK_WARNING_PREFIX = 'PowerPoint export failed before a safe file could be produced.';
   let jsZipPromise = null;
 
   function ensureJsZip() {
@@ -149,6 +149,16 @@
     window.__figureLoomLibraryPromise_PptxGenJS = Promise.resolve(SvgOnlyPresentation);
   }
 
+  function installFallbackWarningFilter() {
+    if (window.__figureLoomSvgFallbackWarningFilterV1) return;
+    window.__figureLoomSvgFallbackWarningFilterV1 = true;
+    const originalAlert = window.alert.bind(window);
+    window.alert = message => {
+      if (String(message || '').startsWith(FALLBACK_WARNING_PREFIX)) return;
+      return originalAlert(message);
+    };
+  }
+
   function setHtmlIfDifferent(element, html) {
     if (element && element.innerHTML !== html) element.innerHTML = html;
   }
@@ -157,13 +167,14 @@
     const button = document.getElementById(PPTX_BUTTON_ID);
     if (button) {
       const text = button.textContent || '';
-      if (text.includes('Building PowerPoint')) {
-        setHtmlIfDifferent(button, PACKING_LABEL);
-      } else if (text.includes('PowerPoint failed')) {
-        setHtmlIfDifferent(button, SAVING_LABEL);
-      } else if (!button.disabled || text.includes('PowerPoint')) {
-        setHtmlIfDifferent(button, READY_LABEL);
-      }
+      const isWorking = button.disabled && (
+        text.includes('Building') ||
+        text.includes('Packing') ||
+        text.includes('Freezing') ||
+        text.includes('saving') ||
+        text.includes('Saving')
+      );
+      setHtmlIfDifferent(button, isWorking ? WORKING_LABEL : READY_LABEL);
     }
 
     const duplicate = document.getElementById(SVG_ZIP_BUTTON_ID);
@@ -174,12 +185,12 @@
     }
 
     ['officeExportFlatPptx', 'officeExportPptx'].forEach(id => {
-      const officeButton = document.getElementById(id);
-      if (officeButton) setHtmlIfDifferent(officeButton, READY_LABEL);
+      setHtmlIfDifferent(document.getElementById(id), READY_LABEL);
     });
   }
 
   installSvgOnlyConverter();
+  installFallbackWarningFilter();
   updateExportLabels();
 
   const observer = new MutationObserver(() => {
