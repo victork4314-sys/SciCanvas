@@ -210,6 +210,17 @@
     return true;
   }
 
+  function loadCommandExtensions() {
+    if (window.__figureLoomMcpCommandExtensionsV1 || document.querySelector('script[data-figureloom-mcp-extensions]')) return;
+    const script = document.createElement('script');
+    script.dataset.figureloomMcpExtensions = '1';
+    script.src = `mcp-command-extensions.js?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v69')}`;
+    script.async = false;
+    script.onerror = () => console.error('FigureLoom MCP command extensions could not be loaded.');
+    document.head.appendChild(script);
+  }
+
   function attempt() { if (!install()) setTimeout(attempt,100); }
   attempt();
+  loadCommandExtensions();
 })();
