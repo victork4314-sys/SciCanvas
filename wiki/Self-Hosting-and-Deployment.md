@@ -1,6 +1,6 @@
 # Self-hosting and deployment
 
-FigureLoom is a static browser application. The basic local editor can be served without a build step. Accounts, cloud projects, and collaboration require a configured Supabase project.
+FigureLoom is a static browser application. The basic local editor can be served without a build step. Accounts, cloud projects, guest links, live collaboration, and hosted MCP require a configured Supabase project.
 
 ## Basic local server
 
@@ -43,13 +43,14 @@ After changing domains:
 - Check service-worker scope.
 - Test downloads.
 - Test account confirmation and recovery links.
-- Test share links.
+- Test guest share links.
+- Test hosted MCP connection links.
 
 ## HTTPS
 
 Use HTTPS in production.
 
-Secure contexts are required or strongly preferred for service workers, clipboard features, authentication, and modern browser APIs.
+Secure contexts are required or strongly preferred for service workers, clipboard features, authentication, cryptography, and modern browser APIs.
 
 ## Cloud configuration
 
@@ -79,24 +80,26 @@ Do not put these in browser code or the repository:
 - Provider secret keys
 - Personal access tokens
 
-The publishable key is not a secret. Security depends on database policies and authenticated functions.
+The publishable key is not a secret. Security depends on database policies, authenticated functions, and correct deployment configuration.
 
 ## Database schema
 
-The repository contains Supabase SQL for:
+The configured backend can include:
 
 - Profiles
 - Projects
 - Project members
 - Pending invitations
-- Share links
+- Guest share links
 - Collaboration comments
 - Project roles and access helpers
 - Project-key derivation
 - Row Level Security
 - Private Realtime authorization
+- Hosted MCP connections
+- Hosted MCP command queue
 
-Apply the schema and later migrations in the documented order.
+Apply the base schema and later migrations in the documented order.
 
 ## Row Level Security
 
@@ -105,6 +108,7 @@ Every exposed application table should have Row Level Security enabled.
 Test each role separately:
 
 - Signed out
+- Temporary guest
 - Viewer
 - Reviewer
 - Editor
@@ -140,6 +144,25 @@ Test:
 7. New password
 8. Sign-out
 
+## Anonymous authentication for guest links
+
+Guest links use a temporary anonymous session so a recipient can join with a display name instead of an email account.
+
+Enable anonymous authentication only when the guest-link SQL functions, role checks, expiry checks, PIN checks, and Row Level Security policies are installed and tested.
+
+Test:
+
+- Guest link without a PIN
+- Guest link with a 4 to 12 digit PIN
+- Wrong PIN
+- Expired link
+- Revoked link
+- Viewer, reviewer, and editor guest roles
+- Guest presence and cursor name
+- Guest access after the owner removes or revokes it
+
+When anonymous authentication is disabled, ordinary email-account invitations can still work.
+
 ## Email delivery
 
 Built-in test email delivery is limited. Configure a reliable SMTP sender before public use.
@@ -148,22 +171,23 @@ Check sender domain authentication and delivery to several providers.
 
 Do not place SMTP credentials in browser code.
 
-## Realtime
+## Realtime collaboration
 
-Private Realtime channels support presence, cursors, and encrypted edit broadcasts.
+Private Realtime channels support presence, cursors, encrypted edit broadcasts, and hosted MCP command delivery.
 
 Keep public Realtime channel access disabled.
 
 Test:
 
 - Two members in the same project
+- A guest and an account member in the same project
 - A non-member attempting access
 - Viewer and reviewer restrictions
 - Editor broadcasts
 - Owner access management
 - Incoming update pause while typing or dragging
 
-## Share links
+## Guest share links
 
 The database should store only a hash of each raw share token.
 
@@ -172,17 +196,51 @@ Test:
 - Viewer link
 - Reviewer link
 - Editor link
+- Optional PIN
 - Expiry
 - Revocation
 - Existing stronger membership
-- Signed-out recipient
-- Non-member recipient after sign-in
+- Signed-out guest recipient
+- Display-name validation
+- Anonymous-auth-disabled behavior
 
 ## Invitations by email
 
 Test both existing accounts and unknown email addresses.
 
 Pending invitations should activate only for the exact authenticated email.
+
+## Hosted MCP deployment
+
+Hosted MCP is separate from Loomy. It connects one cloud project to a compatible external client through a project-specific remote server link.
+
+The deployment needs:
+
+- A `figureloom_mcp_connections` table for project authorization, access level, destructive-action permission, current command metadata, status, and revocation state
+- A `figureloom_mcp_commands` table for pending, running, completed, expired, and failed commands
+- Row Level Security or protected functions that restrict every row to the owning account and authorized connection
+- Private Realtime delivery for new command rows
+- A deployed `figureloom-mcp` edge function or equivalent remote MCP endpoint
+- Token hashing so the raw connection token is not stored as the database credential
+
+The browser creates a private connection token, stores only the local connection record needed to reconnect the same project, and publishes the current command list. The remote endpoint authenticates the copied link and queues commands for the matching open editor tab.
+
+Test:
+
+1. Sign-in requirement
+2. Read-only connection
+3. Full editor connection
+4. Destructive command denied when the separate permission is off
+5. Destructive command allowed only when explicitly enabled
+6. Current command list and input descriptions
+7. Successful write followed by normal history and durable save
+8. Disconnect and reconnect
+9. Revocation invalidating the copied link
+10. Project switching revoking the old authorization
+11. Expired command rejection
+12. Two clients attempting the same queued command
+
+Treat copied MCP connection links as private credentials. Do not log the raw token or include it in screenshots, issues, or analytics.
 
 ## Service worker and cache
 
@@ -199,6 +257,8 @@ When changing runtime files:
 
 A changed source file without a cache bump can leave phones or installed web apps on an older version.
 
+Documentation-only changes inside `wiki/` do not require changing the editor's runtime loader, but the hosted wiki script URL should be versioned when its JavaScript changes.
+
 ## Content Security Policy
 
 A deployment can add a Content Security Policy, but it must allow the resources FigureLoom actually uses.
@@ -207,6 +267,7 @@ Review:
 
 - Supabase endpoints
 - Realtime WebSocket connection
+- Hosted MCP edge-function endpoint
 - On-demand libraries
 - MathJax
 - Public scientific asset hosts
@@ -242,6 +303,7 @@ Back up:
 - Private encryption master key
 - Authentication configuration records
 - SQL migrations
+- Edge functions
 - Static deployment
 - Custom domain configuration
 - SMTP configuration outside the repository
@@ -253,29 +315,33 @@ Test restoration, not only backup creation.
 Monitor:
 
 - Authentication failures
+- Anonymous guest failures
 - Email delivery
 - Database errors
-- RLS denials
+- Row Level Security denials
 - Realtime connection failures
+- Hosted MCP command failures and expiry
 - Storage and row growth
 - Rate limits
 - Client-side error reports
 
-Do not log decrypted project contents.
+Do not log decrypted project contents, guest PINs, raw share tokens, or raw MCP connection tokens.
 
 ## Production checklist
 
 - HTTPS enabled
 - Correct domain and redirects
 - Email confirmed working
-- RLS tested by role
-- Share links tested
+- Row Level Security tested by role
+- Guest links and optional PIN tested
+- Anonymous authentication deliberately configured
 - Private Realtime tested
+- Hosted MCP endpoint and command queue tested
 - Database backups enabled
 - Encryption key backed up
 - Service-worker update tested
 - Offline shell tested
-- Export downloads tested
+- SVG export downloads tested
 - Privacy and retention policy written
 - Account deletion process defined
 - Incident response defined
@@ -283,6 +349,6 @@ Do not log decrypted project contents.
 
 ## Publishing the wiki
 
-The repository stores the wiki source in `wiki/`. A GitHub Actions workflow validates internal links and publishes the Markdown pages to the repository wiki after changes reach `main`.
+The repository stores the wiki source in `wiki/`. The hosted Help center reads the Markdown pages listed in `wiki/wiki.js`.
 
-This keeps the manual reviewable in pull requests and prevents the wiki from becoming an undocumented second source tree.
+The validator checks internal Markdown links, sidebar coverage, hosted page registration, duplicate hosted slugs, and hosted wiki JavaScript syntax before documentation is considered complete.
