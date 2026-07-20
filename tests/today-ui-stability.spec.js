@@ -36,7 +36,7 @@ async function prepare(page, interfaceMode) {
     window.FigureLoomTodayUiStability &&
     document.documentElement.dataset.figureloomReady === '1'
   ), null, { timeout:40000 });
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(300);
 
   return { consoleErrors, pageErrors };
 }
@@ -46,60 +46,132 @@ function expectNoRuntimeErrors(errors) {
   expect(errors.consoleErrors, `Console errors:\n${errors.consoleErrors.join('\n')}`).toEqual([]);
 }
 
-test('desktop project tab and Projects chip close controls stay beside their titles', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'desktop-only close placement check');
+test('desktop project tabs, avatar, Pages controls, Data checks and Review density stay compact', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'desktop-only UI density check');
   const errors = await prepare(page, 'desktop');
+  await expect(page.locator('html')).toHaveAttribute('data-figureloom-device-class', 'desktop');
 
-  const geometry = await page.evaluate(() => {
+  await page.evaluate(() => {
     let rail = document.getElementById('projectTabRail');
     if (!rail) {
       rail = document.createElement('nav');
       rail.id = 'projectTabRail';
-      rail.innerHTML = '<div class="project-tab-scroll"></div>';
+      rail.innerHTML = '<div class="project-tab-scroll"></div><div class="project-tab-tools"><button class="project-tab-add" type="button">+</button></div>';
       document.body.appendChild(rail);
     }
-    const scroll = rail.querySelector('.project-tab-scroll') || rail;
-    const tabWrap = document.createElement('div');
-    tabWrap.className = 'project-tab-wrap';
-    tabWrap.innerHTML = '<button class="project-tab active" type="button"><span>Current project title</span></button><button class="project-tab-close" type="button">×</button>';
-    scroll.appendChild(tabWrap);
-
-    let projects = document.getElementById('projectsRibbonHost');
-    if (!projects) {
-      projects = document.createElement('section');
-      projects.id = 'projectsRibbonHost';
-      document.body.appendChild(projects);
+    let scroll = rail.querySelector('.project-tab-scroll');
+    if (!scroll) {
+      scroll = document.createElement('div');
+      scroll.className = 'project-tab-scroll';
+      rail.prepend(scroll);
     }
-    const chipWrap = document.createElement('div');
-    chipWrap.className = 'projects-chip-wrap';
-    chipWrap.innerHTML = '<button class="projects-open-chip" type="button"><span>Current project title</span></button><button class="projects-chip-close" type="button">×</button>';
-    projects.appendChild(chipWrap);
-
-    const measure = (wrapper, title, close) => {
-      const outer = wrapper.getBoundingClientRect();
-      const body = title.getBoundingClientRect();
-      const x = close.getBoundingClientRect();
-      return {
-        outer:{ left:outer.left, right:outer.right, top:outer.top, bottom:outer.bottom },
-        title:{ left:body.left, right:body.right, top:body.top, bottom:body.bottom },
-        close:{ left:x.left, right:x.right, top:x.top, bottom:x.bottom },
-        centerDifference:Math.abs((body.top + body.bottom) / 2 - (x.top + x.bottom) / 2)
-      };
-    };
-
-    return {
-      tab:measure(tabWrap, tabWrap.querySelector('.project-tab'), tabWrap.querySelector('.project-tab-close')),
-      chip:measure(chipWrap, chipWrap.querySelector('.projects-open-chip'), chipWrap.querySelector('.projects-chip-close'))
-    };
+    let tools = rail.querySelector('.project-tab-tools');
+    if (!tools) {
+      tools = document.createElement('div');
+      tools.className = 'project-tab-tools';
+      rail.appendChild(tools);
+    }
+    if (!tools.querySelector('.project-tab-add')) {
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'project-tab-add';
+      add.textContent = '+';
+      tools.prepend(add);
+    }
+    if (!scroll.querySelector('.project-tab-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'project-tab-wrap';
+      wrap.innerHTML = '<button class="project-tab active" type="button"><span>Untitled figure</span></button><button class="project-tab-close" type="button">×</button>';
+      scroll.appendChild(wrap);
+    }
+    window.FigureLoomTodayUiStability.refreshDesktop();
   });
 
-  for (const item of [geometry.tab, geometry.chip]) {
-    expect(item.centerDifference).toBeLessThanOrEqual(4);
-    expect(item.close.left).toBeGreaterThanOrEqual(item.title.left);
-    expect(item.close.right).toBeLessThanOrEqual(item.outer.right + 1);
-    expect(item.close.top).toBeGreaterThanOrEqual(item.outer.top - 1);
-    expect(item.close.bottom).toBeLessThanOrEqual(item.outer.bottom + 1);
-  }
+  const inlineAdd = page.locator('#projectTabRail .project-tab-scroll>.project-tab-add-inline');
+  await expect(inlineAdd).toBeVisible();
+
+  const tabGeometry = await page.evaluate(() => {
+    const scroll = document.querySelector('#projectTabRail .project-tab-scroll');
+    const wrap = scroll.querySelector('.project-tab-wrap');
+    const tab = wrap.querySelector('.project-tab');
+    const close = wrap.querySelector('.project-tab-close');
+    const add = scroll.querySelector('.project-tab-add-inline');
+    const outer = wrap.getBoundingClientRect();
+    const body = tab.getBoundingClientRect();
+    const x = close.getBoundingClientRect();
+    const plus = add.getBoundingClientRect();
+    return {
+      inlineParent:add.parentElement === scroll,
+      inlineLast:scroll.lastElementChild === add,
+      closeCenterDifference:Math.abs((body.top + body.bottom) / 2 - (x.top + x.bottom) / 2),
+      closeInside:x.right <= outer.right + 1 && x.top >= outer.top - 1 && x.bottom <= outer.bottom + 1,
+      plusAfterTab:plus.left >= outer.right - 1,
+      plusSize:{ width:plus.width, height:plus.height },
+      originalDisplay:getComputedStyle(document.querySelector('#projectTabRail .project-tab-tools>.project-tab-add')).display
+    };
+  });
+  expect(tabGeometry.inlineParent).toBe(true);
+  expect(tabGeometry.inlineLast).toBe(true);
+  expect(tabGeometry.closeCenterDifference).toBeLessThanOrEqual(4);
+  expect(tabGeometry.closeInside).toBe(true);
+  expect(tabGeometry.plusAfterTab).toBe(true);
+  expect(tabGeometry.plusSize.width).toBe(28);
+  expect(tabGeometry.plusSize.height).toBe(28);
+  expect(tabGeometry.originalDisplay).toBe('none');
+
+  const desktopGeometry = await page.evaluate(() => {
+    const avatar = document.getElementById('accountProfileButton');
+    const avatarDot = getComputedStyle(avatar, '::after');
+    const heading = document.querySelector('.left-panel>.panel-heading:first-child');
+    const add = document.getElementById('addPageButton').getBoundingClientRect();
+    const remove = document.getElementById('deletePageButton').getBoundingClientRect();
+    const headingRect = heading.getBoundingClientRect();
+    return {
+      avatarRight:Number.parseFloat(avatarDot.right),
+      avatarBottom:Number.parseFloat(avatarDot.bottom),
+      add:{ width:add.width, height:add.height, left:add.left, right:add.right },
+      remove:{ width:remove.width, height:remove.height, left:remove.left, right:remove.right },
+      heading:{ left:headingRect.left, right:headingRect.right }
+    };
+  });
+  expect(desktopGeometry.avatarRight).toBeLessThanOrEqual(-5);
+  expect(desktopGeometry.avatarBottom).toBeLessThanOrEqual(-4);
+  expect(desktopGeometry.add.width).toBe(28);
+  expect(desktopGeometry.add.height).toBe(28);
+  expect(desktopGeometry.remove.width).toBe(28);
+  expect(desktopGeometry.remove.height).toBe(28);
+  expect(desktopGeometry.remove.left - desktopGeometry.add.right).toBeLessThanOrEqual(5);
+  expect(desktopGeometry.add.left).toBeGreaterThan(desktopGeometry.heading.left + (desktopGeometry.heading.right - desktopGeometry.heading.left) / 2);
+
+  await page.evaluate(() => window.openDataLab?.());
+  await expect(page.locator('#dataLabDrawer')).toHaveClass(/open/);
+  await expect(page.locator('#dataShowLegend')).toBeVisible();
+  const dataCheckbox = await page.locator('#dataShowLegend').boundingBox();
+  expect(dataCheckbox.width).toBeLessThanOrEqual(14);
+  expect(dataCheckbox.height).toBeLessThanOrEqual(14);
+
+  await page.evaluate(() => window.openReviewTools?.());
+  const review = page.locator('#reviewProDrawer');
+  await expect(review).toHaveClass(/open/);
+  const reviewMetrics = await page.evaluate(() => {
+    const drawer = document.getElementById('reviewProDrawer');
+    const summary = drawer.querySelector('.review-section>summary');
+    const button = drawer.querySelector('.review-actions button,.utility-action');
+    const checkbox = drawer.querySelector('input[type="checkbox"]');
+    const checkboxRect = checkbox.getBoundingClientRect();
+    return {
+      summaryFont:Number.parseFloat(getComputedStyle(summary).fontSize),
+      buttonFont:Number.parseFloat(getComputedStyle(button).fontSize),
+      buttonHeight:button.getBoundingClientRect().height,
+      checkboxWidth:checkboxRect.width,
+      checkboxHeight:checkboxRect.height
+    };
+  });
+  expect(reviewMetrics.summaryFont).toBeLessThanOrEqual(10);
+  expect(reviewMetrics.buttonFont).toBeLessThanOrEqual(9);
+  expect(reviewMetrics.buttonHeight).toBeLessThanOrEqual(31);
+  expect(reviewMetrics.checkboxWidth).toBeLessThanOrEqual(14);
+  expect(reviewMetrics.checkboxHeight).toBeLessThanOrEqual(14);
 
   expectNoRuntimeErrors(errors);
 });
