@@ -25,6 +25,7 @@ self.addEventListener("install", event => {
       cache.add(new Request("./mcp-project-command-adapter.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-browser-bridge.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-settings-panel.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
+      cache.add(new Request("./mcp-simple-connect.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-command-extensions.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-feature-bootstrap.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-feature-adapters.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
