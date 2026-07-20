@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomDesktopFinalToolbarPolishV6) return;
+  if (window.__figureLoomDesktopFinalToolbarPolishV7) return;
+  window.__figureLoomDesktopFinalToolbarPolishV7 = true;
   window.__figureLoomDesktopFinalToolbarPolishV6 = true;
   window.__figureLoomDesktopFinalToolbarPolishV5 = true;
   window.__figureLoomDesktopFinalToolbarPolishV4 = true;
@@ -56,6 +57,24 @@
       line-height:1!important;
     }
 
+    /* Exact alignment only. These rules do not move either control. */
+    ${DESKTOP} #settingsRibbonButton,
+    ${DESKTOP} #exportButton{
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      line-height:1!important;
+      text-align:center!important;
+      vertical-align:middle!important;
+    }
+    ${DESKTOP} #settingsRibbonButton::before,
+    ${DESKTOP} #settingsRibbonButton::after,
+    ${DESKTOP} #exportButton::before,
+    ${DESKTOP} #exportButton::after{
+      line-height:1!important;
+      vertical-align:middle!important;
+    }
+
     /* Compact only the desktop inspector. */
     ${DESKTOP} .workspace{
       grid-template-columns:192px minmax(0,1fr) 220px!important;
@@ -100,6 +119,12 @@
     ${DESKTOP} input[type="color"]{
       height:27px!important;
       border-radius:5px!important;
+    }
+
+    /* Only Pro Tools is resized here. Other windows keep their existing size. */
+    ${DESKTOP} #proToolsDrawer{
+      width:min(520px,calc(100vw - 48px))!important;
+      max-width:min(520px,calc(100vw - 48px))!important;
     }
   `;
   document.head.appendChild(style);
