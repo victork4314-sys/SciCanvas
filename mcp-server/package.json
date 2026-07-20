@@ -1,0 +1,38 @@
+{
+  "name": "@figureloom/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Model Context Protocol server and authenticated editor bridge for FigureLoom",
+  "bin": {
+    "figureloom-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js --stdio",
+    "start:stdio": "node dist/index.js --stdio",
+    "start:http": "node dist/index.js --http",
+    "dev:stdio": "tsx src/index.ts --stdio",
+    "dev:http": "tsx src/index.ts --http",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@resvg/resvg-js": "2.6.2",
+    "express": "5.2.1",
+    "pdf-lib": "1.17.1",
+    "pptxgenjs": "4.0.1",
+    "ws": "8.21.1",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
