@@ -38,6 +38,7 @@ jobs:
           node --check mcp-browser-bridge.js
           node --check mcp-settings-panel.js
           node --check mcp-simple-connect.js
+          node --check mcp-settings-polish.js
           node --check mcp-command-extensions.js
           node --check mcp-feature-bootstrap.js
           node --check mcp-feature-adapters.js
