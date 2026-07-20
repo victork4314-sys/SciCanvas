@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomDesktopHistoryActionsV3) return;
+  if (window.__figureLoomDesktopHistoryActionsV4) return;
+  window.__figureLoomDesktopHistoryActionsV4 = true;
   window.__figureLoomDesktopHistoryActionsV3 = true;
   window.__figureLoomDesktopHistoryActionsV2 = true;
   window.__figureLoomDesktopHistoryActionsV1 = true;
@@ -10,6 +11,10 @@
 
   function desktopInterfaceMode() {
     return root.dataset.figureloomResolvedMode === 'desktop';
+  }
+
+  function tabletInterfaceMode() {
+    return root.dataset.figureloomResolvedMode === 'tablet';
   }
 
   function restoreHeader(undoButton, redoButton) {
@@ -91,6 +96,12 @@
       return;
     }
 
+    if (tabletInterfaceMode()) {
+      if (deleteButton) placeBesideDelete(undoButton, redoButton, deleteButton);
+      restorePhoneViewOrder();
+      return;
+    }
+
     restoreHeader(undoButton, redoButton);
     restorePhoneViewOrder();
   }
@@ -138,6 +149,21 @@
       min-width:78px!important;
       max-width:78px!important;
       margin:0!important;
+    }
+    html[data-figureloom-resolved-mode="tablet"] .ribbon .tool-group > :where(#undoButton,#redoButton,#deleteButton){
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      box-sizing:border-box!important;
+      width:auto!important;
+      min-width:52px!important;
+      max-width:none!important;
+      height:36px!important;
+      min-height:36px!important;
+      margin:0!important;
+      padding:0 9px!important;
+      white-space:nowrap!important;
+      touch-action:manipulation;
     }
     html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > label{
       display:inline-flex!important;
@@ -194,5 +220,5 @@
   addEventListener('resize', scheduleSync);
 
   sync();
-  window.FigureLoomDesktopHistoryActions = Object.freeze({ sync, active:desktopInterfaceMode });
+  window.FigureLoomDesktopHistoryActions = Object.freeze({ sync, active:() => desktopInterfaceMode() || tabletInterfaceMode() });
 })();
