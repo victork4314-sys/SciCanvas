@@ -187,4 +187,11 @@
     }
   `;
   document.head.appendChild(style);
+
+  function keepStyleLast() {
+    if (style.isConnected && document.head.lastElementChild !== style) document.head.appendChild(style);
+  }
+
+  addEventListener('figureloom-stable-ready', () => requestAnimationFrame(keepStyleLast));
+  requestAnimationFrame(keepStyleLast);
 })();
