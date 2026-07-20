@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsPageV3) return;
+  if (window.__figureLoomSettingsPageV4) return;
+  window.__figureLoomSettingsPageV4 = true;
   window.__figureLoomSettingsPageV3 = true;
 
   let page = null;
@@ -77,11 +78,12 @@
           <section class="settings-panel" data-settings-panel="general">
             <div class="settings-section-heading"><h2>Appearance</h2></div>
             <label class="settings-select-row"><span><strong>Appearance</strong></span><select data-interface-theme><option value="light">Light</option><option value="dark">Dark</option></select></label>
-            <div class="settings-section-heading settings-subheading"><h2>Interface mode</h2><p>Choose how FigureLoom decides which interface to use.</p></div>
+            <div class="settings-section-heading settings-subheading"><h2>Interface mode</h2><p>Choose the layout density for this device.</p></div>
             <div class="settings-choice-grid" role="radiogroup" aria-label="Interface mode">
-              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="auto" data-setting="interfaceMode"><span><strong>Automatic</strong><small>Use phone mode on phones and the full interface on tablets and computers.</small></span></label>
-              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="desktop" data-setting="interfaceMode"><span><strong>Desktop &amp; tablet</strong><small>Always use the current full interface.</small></span></label>
-              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="phone" data-setting="interfaceMode"><span><strong>Phone</strong><small>Always use the phone-specific interface.</small></span></label>
+              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="auto" data-setting="interfaceMode"><span><strong>Automatic</strong><small>Use phone, tablet, or desktop mode based on the device and input type.</small></span></label>
+              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="desktop" data-setting="interfaceMode"><span><strong>Desktop</strong><small>Use the compact mouse-and-keyboard layout with more canvas space.</small></span></label>
+              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="tablet" data-setting="interfaceMode"><span><strong>Tablet</strong><small>Use the roomier touch-friendly full interface without phone sheets.</small></span></label>
+              <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="phone" data-setting="interfaceMode"><span><strong>Phone</strong><small>Use the phone-specific dock and sliding tool panels.</small></span></label>
             </div>
           </section>
           <section class="settings-panel" data-settings-panel="accessibility" hidden>
