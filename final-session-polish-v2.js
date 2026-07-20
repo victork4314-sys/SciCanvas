@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomFinalSessionPolishV4) return;
+  if (window.__figureLoomFinalSessionPolishV5) return;
+  window.__figureLoomFinalSessionPolishV5 = true;
   window.__figureLoomFinalSessionPolishV4 = true;
   window.__figureLoomFinalSessionPolishV3 = true;
   window.__figureLoomFinalSessionPolishV2 = true;
@@ -11,7 +12,6 @@
   const style = document.createElement('style');
   style.id = 'figureloomFinalSessionPolishV2Style';
   style.textContent = `
-    /* Lightweight MCP pointer, coloured for the connected client. */
     .figureloom-mcp-agent-cursor{--mcp-agent-color:var(--figureloom-ui-accent,#2f7468)}
     .figureloom-mcp-agent-cursor .mcp-paw{
       position:relative!important;display:block!important;width:18px!important;min-width:18px!important;
@@ -32,8 +32,6 @@
     html[data-figureloom-theme="dark"] .figureloom-mcp-agent-cursor .mcp-paw{
       filter:drop-shadow(0 1px 0 rgba(0,0,0,.8)) drop-shadow(0 2px 4px rgba(0,0,0,.52))
     }
-
-    /* Editing surfaces must never hide the final line or the right edge. */
     .figureloom-direct-label-editor[data-figureloom-text-id]{
       overflow:auto!important;padding-right:max(8px,.32em)!important;padding-bottom:max(8px,.32em)!important;
       box-sizing:border-box!important
@@ -119,109 +117,65 @@
     return { minX, minY, maxX, maxY, width:maxX - minX, height:maxY - minY };
   }
 
-  function pageSize() {
-    try {
-      const size = window.currentCanvasSize?.();
-      if (Number(size?.width) > 0 && Number(size?.height) > 0) return { width:Number(size.width), height:Number(size.height) };
-    } catch {}
-    const viewBox = document.getElementById('canvas')?.viewBox?.baseVal;
-    return {
-      width:Math.max(1, Number(viewBox?.width) || 1200),
-      height:Math.max(1, Number(viewBox?.height) || 750)
-    };
+  function setRectAttribute(rect, name, value) {
+    const next = String(Math.ceil(value));
+    if (rect.getAttribute(name) === next) return false;
+    rect.setAttribute(name, next);
+    return true;
   }
 
-  function repairTextGroup(group, item, options = {}) {
+  function repairTextGroup(group, item) {
     const bounds = measuredTextBounds(group);
     if (!bounds) return false;
 
-    const growBox = options.growBox !== false;
     const fontSize = Math.max(6, Number(item.fontSize) || 30);
-    const currentWidth = Math.max(1, Number(item.width) || Number(item.textBoxWidth) || 1);
-    const currentHeight = Math.max(1, Number(item.height) || Number(item.textBoxHeight) || 1);
-    const horizontalGuard = Math.max(4, Math.ceil(fontSize * .18));
-    const topGuard = Math.max(3, Math.ceil(fontSize * .12));
-    const bottomGuard = Math.max(7, Math.ceil(fontSize * .3));
-    const clipLeft = Math.min(0, Math.floor(bounds.minX - horizontalGuard));
-    const clipTop = Math.min(0, Math.floor(bounds.minY - topGuard));
-    const wantedRight = Math.ceil(bounds.maxX + horizontalGuard);
-    const wantedBottom = Math.ceil(bounds.maxY + bottomGuard);
-    const size = pageSize();
-    const maximumWidth = Math.max(currentWidth, size.width - Math.max(0, Number(item.x) || 0));
-    const maximumHeight = Math.max(currentHeight, size.height - Math.max(0, Number(item.y) || 0));
-    const requiredWidth = Math.min(maximumWidth, Math.max(currentWidth, wantedRight));
-    const requiredHeight = Math.min(maximumHeight, Math.max(currentHeight, wantedBottom));
+    const boxWidth = Math.max(1, Number(item.width) || Number(item.textBoxWidth) || 1);
+    const boxHeight = Math.max(1, Number(item.height) || Number(item.textBoxHeight) || 1);
+    const guardX = Math.max(12, Math.ceil(fontSize * .45));
+    const guardTop = Math.max(8, Math.ceil(fontSize * .35));
+    const guardBottom = Math.max(12, Math.ceil(fontSize * .55));
+    const left = Math.min(-guardX, Math.floor(bounds.minX - guardX));
+    const top = Math.min(-guardTop, Math.floor(bounds.minY - guardTop));
+    const right = Math.max(boxWidth + guardX, Math.ceil(bounds.maxX + guardX));
+    const bottom = Math.max(boxHeight + guardBottom, Math.ceil(bounds.maxY + guardBottom));
     let changed = false;
 
-    if (growBox && requiredWidth > currentWidth + .5) {
-      item.width = requiredWidth;
-      item.textBoxWidth = requiredWidth;
-      changed = true;
-    }
-    if (growBox && requiredHeight > currentHeight + .5) {
-      item.height = requiredHeight;
-      item.textBoxHeight = requiredHeight;
-      changed = true;
-    }
-
-    const visibleWidth = Math.max(requiredWidth, wantedRight) - clipLeft + horizontalGuard;
-    const visibleHeight = Math.max(requiredHeight, wantedBottom) - clipTop + bottomGuard;
     group.querySelectorAll('clipPath[data-figureloom-text-clip="1"] rect').forEach(rect => {
-      rect.setAttribute('x', String(clipLeft));
-      rect.setAttribute('y', String(clipTop));
-      rect.setAttribute('width', String(Math.max(1, Math.ceil(visibleWidth))));
-      rect.setAttribute('height', String(Math.max(1, Math.ceil(visibleHeight))));
+      changed = setRectAttribute(rect, 'x', left) || changed;
+      changed = setRectAttribute(rect, 'y', top) || changed;
+      changed = setRectAttribute(rect, 'width', Math.max(1, right - left)) || changed;
+      changed = setRectAttribute(rect, 'height', Math.max(1, bottom - top)) || changed;
     });
 
     return changed;
   }
 
-  function scanRenderedText(options = {}) {
+  function scanRenderedText() {
     const layer = document.getElementById('objectLayer');
     if (!layer) return false;
     let changed = false;
     layer.querySelectorAll('.canvas-object[data-id]').forEach(group => {
       const item = currentTextItem(group.dataset.id || '');
       if (!item) return;
-      if (repairTextGroup(group, item, options)) changed = true;
+      if (repairTextGroup(group, item)) changed = true;
     });
     return changed;
   }
 
-  function repairRenderedText(options = {}) {
+  function repairRenderedText() {
     if (repairing) return false;
     repairing = true;
-    let changed = false;
     try {
-      changed = scanRenderedText({ growBox:options.growBox !== false });
+      return scanRenderedText();
     } finally {
       repairing = false;
     }
-
-    if (changed && options.rerender !== false) {
-      try { window.render?.(); } catch (error) { console.warn('FigureLoom could not rerender repaired text boxes.', error); }
-      requestAnimationFrame(() => {
-        if (repairing) return;
-        repairing = true;
-        try { scanRenderedText({ growBox:false }); } finally { repairing = false; }
-      });
-      try { window.scheduleSave?.(); } catch {}
-    }
-    return changed;
   }
 
   async function settleTextBounds() {
     try { await document.fonts?.ready; } catch {}
-    const changed = repairRenderedText({ rerender:false, growBox:true });
-    if (changed) {
-      try { window.render?.(); } catch {}
-      await new Promise(resolve => requestAnimationFrame(resolve));
-    }
-    repairRenderedText({ rerender:false, growBox:false });
-    if (changed) {
-      try { window.scheduleSave?.(); } catch {}
-    }
-    return changed;
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    return repairRenderedText();
   }
 
   function scheduleTextRepair() {
