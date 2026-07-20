@@ -4,7 +4,7 @@
 
 No. Local projects, autosave, backups, imports, exports, and most editing features work without an account.
 
-An account adds encrypted cloud projects, sharing, roles, persistent collaboration comments, presence, and live updates.
+An account adds encrypted cloud projects, account invitations, guest-link creation, persistent collaboration comments, presence, live updates, and hosted MCP access.
 
 ## Is FigureLoom free?
 
@@ -20,7 +20,7 @@ They do not automatically follow you to another device. Download `.figureloom` b
 
 It is the complete editable project backup. Use it to reopen, archive, or move a project.
 
-It is not the same as a PNG, SVG, or PowerPoint export.
+It is not the same as an SVG export.
 
 ## Are older project backups supported?
 
@@ -30,7 +30,7 @@ Yes. Import the older backup, check the project, and download a new `.figureloom
 
 Much of the editor can work offline after the application shell and required files are cached.
 
-Cloud features, outside libraries, authentication, collaboration, MathJax, and optional providers can require a connection.
+Cloud features, outside libraries, authentication, collaboration, hosted MCP, MathJax, and optional providers can require a connection.
 
 ## Is it an AI image generator?
 
@@ -38,21 +38,34 @@ No. FigureLoom is an editor.
 
 Loomy is an optional helper that creates an editable starting layout from normal FigureLoom objects. The editor does not depend on it.
 
-## Does Loomy flatten the result?
+## What is MCP in FigureLoom?
 
-No. The result is intended to remain editable.
+MCP lets a compatible external assistant inspect or edit the current cloud project through a private project-specific connection link.
 
-Check the scientific accuracy and layout yourself.
+The connection can be read-only or full access. Destructive actions use a separate permission. MCP is optional and separate from Loomy.
 
 ## Can I use FigureLoom on a phone?
 
-Yes. Phone mode uses a compact header, scrollable tabs, full-screen Add panel, bottom dock, touch-friendly sheets, safe areas, and mobile canvas controls.
+Yes. Phone mode uses a compact header, scrollable tabs, a full-screen Add panel, a bottom dock, touch-friendly sheets, safe areas, and mobile canvas controls.
 
 Dense poster work and advanced path editing are still easier on a larger screen.
 
-## Can I force the desktop interface on a phone?
+## Which interface modes are available?
 
-Yes. Open Settings and select Desktop and tablet. Phone mode also includes a quick **Use desktop and tablet interface** action in More.
+Open Settings and choose:
+
+- Automatic
+- Desktop
+- Tablet
+- Phone
+
+Desktop is compact. Tablet keeps the full editor with roomier touch targets. Phone uses the dock and sliding panels.
+
+## Where are Undo and Redo?
+
+On Desktop and Tablet, Undo and Redo sit beside Delete in the selected-object action group.
+
+On Phone, Undo and Redo remain in the compact header.
 
 ## Can I move a project between devices?
 
@@ -72,9 +85,15 @@ Always compare the import with the original.
 
 ## Can I export PowerPoint?
 
-Yes. Multi-page projects can be exported to `.pptx`.
+Not from the current finished export panel.
 
-The compatibility path can place each page as a high-resolution image on a slide. Not every object becomes a native PowerPoint shape.
+Export SVG from FigureLoom and convert it in PowerPoint, Keynote, LibreOffice Impress, or another application when a `.pptx` file is required.
+
+## Can I export PNG, PDF, or TIFF directly?
+
+Not from the current finished export panel.
+
+Use **Editable SVG (per page)** or **Export all pages as SVG**, check the SVG, and convert it in another trusted application.
 
 ## Can I import Excel files?
 
@@ -94,7 +113,7 @@ Yes. Use quick notation helpers for short labels or the MathJax TeX workspace fo
 
 Yes, within the supported path-command editor. It can inspect commands, change coordinates, select anchors, and break compound artwork apart.
 
-It is not a full desktop Bézier editor.
+It is not a full desktop Bezier editor.
 
 ## Can I make maps?
 
@@ -122,6 +141,8 @@ The font may not be available on another device, and font licensing still applie
 
 Yes, in a configured cloud deployment. Roles control viewing, commenting, editing, broadcasting, and access management.
 
+The owner can invite an email account or create an expiring guest link. A guest enters a display name and does not need an email account. The owner can add an optional 4 to 12 digit PIN.
+
 ## Are cloud projects encrypted?
 
 Editable payloads and persistent comment bodies are encrypted in the browser before storage.
@@ -135,10 +156,6 @@ Yes. Access removal cannot delete exports or backups already downloaded by that 
 ## Can FigureLoom guarantee journal compliance?
 
 No. It provides generic presets and readiness checks. Verify the current journal, conference, or printer requirements.
-
-## Can it export PDF or TIFF directly?
-
-The current main workflows focus on SVG, PNG, PowerPoint, project backups, reports, and pathway exchange. Use another trusted application to convert a validated export when PDF or TIFF is required.
 
 ## Why does a project look different on another device?
 
