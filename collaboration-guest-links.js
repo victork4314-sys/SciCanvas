@@ -230,6 +230,46 @@
       overflow-wrap:normal!important;text-orientation:mixed!important
     }
     .collab-link-controls>input{min-height:38px;min-width:0;border:1px solid #cbd7e2;border-radius:10px;background:#fff;padding:8px;color:#4d5e73}
+
+    body #projectsRibbonHost .projects-open-list>.projects-chip-wrap{
+      position:relative!important;display:grid!important;grid-template-columns:minmax(0,1fr) 24px!important;
+      align-items:center!important;flex:0 1 180px!important;min-width:92px!important;max-width:180px!important;
+      height:38px!important;min-height:38px!important;margin:0!important;padding:0!important;overflow:hidden!important;
+      border:1px solid var(--figureloom-ui-line,#cddbd7)!important;border-radius:9px!important;
+      background:var(--figureloom-ui-surface-glass,rgba(255,255,255,.72))!important;
+      color:var(--figureloom-ui-text,#172321)!important;box-shadow:none!important;box-sizing:border-box!important
+    }
+    body #projectsRibbonHost .projects-open-list>.projects-chip-wrap:has(>.projects-open-chip.active){
+      border-color:#718ec6!important;background:linear-gradient(145deg,#edf5f6,#f0eff8)!important;
+      box-shadow:0 0 0 2px rgba(82,115,178,.1)!important
+    }
+    body #projectsRibbonHost .projects-chip-wrap>.projects-open-chip,
+    body #projectsRibbonHost .projects-chip-wrap>.projects-open-chip.active{
+      position:static!important;grid-column:1!important;width:100%!important;min-width:0!important;max-width:none!important;
+      height:36px!important;min-height:36px!important;margin:0!important;padding:5px 4px 5px 10px!important;
+      border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+      color:inherit!important;box-sizing:border-box!important
+    }
+    body #projectsRibbonHost .projects-chip-wrap>.projects-chip-close{
+      position:static!important;grid-column:2!important;align-self:center!important;justify-self:center!important;
+      display:grid!important;place-items:center!important;width:20px!important;min-width:20px!important;max-width:20px!important;
+      height:20px!important;min-height:20px!important;max-height:20px!important;margin:0!important;padding:0!important;
+      inset:auto!important;right:auto!important;top:auto!important;transform:none!important;border:0!important;
+      border-radius:5px!important;background:transparent!important;color:var(--figureloom-ui-muted,#60706c)!important;
+      box-shadow:none!important;font-size:14px!important;line-height:1!important;opacity:.78!important
+    }
+    body #projectsRibbonHost .projects-chip-wrap:hover>.projects-chip-close,
+    body #projectsRibbonHost .projects-chip-wrap:focus-within>.projects-chip-close{opacity:1!important}
+    body #projectsRibbonHost .projects-chip-wrap>.projects-chip-close:hover:not(:disabled){
+      background:var(--figureloom-ui-soft-strong,#e2ebe8)!important;color:var(--figureloom-ui-text,#172321)!important
+    }
+    html[data-figureloom-theme="dark"] body #projectsRibbonHost .projects-open-list>.projects-chip-wrap{
+      background:#293440!important;color:#dce3eb!important;border-color:#465465!important
+    }
+    html[data-figureloom-theme="dark"] body #projectsRibbonHost .projects-open-list>.projects-chip-wrap:has(>.projects-open-chip.active){
+      background:linear-gradient(145deg,#263743,#342f45)!important;border-color:#7188bb!important
+    }
+
     #figureloomGuestJoin{position:fixed;z-index:500;inset:0;display:grid;place-items:center;padding:18px;background:rgba(20,28,40,.48);backdrop-filter:blur(5px)}
     #figureloomGuestJoin[hidden]{display:none}
     .guest-join-card{position:relative;width:min(430px,100%);box-sizing:border-box;padding:25px;border:1px solid #cbd9e5;border-radius:20px;background:#fff;color:#243147;box-shadow:0 28px 90px rgba(20,30,48,.34)}
