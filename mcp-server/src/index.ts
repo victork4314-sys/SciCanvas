@@ -41,6 +41,12 @@ class SessionController {
 
   constructor(readonly transport:'stdio'|'http') { activeSessions.set(this.id,this);refreshSessionBroadcast(); }
   close():void { activeSessions.delete(this.id);refreshSessionBroadcast(); }
+  setClientName(value:string):void {
+    const next=String(value||'').trim()||'MCP client';
+    if(this.clientName===next)return;
+    this.clientName=next;
+    refreshSessionBroadcast();
+  }
   selectedConnection(){return this.selectedProjectId?bridge.connectionForProject(this.selectedProjectId):null;}
   info():SessionInfo {
     const connection=this.selectedConnection();
@@ -88,6 +94,7 @@ const recordSchema=z.record(z.string(),z.unknown());
 
 function createMcpServer(session:SessionController):McpServer {
   const server=new McpServer({name:'figureloom',version:VERSION},{capabilities:{logging:{}}});
+  server.server.oninitialized=()=>session.setClientName(server.server.getClientVersion()?.name||'MCP client');
 
   server.tool('get_session_access','Show this MCP session’s workspace, scopes, and available FigureLoom projects',{},async()=>jsonText(session.accessState()));
   server.tool('select_workspace','Choose the isolated scratch project or an explicitly authorized FigureLoom project',{workspace:z.enum(['scratch','current']),project_id:z.string().optional()},async({workspace,project_id})=>jsonText(session.selectWorkspace(workspace,project_id)));
