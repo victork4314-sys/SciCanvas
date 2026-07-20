@@ -110,12 +110,18 @@
     const fontSize = Math.max(6, Number(item.fontSize) || 30);
     const lineHeight = fontSize * Math.max(1, Number(item.lineHeight) || 1.25);
     const padding = Math.max(0, Number(item.textPadding) || 0);
-    const contentHeight = Math.max(lineHeight, lines.length * lineHeight);
+    const layoutHeight = Math.max(lineHeight, lines.length * lineHeight);
+    const glyphGuardX = Math.max(12, Math.ceil(fontSize * .45));
+    const glyphGuardTop = Math.max(8, Math.ceil(fontSize * .35));
+    const glyphGuardBottom = Math.max(12, Math.ceil(fontSize * .55));
+    const lastBaselineOffset = Math.max(0, lines.length - 1) * lineHeight;
 
     if (item.textFlow === 'auto-height') {
       const pageHeight = Number(document.getElementById('canvas')?.viewBox?.baseVal?.height) || 750;
       const available = Math.max(30, pageHeight - (Number(item.y) || 0));
-      item.height = Math.min(available, Math.max(30, Math.ceil(contentHeight + padding * 2)));
+      const requiredHeight = Math.ceil(padding * 2 + fontSize + lastBaselineOffset + glyphGuardBottom);
+      item.height = Math.min(available, Math.max(30, requiredHeight));
+      item.textBoxHeight = item.height;
     }
 
     [...group.children].forEach(child => {
@@ -126,14 +132,19 @@
     const clipId = `figureloom-text-clip-${safeId}`;
     const clip = makeSvg('clipPath', { id:clipId });
     clip.dataset.figureloomTextClip = '1';
-    clip.appendChild(makeSvg('rect', { x:0, y:0, width:Math.max(1, item.width), height:Math.max(1, item.height) }));
+    clip.appendChild(makeSvg('rect', {
+      x:-glyphGuardX,
+      y:-glyphGuardTop,
+      width:Math.max(1, Number(item.width) + glyphGuardX * 2),
+      height:Math.max(1, Number(item.height) + glyphGuardTop + glyphGuardBottom)
+    }));
     group.appendChild(clip);
 
     let firstBaseline = padding + fontSize;
     if (item.textVerticalAlign === 'middle') {
-      firstBaseline = (Number(item.height) - contentHeight) / 2 + fontSize;
+      firstBaseline = (Number(item.height) - layoutHeight) / 2 + fontSize;
     } else if (item.textVerticalAlign === 'bottom') {
-      firstBaseline = Number(item.height) - padding - contentHeight + fontSize;
+      firstBaseline = Number(item.height) - padding - layoutHeight + fontSize;
     }
     firstBaseline = Math.max(fontSize * .85, firstBaseline);
 
