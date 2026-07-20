@@ -1,0 +1,52 @@
+name: Desktop toolbar
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop-final-toolbar-polish.js'
+      - 'desktop-mode-tab-parity.js'
+      - 'settings-page.js'
+      - 'tests/desktop-toolbar-polish.spec.js'
+      - 'safe-refresh.js'
+      - 'service-worker.js'
+      - '.github/workflows/desktop-toolbar.yml'
+  pull_request:
+    paths:
+      - 'desktop-final-toolbar-polish.js'
+      - 'desktop-mode-tab-parity.js'
+      - 'settings-page.js'
+      - 'tests/desktop-toolbar-polish.spec.js'
+      - 'safe-refresh.js'
+      - 'service-worker.js'
+      - '.github/workflows/desktop-toolbar.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run desktop toolbar tests
+        run: npx playwright test tests/desktop-toolbar-polish.spec.js --project=desktop
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-toolbar-test-results
+          path: test-results
+          if-no-files-found: ignore
