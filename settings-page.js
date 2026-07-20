@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsPageV4) return;
+  if (window.__figureLoomSettingsPageV5) return;
+  window.__figureLoomSettingsPageV5 = true;
   window.__figureLoomSettingsPageV4 = true;
   window.__figureLoomSettingsPageV3 = true;
 
@@ -21,13 +22,17 @@
 
   function settingsButton() {
     const existing = document.getElementById('settingsRibbonButton');
-    if (existing) return existing;
+    if (existing) {
+      existing.classList.remove('ribbon-command-tab');
+      existing.classList.add('ribbon-tab', 'settings-ribbon-button');
+      return existing;
+    }
     const tabs = document.querySelector('.ribbon-tabs');
     if (!tabs) return null;
     const item = document.createElement('button');
     item.id = 'settingsRibbonButton';
     item.type = 'button';
-    item.className = 'ribbon-command-tab settings-ribbon-button';
+    item.className = 'ribbon-tab settings-ribbon-button';
     item.textContent = 'Settings';
     item.setAttribute('aria-label', 'Settings');
     tabs.prepend(item);
