@@ -10,13 +10,15 @@ This page maps the main parts of FigureLoom before you start clicking around. Th
 
 The profile button opens account and project gallery controls. The project name is editable. Local save status appears beside it.
 
+Open project tabs sit below the title area. Each tab keeps its **×** close control directly beside the project title rather than below the tab.
+
 ### 2. Undo, redo, Help, and Export
 
 These actions stay close to the top of the editor. The **?** button opens a Help menu with the complete manual, quick task guides, the visual guide, and the passive tour.
 
 ### 3. Main tabs
 
-The normal workflow is organized into Home, Add, Illustrations, Arrange, Style, Charts, Check, and Share. Some advanced tools live inside Pro Tools so the main interface does not become overcrowded.
+The normal workflow is organized into Settings, Projects, Home, Add, Illustrations, Arrange, Style, Charts, Check, and Share. Some advanced tools live inside Pro Tools so the main interface does not become overcrowded.
 
 ### 4. Pages and layers
 
@@ -32,7 +34,7 @@ The right side changes with the selected object. Position, size, color, opacity,
 
 ### 7. Canvas navigation
 
-Zoom, Fit page, the Hand tool, and the navigator help with large figures and posters. Use exact position fields for small movements that are difficult to drag.
+Pages, the Hand tool, zoom, 100 percent, Format, and Navigation stay together in one control bar. On supported desktop layouts, drag the complete bar from an empty part of the bar or its grip. The existing collapse control still collapses it.
 
 ## Phone overview
 
@@ -40,7 +42,7 @@ Zoom, Fit page, the Hand tool, and the navigator help with large figures and pos
 
 ### Compact top bar
 
-The project name, undo, redo, Help, and Export remain available. Less frequent actions move into **More**.
+The project name, undo, redo, and Export remain available. Less frequent actions move into **More**.
 
 ### Scrollable tabs
 
@@ -55,23 +57,29 @@ Add opens a large insertion panel for text, shapes, files, images, templates, ch
 - **Tools** shows the current ribbon controls.
 - **Pages** shows pages and layers.
 - **Edit** opens the selected object's inspector.
-- **More** contains projects, settings, account, templates, Loomy, Pro Tools, sharing, and other less frequent actions.
+- **More** contains projects, settings, account, templates, Loomy, Pro Tools, Guide, sharing, and other less frequent actions.
 
 ### Moving and zooming
 
 Drag a selected object with one finger. Pinch with two fingers to zoom. Use the Hand tool or navigator to move around a zoomed page. Zoom never changes the real page bounds.
 
+### Help on a phone
+
+Open **More → Guide**. The phone sheet closes and the FigureLoom Help menu opens without leaving the current project.
+
 ## Help menu
 
 ![FigureLoom Help menu](https://figureloom.org/wiki-assets/help-menu.svg)
 
-Press **?** from the editor to open:
+Press **?** on desktop or use **More → Guide** on a phone to open:
 
 - Search the full manual
 - Start here
 - Quick task guides
 - Visual interface guide
 - Passive interface tour
+
+The passive tour now covers the main sections, project tabs, Add and Illustrations, the real page area, the movable canvas controls, pages and layers, the inspector, Pro Tools, Help, export, checks, and backups.
 
 The manual opens in a new tab so the current canvas remains open.
 
