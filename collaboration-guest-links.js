@@ -212,8 +212,23 @@
   joinPanel.querySelector('#guestJoinClose').addEventListener('click', () => { joinPanel.hidden = true; });
 
   const style = document.createElement('style');
+  style.id = 'figureloomGuestCollaborationStyle';
   style.textContent = `
-    .collab-link-controls{grid-template-columns:120px minmax(135px,1fr) minmax(150px,1fr) auto auto!important}
+    .collab-link-controls{
+      display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+      align-items:stretch!important;gap:7px!important
+    }
+    .collab-link-controls>#collabLinkRole{grid-column:1/3!important}
+    .collab-link-controls>#collabLinkExpiry{grid-column:3/5!important}
+    .collab-link-controls>#collabLinkPin{grid-column:5/7!important}
+    .collab-link-controls>#collabCreateLink{grid-column:1/4!important}
+    .collab-link-controls>#collabRevokeLinks{grid-column:4/7!important}
+    .collab-link-controls>#collabCreateLink,
+    .collab-link-controls>#collabRevokeLinks{
+      width:100%!important;min-width:0!important;max-width:none!important;
+      writing-mode:horizontal-tb!important;white-space:nowrap!important;word-break:normal!important;
+      overflow-wrap:normal!important;text-orientation:mixed!important
+    }
     .collab-link-controls>input{min-height:38px;min-width:0;border:1px solid #cbd7e2;border-radius:10px;background:#fff;padding:8px;color:#4d5e73}
     #figureloomGuestJoin{position:fixed;z-index:500;inset:0;display:grid;place-items:center;padding:18px;background:rgba(20,28,40,.48);backdrop-filter:blur(5px)}
     #figureloomGuestJoin[hidden]{display:none}
@@ -226,8 +241,15 @@
     #guestJoinButton{width:100%;min-height:43px;margin-top:15px;border-color:#3f69b9;border-radius:10px;background:#3f69b9;color:#fff;font-weight:800}
     #guestJoinStatus{display:block;min-height:15px;margin-top:9px;color:#69778a;font-size:9px;line-height:1.4}
     html[data-figureloom-theme="dark"] .guest-join-card{border-color:#465263;background:#252c35;color:#f0f3f7}html[data-figureloom-theme="dark"] .guest-join-card>p,html[data-figureloom-theme="dark"] #guestJoinStatus{color:#a9b2bf}html[data-figureloom-theme="dark"] .guest-join-card input{border-color:#4d5968;background:#333b46;color:#f2f4f7}
-    @media(max-width:760px){.collab-link-controls{grid-template-columns:1fr 1fr!important}.collab-link-controls>input{grid-column:1/-1}}
+    @media(max-width:760px){
+      .collab-link-controls>#collabLinkRole{grid-column:1/4!important}
+      .collab-link-controls>#collabLinkExpiry{grid-column:4/7!important}
+      .collab-link-controls>#collabLinkPin{grid-column:1/7!important}
+      .collab-link-controls>#collabCreateLink{grid-column:1/4!important}
+      .collab-link-controls>#collabRevokeLinks{grid-column:4/7!important}
+    }
   `;
+  document.getElementById(style.id)?.remove();
   document.head.appendChild(style);
 
   const initialToken = shareTokenFromLocation();
