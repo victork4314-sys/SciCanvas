@@ -1,4 +1,4 @@
-name: Isolated all-pages exporter
+name: Direct all-pages PowerPoint exporter
 
 on:
   pull_request:
@@ -6,8 +6,7 @@ on:
       - 'export-tools.js'
       - 'pptx-export.js'
       - 'pptx-export-rebuilt.js'
-      - 'pptx-converter-loader.js'
-      - 'pptx-verified-writer.js'
+      - 'pptx-direct-package.js'
       - 'safe-refresh.js'
       - 'package.json'
       - 'tests/pptx-final-page.spec.js'
@@ -19,7 +18,7 @@ permissions:
   contents: read
 
 jobs:
-  isolated-multi-page-export:
+  direct-multi-page-export:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,20 +32,19 @@ jobs:
           node --check export-tools.js
           node --check pptx-export.js
           node --check pptx-export-rebuilt.js
-          node --check pptx-converter-loader.js
-          node --check pptx-verified-writer.js
+          node --check pptx-direct-package.js
           node --check tests/pptx-final-page.spec.js
           node --check tests/pptx-real-file.spec.js
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Verify isolated SVG capture and the real five-page PowerPoint file
+      - name: Verify isolated capture and direct five-page PowerPoint package
         run: npx playwright test tests/pptx-final-page.spec.js tests/pptx-real-file.spec.js --project=desktop
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: isolated-all-pages-export-results
+          name: direct-all-pages-export-results
           path: test-results
           if-no-files-found: warn
