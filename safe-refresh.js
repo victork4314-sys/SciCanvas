@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV69) return;
+  if (window.__figureLoomStableRuntime71d36dfV70) return;
+  window.__figureLoomStableRuntime71d36dfV70 = true;
   window.__figureLoomStableRuntime71d36dfV69 = true;
   window.__figureLoomStableRuntime71d36dfV68 = true;
   window.__figureLoomStableRuntime71d36dfV67 = true;
@@ -33,7 +34,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v69";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v70";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -53,6 +54,7 @@
     "mcp-browser-bridge.js",
     "mcp-settings-panel.js",
     "mcp-command-extensions.js",
+    "mcp-hosted-bridge.js",
     "mcp-feature-bootstrap.js",
     "mcp-feature-adapters.js",
     "project-tabs.js",
