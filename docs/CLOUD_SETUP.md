@@ -1,46 +1,51 @@
-# SciCanvas cloud accounts and collaboration
+# FigureLoom cloud accounts, collaboration, and MCP
 
-SciCanvas is connected to the Supabase project configured in [`../cloud-config.js`](../cloud-config.js). Local editing still works without signing in.
+FigureLoom uses the Supabase project configured in [`../cloud-config.js`](../cloud-config.js). Local editing continues to work without signing in.
 
-## What is live
+## Cloud features
 
-- Email/password account creation and sign-in
-- Email confirmation and confirmation-email resend
-- Forgot-password email flow
-- In-app new-password form after a recovery link
+A configured deployment can provide:
+
+- Email and password account creation and sign-in
+- Email confirmation and confirmation resend
+- Forgot-password and recovery flows
 - Local project gallery without an account
 - Encrypted cloud gallery for owned and shared projects
-- Local/scoped profile pictures using initials or scientific symbols
-- Owner, editor, reviewer and viewer permissions
+- Profile initials or scientific symbols
+- Owner, editor, reviewer, and viewer permissions
 - Pending invitations reserved by email address
-- Automatic access activation when an invited email creates an account
-- Expiring role-based collaboration links
-- Private authenticated Realtime presence, cursors and encrypted project broadcasts
+- Expiring guest collaboration links
+- Optional 4 to 12 digit guest-link PIN
+- Temporary guest sessions using a display name and no email account
+- Private Realtime presence, cursors, and encrypted project broadcasts
 - Encrypted persistent review comments
+- Hosted project-specific MCP connections
 - Row Level Security on every exposed application table
 
-SciCanvas intentionally does **not** use Apple, Microsoft or other social sign-in providers. There is one account system to maintain: email and password.
+FigureLoom intentionally uses one normal account system: email and password. Apple, Microsoft, and other social sign-in providers are not part of the current setup.
 
-## Live project configuration
+## Browser configuration
 
-The browser uses only the public project URL and publishable key:
+The browser receives only the public Supabase project URL and publishable key.
+
+Use the deployment's current configuration shape, for example:
 
 ```js
-window.SCICANVAS_CLOUD_CONFIG = {
-  supabaseUrl: 'https://yzjqciycdbnpnndxvpgq.supabase.co',
-  supabaseAnonKey: 'sb_publishable_hHhDcLXqCmhJSA80NX0gtA_2L1lW4O0',
+window.FIGURELOOM_CLOUD_CONFIG = {
+  supabaseUrl: 'https://your-project.supabase.co',
+  supabaseAnonKey: 'your-publishable-key',
   redirectUrl: `${window.location.origin}${window.location.pathname}`,
-  appName: 'SciCanvas'
+  appName: 'FigureLoom'
 };
 ```
 
-A Supabase publishable key is designed for browser use. Access is enforced by database policies. Never put a secret key, service-role key, database password or SMTP credential in this repository.
+Some source files retain older internal aliases for compatibility. Do not copy old branding into visible interface text or new documentation.
 
-## Database
+A Supabase publishable key is designed for browser use. Access is enforced by database policies and protected functions. Never put a service-role key, database password, SMTP credential, encryption master key, or other secret in browser code or this repository.
 
-[`../supabase/schema.sql`](../supabase/schema.sql) defines the account, encrypted project, membership, comment and Realtime foundation. [`../supabase/share-links.sql`](../supabase/share-links.sql) defines the deployed secure share-link extension.
+## Database and migrations
 
-Together they provide:
+The base schema and later migrations provide structures such as:
 
 - `profiles`
 - `projects`
@@ -48,106 +53,101 @@ Together they provide:
 - `project_invitations`
 - `project_share_links`
 - `collaboration_comments`
-- project-role and access helpers
-- project-key derivation
-- email invitation handling
-- automatic pending-invitation activation
-- expiring hashed share tokens
-- RLS policies
-- private Realtime authorization policies
-- the Realtime publication for collaboration comments
+- `figureloom_mcp_connections`
+- `figureloom_mcp_commands`
+- Project-role and access helpers
+- Project-key derivation
+- Email invitation handling
+- Expiring hashed guest tokens
+- MCP token hashing and revocation
+- Row Level Security policies
+- Private Realtime authorization
 
-The live project has these migrations and policies applied.
+Apply the base schema and all required migrations in order. Do not assume that copying only one SQL file produces the current deployment.
 
 ## Encryption model
 
-Editable project payloads and shared-comment bodies are encrypted in the browser with AES-GCM before they are stored.
+Editable project payloads and persistent collaboration comment bodies are encrypted in the browser with AES-GCM before storage.
 
-An authenticated database function checks project membership and derives a stable project-specific key from a random server-side master key in the non-exposed `private` schema. The browser receives only the derived key for a project the signed-in user is allowed to open.
+A protected database function checks project access and derives a stable project-specific key from a random server-side master key in a non-exposed schema. The browser receives only the derived key for a project the current account or accepted guest is allowed to open.
 
-This is application-layer encryption, not a zero-knowledge system. A database operator with privileged access can derive keys. Protect database credentials and backups accordingly.
+This is application-layer encryption, not a zero-knowledge system. A privileged database operator can derive project keys. Protect database credentials, the master key, and backups accordingly.
 
-Cloud gallery thumbnails are intentionally not stored. Project titles, ownership, timestamps, roles and revision numbers remain metadata so the gallery and permissions can work.
-
-## Profile pictures
-
-The profile button can use:
-
-- the user's initials
-- DNA
-- flask
-- molecule
-- cell
-- signal/wave
-- scientific marker
-
-The choice is stored locally for immediate display and is also synchronized into authenticated user metadata when signed in. It affects only the SciCanvas interface, never project artwork or exports.
+Project titles, ownership, timestamps, roles, revision numbers, memberships, guest-link records, and MCP connection status remain visible metadata so the gallery and permission systems can work.
 
 ## Email authentication
 
-SciCanvas uses:
+The browser client uses the normal Supabase client flow for:
 
-- `signUp()` for account creation
-- `signInWithPassword()` for sign-in
-- `resend({ type: 'signup' })` for confirmation-email resend
-- `resetPasswordForEmail()` for forgotten passwords
-- `PASSWORD_RECOVERY` plus `updateUser({ password })` for password replacement
+- Account creation
+- Password sign-in
+- Confirmation-email resend
+- Password reset email
+- Recovery-session detection
+- Password replacement
 
-The browser client uses the normal client-side redirect flow and detects the returned session in the app URL.
+In **Supabase Dashboard → Authentication → URL Configuration**:
 
-### Required Auth dashboard setting
+- Set the production Site URL to the actual FigureLoom deployment.
+- Add the production redirect URL.
+- Add local development URLs that are genuinely used, such as `http://localhost:8080/`.
+- Remove obsolete domains and old project paths.
 
-In **Supabase Dashboard → Authentication → URL Configuration**, set:
+Test the complete flow from more than one email provider.
 
-- **Site URL:** `https://victork4314-sys.github.io/SciCanvas/`
-- Add the same URL to **Redirect URLs**
-- Add local URLs used during development, such as `http://localhost:8080/`
+## Email invitations
 
-This setting is managed by Supabase Auth rather than PostgreSQL, so it is not part of the SQL files.
+Project owners can enter an exact email address and choose a role.
 
-### Email delivery
+- Existing accounts can receive access immediately.
+- Unknown emails can remain pending invitations.
+- When that exact email creates an account, access can activate automatically.
 
-Supabase's built-in mail service is suitable for initial testing but is rate-limited and best-effort. Before public use, configure a custom SMTP sender and test:
+FigureLoom reserves project access by email. The owner may still need to send the app link separately.
 
-1. Account confirmation
-2. Confirmation resend
-3. Sign-in after confirmation
-4. Forgot-password delivery
-5. Recovery-link redirect
-6. New-password replacement
+## Guest collaboration links
 
-## Invitations by email
+Guest links do not require the recipient to create an email account.
 
-Project owners can enter a collaborator's email and choose a role.
+The owner must be signed in and must save or open a cloud project. The owner chooses a role, expiry, and optional numeric PIN. The generated URL contains the raw guest token while the database stores only its hash.
 
-- Existing accounts receive access immediately.
-- Unknown emails are stored as pending invitations.
-- When that exact email creates an account, the membership is activated automatically.
+The recipient:
 
-SciCanvas reserves access by email but does not send a separate collaboration-invitation email. The owner should share the SciCanvas app link with the collaborator. Account confirmation and password-recovery emails are sent by Supabase Auth normally.
+1. Opens the link.
+2. Enters a display name.
+3. Enters the optional PIN when one was supplied.
+4. Receives a temporary anonymous session.
+5. Opens the encrypted project with the selected role.
 
-## Invitations by secure link
+The frontend uses protected functions for creating, accepting, and revoking project share links.
 
-Project owners can also create a link for a viewer, reviewer or editor.
+## Anonymous authentication
 
-- The raw token appears only in the generated URL.
-- Supabase stores only a SHA-256 hash of the token.
-- The recipient must sign in before the link grants access.
-- Links expire after 24 hours, 7 days or 30 days.
-- Owners can revoke every active link for a project.
-- Accepting a link never downgrades an existing stronger role.
+Guest joining depends on Supabase anonymous authentication.
 
-The frontend uses:
+Enable it only after the guest-link functions, expiry checks, PIN checks, role checks, and Row Level Security policies have been installed and tested.
 
-- `create_project_share_link()`
-- `accept_project_share_link()`
-- `revoke_project_share_links()`
+When anonymous authentication is disabled, normal email-account invitations can still work.
 
-The live permission test verified link creation, reviewer membership, RLS project access, use tracking and revocation. Disposable test data was removed afterward.
+## Guest-link tests
+
+Test:
+
+- Viewer, reviewer, and editor links
+- Link without a PIN
+- Link with a 4 to 12 digit PIN
+- Wrong PIN
+- Expiry
+- Revocation
+- Existing stronger membership
+- Signed-out guest
+- Display-name handling
+- Anonymous-auth-disabled behavior
+- Owner revoking every active link
 
 ## Roles
 
-| Role | Open project | Presence/cursors | Comment | Edit/broadcast | Manage access |
+| Role | Open project | Presence and cursors | Comment | Edit and broadcast | Manage access |
 |---|---:|---:|---:|---:|---:|
 | Viewer | Yes | Yes | No | No | No |
 | Reviewer | Yes | Yes | Yes | No | No |
@@ -158,29 +158,79 @@ Incoming live edits pause when the local user is typing or dragging. The user ch
 
 ## Realtime
 
-SciCanvas uses private channels:
+Use private channels for:
 
-- `project-room:<project UUID>` for authenticated presence and cursors
-- `project-edit:<project UUID>` for encrypted project broadcasts
+- Project presence and remote cursors
+- Encrypted project broadcasts
+- Persistent comment updates
+- Hosted MCP command delivery
 
-The policies on `realtime.messages` allow project members into room channels and restrict edit broadcasts to owners/editors. Persistent comments use Postgres Changes and ordinary table RLS.
+Keep public Realtime channel access disabled. Test a non-member and a revoked guest directly, not only through the interface.
 
-Keep public Realtime channel access disabled in the project settings.
+## Hosted MCP
+
+The hosted MCP workflow connects one exact cloud project to a compatible external client.
+
+The backend needs:
+
+- `figureloom_mcp_connections` for owner, project, access level, destructive permission, current command metadata, status, and revocation
+- `figureloom_mcp_commands` for pending, running, completed, expired, and failed commands
+- Row Level Security or protected functions that restrict connection and command rows
+- Private Realtime delivery for newly queued commands
+- A deployed `figureloom-mcp` edge function or equivalent remote MCP endpoint
+- Token hashing so the raw private token is not stored as the database credential
+
+The browser creates a project-specific connection, publishes its currently available commands, and processes authorized command rows while the matching project is open.
+
+Test:
+
+1. Sign-in requirement
+2. Read-only access
+3. Full editor access
+4. Destructive action refused when its separate switch is off
+5. Successful write using normal history and durable saving
+6. Disconnect and reconnect
+7. Revocation invalidating the copied link
+8. Project switching revoking the old authorization
+9. Command expiry
+10. Duplicate command claiming
+
+Do not log raw MCP connection links or include them in screenshots, issues, analytics, or documentation examples.
+
+## Email delivery
+
+Supabase's built-in mail service is suitable for initial testing but can be rate-limited and best-effort.
+
+Before public use, configure a reliable SMTP sender and test:
+
+1. Account confirmation
+2. Confirmation resend
+3. Sign-in after confirmation
+4. Forgot-password delivery
+5. Recovery-link redirect
+6. New-password replacement
+
+Do not place SMTP credentials in browser code.
 
 ## Production checklist
 
-- Set the production Site URL and redirect allow list.
+- Set the correct production Site URL and redirect allow list.
 - Configure and test a custom SMTP sender.
-- Keep email confirmations enabled.
-- Test owner, editor, reviewer and viewer accounts separately.
-- Test email invitations and secure links separately.
+- Keep email confirmations enabled when required by the deployment.
+- Deliberately configure anonymous authentication for guest links.
+- Test owner, editor, reviewer, viewer, and guest sessions separately.
+- Test email invitations and guest links separately.
+- Test optional PIN, expiry, and revocation.
 - Test one project simultaneously in two browsers.
-- Review Auth and database rate limits.
+- Test hosted MCP read-only, full, destructive permission, saving, and revocation.
+- Review authentication, database, Realtime, and edge-function rate limits.
 - Enable database backups.
-- Keep the private encryption master key backed up with the database.
-- Define account deletion, retention, privacy and breach-response policies.
+- Back up the private encryption master key.
+- Define account deletion, retention, privacy, and incident-response policies.
 - Re-run Supabase security and performance advisors after schema changes.
 
 ## Local-only behavior
 
-If the Supabase configuration is removed or unavailable, the editor, autosave, recovery copies, `.scicanvas` backups and local project gallery continue to work. Cloud controls report the connection problem rather than replacing local project data.
+If Supabase is unavailable or removed, the editor, autosave, recovery copies, `.figureloom` backups, SVG export, and local project gallery continue to work.
+
+Cloud projects, account collaboration, guest links, and hosted MCP report the connection problem rather than replacing local project data.
