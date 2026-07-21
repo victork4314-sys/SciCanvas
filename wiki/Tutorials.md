@@ -1,12 +1,10 @@
 # Complete tutorials
 
-These tutorials use the normal FigureLoom editor and are written so they can be followed on desktop, tablet, or phone.
+These tutorials use the normal FigureLoom editor and can be followed on Desktop, Tablet, or Phone.
 
 Before a large tutorial, create a new project and download a backup after the first major milestone.
 
 # Tutorial 1: Create an editable scientific pathway
-
-This walkthrough builds a left-to-right signaling pathway with anchored connectors and a legend.
 
 ## Plan the pathway
 
@@ -20,7 +18,7 @@ Write down:
 - Inhibitory relationships
 - Compartments
 
-Keep the first version small. A six-stage pathway is easier to clean up than a twenty-stage pathway generated all at once.
+Keep the first version small. A six-stage pathway is easier to clean up than a twenty-stage pathway created all at once.
 
 ## Set up the page
 
@@ -30,71 +28,39 @@ Keep the first version small. A six-stage pathway is easier to clean up than a t
 4. Turn on the grid and snapping.
 5. Choose a light background with strong text contrast.
 
-## Add compartments
+## Add compartments and nodes
 
 1. Add a large rounded rectangle for the cell or system boundary.
-2. Set a light fill and a subtle stroke.
-3. Send it to the back.
-4. Lock the layer.
-5. Add a smaller region if the pathway needs a nucleus, membrane, reactor, or another compartment.
-
-## Add the pathway nodes
-
-1. Open Illustrations.
-2. Search for the main biological or environmental objects.
-3. Insert the best matches.
+2. Send it to the back and lock it.
+3. Open Illustrations and insert the main biological or environmental objects.
 4. Add rounded rectangles for concepts that do not need artwork.
 5. Put the nodes in approximate left-to-right order.
 6. Add short labels.
 
-Use one visual language. Do not mix several unrelated illustration styles unless the scientific distinction needs it.
-
-## Connect the nodes
+## Connect and align
 
 1. Choose an anchored connector.
-2. Connect the first object to the second.
-3. Repeat through the pathway.
-4. Use arrowheads for direction.
-5. Use a different line ending or style for inhibition.
-6. Move two nodes to confirm that connectors follow them.
+2. Connect the nodes in order.
+3. Use arrowheads for direction.
+4. Use a different line ending or style for inhibition.
+5. Move two nodes to confirm that connectors follow them.
+6. Align the main nodes and distribute them horizontally.
 
-## Align the layout
+## Add a legend and accessibility text
 
-1. Select the main nodes.
-2. Align their vertical centers.
-3. Put the first and last nodes in the correct positions.
-4. Distribute the nodes horizontally.
-5. Adjust labels so they do not cross connectors.
+Explain activation, inhibition, compartments, colors, and abbreviations.
 
-## Add a legend
-
-Create a small legend explaining:
-
-- Activation arrow
-- Inhibition line
-- Compartments
-- Color meanings
-- Abbreviations
-
-## Add references and alt text
-
-1. Open Review and references.
-2. Check automatically collected asset sources.
-3. Add missing source details.
-4. Write short alt text describing the pathway direction and conclusion.
-5. Add a long description listing the major stages.
+Add alt text describing the pathway direction and a long description listing the major stages.
 
 ## Check and export
 
 1. Run contrast and small-text checks.
 2. Check for broken connectors.
 3. Download a `.figureloom` backup.
-4. Export SVG.
-5. Open the SVG in another browser.
+4. Choose **Editable SVG (per page)**.
+5. Open the SVG in another browser or vector editor.
 
 # Tutorial 2: Build a scientific poster
-
-This walkthrough creates a large multi-section poster.
 
 ## Choose the final size first
 
@@ -103,7 +69,7 @@ This walkthrough creates a large multi-section poster.
 3. Choose portrait or landscape.
 4. Confirm the printer's bleed and margin requirements separately.
 
-## Build the grid
+## Build the layout
 
 1. Turn on the physical grid.
 2. Set margins using guides or locked background objects.
@@ -111,67 +77,34 @@ This walkthrough creates a large multi-section poster.
 4. Add equal-width section frames.
 5. Lock the frames after alignment.
 
-## Add the header
+## Add the header and sections
 
-Include:
+Include the title, author names, affiliations, contact information, and permitted logos.
 
-- Poster title
-- Author names
-- Affiliations
-- Contact or QR code if appropriate
-- Institutional logos with correct permissions
+Create one reusable section header and use it for Introduction, Methods, Results, Discussion, and References.
 
-Keep the title readable from a distance. Do not let logos dominate the research content.
-
-## Create section components
-
-1. Build one section header with a title, background shape, and spacing.
-2. Save it as a component.
-3. Insert instances for Introduction, Methods, Results, Discussion, and References.
-4. Update the component if the header style changes.
-
-## Add figures and charts
+## Add figures, charts, and body text
 
 - Import validated images.
 - Add scale bars from source calibration.
 - Create editable charts from prepared data.
 - Use consistent panel labels.
-- Keep chart text large enough for the physical poster size.
+- Keep chart and body text readable at the physical poster size.
 
-## Add body text
+## Accessibility and export
 
-Use short paragraphs and bullets. A poster is not a manuscript page.
-
-Check line length and spacing. Keep body text consistent across sections.
-
-## Add references and acknowledgements
-
-Use a compact reference section and include required asset attribution.
-
-## Accessibility and print check
-
-1. Preview in grayscale.
-2. Preview common color-vision differences.
-3. Check contrast.
-4. Run the small-text warning.
-5. Zoom out until the whole poster fits and check visual hierarchy.
-6. Zoom in and inspect image quality.
-
-## Export the poster
-
-1. Download a project backup.
-2. Export physical-size SVG when the printer accepts it.
-3. Export print PNG if a raster file is required.
-4. Open the export in a separate application.
-5. Confirm dimensions before sending it to the printer.
+1. Preview in grayscale and common color-vision modes.
+2. Check contrast and small text.
+3. Download a project backup.
+4. Export an SVG with **Print page dimensions** enabled.
+5. Open the SVG in another application and confirm the physical size.
+6. Convert the checked SVG elsewhere when the printer requires PDF or a raster format.
 
 # Tutorial 3: Make a chart from spreadsheet data
 
-This walkthrough creates an editable chart from a small table.
-
 ## Prepare the data
 
-Use a table like this:
+Use a clean table with one header row and numeric values without units inside numeric cells.
 
 ```text
 Group	Mean	SD
@@ -180,207 +113,97 @@ Treatment A	6.1	1.0
 Treatment B	7.4	0.9
 ```
 
-Keep units out of numeric cells. Put units in headers or axis labels.
-
-## Insert the chart
+## Insert and edit the chart
 
 1. Copy the spreadsheet cells.
 2. Open Data or Add chart.
 3. Paste the table.
 4. Confirm the delimiter and headers.
-5. Choose a bar chart.
-6. Insert it.
+5. Choose a chart type.
+6. Add axis labels, units, and a legend.
+7. Double-click the chart later to reopen its source data.
 
-## Edit the chart
-
-1. Add a clear y-axis title with units.
-2. Set the group order.
-3. Choose accessible colors.
-4. Add error-bar meaning to the caption or legend.
-5. Increase text size for the final figure dimensions.
-
-## Reopen the data
-
-Double-click the chart and change one value. Confirm that the chart updates.
-
-Undo the test or restore the correct value.
-
-## Add statistical annotation
-
-Use a significance bracket only when the statistical comparison has been calculated elsewhere.
-
-Add the exact adjusted p value when appropriate instead of relying only on stars.
-
-## Validate
-
-Compare every displayed value with the source data. FigureLoom is drawing the chart, not validating the analysis.
+Calculate and validate statistics outside FigureLoom.
 
 ## Export
 
-Download the project backup and export SVG or PNG. Inspect the axes and labels in the final file.
+Download the project backup and export the active page as editable SVG. Inspect axes, labels, and thin lines in the final file.
 
 # Tutorial 4: Prepare a multi-panel journal figure
-
-This walkthrough creates a four-panel figure for manuscript submission.
 
 ## Set the page size
 
 1. Check the current journal instructions.
 2. Choose a generic single-column or double-column preset close to the required size.
 3. Enter exact custom dimensions when necessary.
-4. Choose a white or transparent background according to the submission rules.
+4. Choose the required background.
 
 ## Create panel frames
 
-1. Add four equal rectangles in a two-by-two arrangement.
-2. Align the left and right columns.
-3. Align the top and bottom rows.
-4. Distribute spacing equally.
-5. Lock the frames or use them as temporary guides.
+1. Add equal rectangles for the panel layout.
+2. Align rows and columns.
+3. Distribute spacing equally.
+4. Lock the frames or use them as temporary guides.
 
-## Insert content
+## Insert and standardize content
 
-- Panel A: microscopy image
-- Panel B: chart
-- Panel C: pathway diagram
-- Panel D: summary table or second chart
+- Add images, charts, diagrams, or tables.
+- Add consistent panel labels.
+- Use one typography system.
+- Use one accessible palette.
+- Add alt text, a long description, references, and source notes.
 
-Keep internal margins consistent.
+## Run checks and export
 
-## Add panel labels
-
-1. Add A, B, C, and D.
-2. Use the same font and size.
-3. Put them in the same relative position.
-4. Keep them above images and away from important content.
-
-## Standardize typography
-
-Select labels and apply a project font. Use consistent sizes for axes, legends, annotations, and panel titles.
-
-## Standardize color
-
-Use one shared palette. Check color-vision previews and grayscale.
-
-## Add metadata
-
-- Alt text for the whole figure
-- Long description for panel content
-- Asset references
-- Image-source notes
-- Comments for unresolved issues
-
-## Run readiness checks
-
-Resolve:
-
-- Off-canvas objects
-- Small text
-- Missing alt text
-- Broken connectors
-- Unresolved comments
-- Incomplete references
-
-## Export
-
-1. Create a named checkpoint called `Submission layout`.
-2. Download a project backup.
-3. Export SVG and the required raster format.
-4. Open the files outside FigureLoom.
-5. Compare physical dimensions with the journal requirements.
+1. Resolve off-canvas objects, small text, missing alt text, broken connectors, unresolved comments, and incomplete references.
+2. Create a named checkpoint called `Submission layout`.
+3. Download a project backup.
+4. Export editable SVG.
+5. Convert the checked SVG elsewhere when the journal requires PDF, TIFF, PNG, or another raster format.
 
 # Tutorial 5: Build a microscopy figure
 
 ## Prepare source images
 
-Complete scientific image processing in the correct analysis software. Keep the raw data, processing steps, and calibration outside FigureLoom.
+Complete scientific image processing in the correct analysis software. Keep raw data, processing steps, and calibration outside FigureLoom.
 
 Export panel images with consistent dimensions and color handling.
 
 ## Create the layout
 
 1. Choose a page size.
-2. Use the Advanced Science microscopy starter or create a grid manually.
+2. Use the microscopy starter or create a grid manually.
 3. Import each channel or condition image.
 4. Set equal image dimensions.
 5. Align and distribute the images.
 
-## Add labels
+## Add labels and scale bars
 
-Include:
+Include channel names, conditions, time or dose, merged-image labels, and panel letters.
 
-- Channel names
-- Condition names
-- Time or dose
-- Merged-image label
-- Panel letters
+Use calibration from the source image software for scale bars. FigureLoom does not infer scientific scale automatically.
 
-## Add scale bars
+## Validate and export
 
-Use the calibration from the source image software.
+Confirm that aspect ratios are unchanged, crops are appropriate, processing is comparable, and scale bars remain correct.
 
-1. Add a scale-bar object.
-2. Set its visual length to match the calibrated value.
-3. Label the unit.
-4. Use the same visual style across comparable panels.
-
-FigureLoom does not infer scientific scale from the image automatically.
-
-## Check image integrity
-
-Confirm that:
-
-- Aspect ratios are unchanged.
-- Crops are scientifically appropriate.
-- Comparable panels use comparable processing.
-- No image is accidentally stretched.
-- Scale bars remain correct after resizing.
-
-## Accessibility
-
-Color-channel figures can be difficult to distinguish. Add channel labels, consider alternative palettes, and include a descriptive caption.
-
-## Export
-
-Use print PNG or SVG with embedded raster images according to the journal workflow. Inspect the final image at 100 percent.
+Export SVG with embedded raster images and inspect it at the intended size. Convert it elsewhere when the journal requires another format.
 
 # Tutorial 6: Make a study-site locator map
 
 ## Prepare location information
 
-Collect verified coordinates and the required geographic extent.
+Collect verified coordinates and the required geographic extent. Do not expose sensitive ecological, archaeological, or participant locations without approval.
 
-Do not expose sensitive ecological, archaeological, or participant locations without approval.
-
-## Create the base map
+## Create the map
 
 1. Open Map Studio.
 2. Choose world, regional, or country view.
-3. Select the relevant area.
-4. Set land, border, and water styling.
-
-## Add study sites
-
-1. Add each point.
-2. Use short site labels.
-3. Choose marker shapes or colors.
-4. Add a legend when marker styles have meaning.
-
-## Add an inset
-
-For a small study area, create a broad locator map and a detailed local map on the same page.
-
-Use a connecting frame or callout to show the relationship.
-
-## Import GeoJSON
-
-When boundaries or sampling regions are available as GeoJSON:
-
-1. Simplify excessive geometry in GIS software if needed.
-2. Import the file.
-3. Inspect every feature.
-4. Style polygons and lines.
-5. Add labels manually when automatic labels are crowded.
+3. Set land, border, and water styling.
+4. Add each verified site.
+5. Use short labels and a legend.
+6. Add an inset when a small study area needs a broader locator.
+7. Import GeoJSON when a boundary or region is needed.
 
 ## Validate
 
@@ -396,26 +219,28 @@ Check coordinates, boundary version, labels, political-context requirements, and
 4. Save an encrypted cloud copy.
 5. Create a named checkpoint.
 
-## Invite a reviewer
+## Invite an account reviewer
 
 1. Open collaboration controls.
 2. Enter the reviewer's exact email.
 3. Choose Reviewer.
 4. Send the FigureLoom link separately when needed.
 
-Alternatively, create an expiring reviewer link.
+The reviewer signs in with the invited email and adds comments without editing.
 
-## Reviewer workflow
+## Invite a guest reviewer
 
-1. Sign in with the invited email.
-2. Open the shared project.
-3. Add comments to pages or objects.
-4. Avoid editing when the role is review-only.
-5. Resolve nothing unless the team has agreed on that workflow.
+1. Choose Reviewer as the guest role.
+2. Choose an expiry.
+3. Add an optional 4 to 12 digit PIN.
+4. Press **Create link**.
+5. Send the link and PIN through an appropriate channel.
+
+The guest opens the link, enters a display name, and does not need an email account.
 
 ## Editor workflow
 
-1. Create a new checkpoint before applying changes.
+1. Create a checkpoint before applying changes.
 2. Work through comments.
 3. Resolve each addressed comment.
 4. Pause when a remote update warning appears.
@@ -426,49 +251,60 @@ Alternatively, create an expiring reviewer link.
 1. Review remaining comments.
 2. Compare with the checkpoint.
 3. Run readiness checks.
-4. Revoke unused share links.
+4. Revoke unused guest links.
 5. Download the final project backup.
-6. Export the submission files.
+6. Export the final SVG files.
 
-# Tutorial 8: Recover or move a project
+# Tutorial 8: Use MCP with an external assistant
+
+## Prepare the project
+
+1. Sign in.
+2. Open the exact cloud project the assistant should use.
+3. Download a backup.
+4. Open **Settings → MCP & AI access**.
+
+## Connect safely
+
+1. Choose Read-only when the client only needs context.
+2. Choose Full editor access only when it must make changes.
+3. Leave destructive actions off unless deletion is intentional.
+4. Press **Connect FigureLoom**.
+5. Copy the private MCP connection link into a compatible client.
+
+## Work with the assistant
+
+Ask the client to list the available FigureLoom commands first. Keep the matching project tab open while commands are running.
+
+Successful write commands use the normal history and saving paths. Review the canvas, save indicator, and Undo history after a sequence of edits.
+
+## Finish the session
+
+1. Download a fresh project backup.
+2. Review every assistant-made change.
+3. Revoke the MCP connection.
+4. Remove destructive permission when it is no longer needed.
+
+# Tutorial 9: Recover or move a project
 
 ## Move to another device
 
 1. Download the `.figureloom` project on the original device.
-2. Transfer it through a trusted method.
-3. Open FigureLoom on the new device.
-4. Import the file.
-5. Check pages, images, fonts, charts, and equations.
-6. Reimport local fonts when needed.
-7. Download a fresh backup.
+2. Transfer the file using a trusted method.
+3. Open FigureLoom on the destination device.
+4. Import the project.
+5. Confirm pages, objects, fonts, images, charts, and comments.
+6. Download a fresh backup from the destination device.
 
 ## Recover after a crash
 
-1. Reopen FigureLoom.
-2. Check the project gallery.
-3. Open recovery snapshots.
-4. Restore the newest known-good state as a separate project.
-5. Compare it with the current project.
-6. Keep both until the recovery is confirmed.
-7. Download a new backup.
-
-## Recover from a bad import
-
 1. Stop editing.
-2. Download the current state if possible.
-3. Restore the checkpoint or snapshot created before import.
-4. Simplify the source file.
-5. Import into a new project.
-6. Copy only the verified result into the main project.
+2. Open Projects and Recovery.
+3. Compare the latest normal copy with recovery snapshots.
+4. Restore the newest known-good snapshot into a separate project.
+5. Save the recovered project under a new name.
+6. Download a fresh backup.
 
-# After every tutorial
+# Final habit
 
-Use this final routine:
-
-1. Rename the project clearly.
-2. Run checks.
-3. Review references.
-4. Add accessibility descriptions.
-5. Download a `.figureloom` backup.
-6. Export the required format.
-7. Open the export outside FigureLoom.
+For every important project, keep the editable `.figureloom` backup and the final checked SVG output. Browser autosave is useful, but neither browser storage nor a visual export should be the only copy.
