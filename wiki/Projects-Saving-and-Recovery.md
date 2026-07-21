@@ -33,6 +33,8 @@ Depending on the project state and account connection, the panel can include:
 
 Several projects can be open in separate project tabs.
 
+Each tab keeps its close control inside the same tab box beside the project title.
+
 Before switching or closing a project:
 
 - Wait for the save indicator to settle.
@@ -58,6 +60,8 @@ Autosave covers normal editor data such as:
 
 A save indicator can briefly show that work is being written. Do not close the browser during a large import or immediately after a major change.
 
+Successful MCP write commands use the same normal history and durable save paths as ordinary editor actions.
+
 ## Recovery snapshots
 
 FigureLoom keeps rotating recovery snapshots. These are intended for situations such as:
@@ -80,7 +84,7 @@ Good times to make a checkpoint include:
 
 - Before a large layout change
 - Before replacing a chart data set
-- Before a coauthor review
+- Before a collaborative review
 - Before changing page format
 - Before final export
 
@@ -92,7 +96,7 @@ Open **Export** and choose the complete editable project download.
 
 The resulting `.figureloom` file is the safest portable copy of the project. It can be stored in cloud drive storage, a lab folder, a versioned archive, or another device.
 
-A project backup is different from SVG, PNG, or PowerPoint export. Those formats are for output. The `.figureloom` file is for reopening and continuing the project.
+A project backup is different from SVG output. SVG is for viewing, publication, or conversion in another application. The `.figureloom` file is for reopening and continuing the editable project.
 
 ## Importing a backup
 
