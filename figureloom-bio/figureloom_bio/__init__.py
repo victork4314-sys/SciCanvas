@@ -8,6 +8,7 @@ from .genomics_core import install_genomics_core
 from .unique_name_fix import install_unique_name_fix
 from .workflow_expansion import install_workflow_expansion
 from .addon_packages import install_addon_packages
+from .addon_translation import install_addon_translation
 
 install_runtime_extensions(Runner)
 install_repeat_reset(Runner)
@@ -16,6 +17,7 @@ install_genomics_core(Runner)
 install_unique_name_fix(Runner)
 install_workflow_expansion(Runner)
 install_addon_packages(Runner)
+install_addon_translation()
 
 __version__ = "0.5.0"
 
