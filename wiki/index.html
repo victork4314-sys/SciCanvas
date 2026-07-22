@@ -61,5 +61,23 @@
 
   <script>window.requestIdleCallback=window.requestIdleCallback||function(callback){return setTimeout(callback,1)};</script>
   <script src="./wiki.js?v=3"></script>
+  <script>
+    (() => {
+      const nav = document.getElementById('wikiNav');
+      if (!nav || document.getElementById('figureloomVmNavGroup')) return;
+      const section = document.createElement('section');
+      section.id = 'figureloomVmNavGroup';
+      section.className = 'wiki-nav-group';
+      const heading = document.createElement('strong');
+      heading.textContent = 'FigureLoom Linux VM';
+      const link = document.createElement('a');
+      link.className = 'wiki-nav-link';
+      link.href = '#Home:figureloom-linux-vm-tools-snapshot';
+      link.dataset.page = 'Home';
+      link.textContent = 'VM access and tools';
+      section.append(heading, link);
+      nav.appendChild(section);
+    })();
+  </script>
 </body>
 </html>
