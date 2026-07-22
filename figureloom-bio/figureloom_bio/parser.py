@@ -64,8 +64,69 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.compile(r"change (.+?) to (.+?) under ([^.,]+)", re.IGNORECASE),
     ),
     ("count_rows", re.compile(r"count the rows", re.IGNORECASE)),
+    ("count_sequences", re.compile(r"count the (?:sequences|reads)", re.IGNORECASE)),
+    ("count_bases", re.compile(r"count the bases", re.IGNORECASE)),
+    ("show_sequence_names", re.compile(r"show the sequence names", re.IGNORECASE)),
+    ("show_sequences", re.compile(r"show the (?:sequences|reads)", re.IGNORECASE)),
+    (
+        "keep_min_length",
+        re.compile(
+            r"keep (?:sequences|reads) at least ([1-9][0-9]*) bases long",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "remove_shorter",
+        re.compile(
+            r"remove (?:sequences|reads) shorter than ([1-9][0-9]*) bases",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "keep_min_quality",
+        re.compile(
+            r"keep reads with average quality at least ([0-9]+(?:\.[0-9]+)?)",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "remove_low_quality",
+        re.compile(
+            r"remove reads with average quality below ([0-9]+(?:\.[0-9]+)?)",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "trim_start",
+        re.compile(r"trim ([1-9][0-9]*) bases from the start", re.IGNORECASE),
+    ),
+    (
+        "trim_end",
+        re.compile(r"trim ([1-9][0-9]*) bases from the end", re.IGNORECASE),
+    ),
+    (
+        "keep_motif",
+        re.compile(r"keep sequences containing (.+)", re.IGNORECASE),
+    ),
+    (
+        "remove_motif",
+        re.compile(r"remove sequences containing (.+)", re.IGNORECASE),
+    ),
+    ("to_rna", re.compile(r"convert the sequences to RNA", re.IGNORECASE)),
+    ("to_dna", re.compile(r"convert the sequences to DNA", re.IGNORECASE)),
+    (
+        "reverse_complement",
+        re.compile(r"find the reverse complement", re.IGNORECASE),
+    ),
+    ("translate", re.compile(r"translate the sequences", re.IGNORECASE)),
+    ("gc_content", re.compile(r"calculate the GC content", re.IGNORECASE)),
+    (
+        "compare_sequences",
+        re.compile(r"compare (?:the sequences|it) with (.+)", re.IGNORECASE),
+    ),
     ("show_result", re.compile(r"show the result", re.IGNORECASE)),
     ("show_file", re.compile(r"show the file", re.IGNORECASE)),
+    ("save_sequences", re.compile(r"save the (?:sequences|reads) as (.+)", re.IGNORECASE)),
     ("save_result", re.compile(r"save the result as (.+)", re.IGNORECASE)),
     ("say", re.compile(r"say (.+)", re.IGNORECASE)),
 )
