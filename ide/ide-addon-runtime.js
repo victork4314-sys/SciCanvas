@@ -7,12 +7,6 @@
   const status = document.getElementById('runStatus');
   if (!editor || !runButton || !results || !status) return;
 
-  const ready = new Set(['microbiology', 'genomics']);
-  const planned = new Set([
-    'virology','mycology','transcriptomics','proteomics','metagenomics','phylogenetics',
-    'singlecell','statistics','visualization','chemistry','laboratory','clinical',
-    'epidemiology','machinelearning','crispr','nanopore','illumina','rnaseq','16s','blast','alphafold'
-  ]);
   let bypass = false;
   let retryingRun = false;
 
@@ -21,8 +15,8 @@
     return /[\s"'\\]/.test(text) ? `'${text.replaceAll("'", `'\\''`)}'` : text;
   };
 
-  function declaration(sentence) {
-    return sentence.match(/^(?:use|load|enable|install)(?: the)? \.?([a-z0-9][a-z0-9-]*)(?: add-on| package)?$/i);
+  function legacyDeclaration(sentence) {
+    return /^(?:use|load|enable|install)(?: the)? \.?[a-z0-9][a-z0-9-]*(?: add-on| package)?$/i.test(sentence);
   }
 
   function expandMicrobiology(sentence) {
@@ -55,35 +49,27 @@
   }
 
   function compile(source) {
-    const active = new Set();
     const output = [];
     let changed = false;
     const lines = String(source).split(/\r?\n/);
-    for (let index = 0; index < lines.length; index += 1) {
-      const raw = lines[index];
+    for (const raw of lines) {
       const trimmed = raw.trim();
-      if (!trimmed || trimmed.startsWith('#')) { output.push(raw); continue; }
-      if (!trimmed.endsWith('.')) { output.push(raw); continue; }
+      if (!trimmed || trimmed.startsWith('#') || !trimmed.endsWith('.')) {
+        output.push(raw);
+        continue;
+      }
       const sentence = trimmed.slice(0, -1).trim();
-      const use = declaration(sentence);
-      if (use) {
-        const name = use[1].toLowerCase();
-        if (planned.has(name)) throw Object.assign(new Error(`The .${name} add-on is listed in the catalog but is not ready yet.`), { lineNumber:index + 1 });
-        if (!ready.has(name)) throw Object.assign(new Error(`I could not find the .${name} add-on.`), { lineNumber:index + 1 });
-        active.add(name);
+      if (legacyDeclaration(sentence)) {
         changed = true;
         continue;
       }
       const expanded = expandMicrobiology(sentence);
       if (expanded) {
-        if (!active.has('microbiology')) {
-          throw Object.assign(new Error('This sentence belongs to the .microbiology add-on.\n\nAdd this near the beginning of the program:\nUse .microbiology.'), { lineNumber:index + 1 });
-        }
         output.push(...expanded);
         changed = true;
-        continue;
+      } else {
+        output.push(raw);
       }
-      output.push(raw);
     }
     return { source:output.join('\n'), changed };
   }
@@ -93,7 +79,7 @@
     const section = document.createElement('section');
     section.className = 'result-section error';
     const heading = document.createElement('h3');
-    heading.textContent = error.lineNumber ? `Line ${error.lineNumber}` : 'Could not expand the add-on';
+    heading.textContent = error.lineNumber ? `Line ${error.lineNumber}` : 'Could not prepare the instruction';
     const paragraph = document.createElement('p');
     paragraph.textContent = error.message || String(error);
     section.append(heading, paragraph);
@@ -128,6 +114,7 @@
   function flowWillHandle() {
     return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(editor.value));
   }
+
   function waitForFlowAndRetry() {
     if (retryingRun) return;
     retryingRun = true;
@@ -150,10 +137,12 @@
     setTimeout(retry, 0);
   }
 
+  const needsBuiltInPreparation = () => /(?:\.(?:microbiology|genomics)|bacterial|resistance genes|virulence genes|plasmids|identify the organism|classify .+ using)/i.test(editor.value);
+
   window.addEventListener('click', (event) => {
     if (bypass) return;
     const target = event.target instanceof Element ? event.target.closest('#runButton,#translateProgramButton') : null;
-    if (!target || !/(?:\.microbiology|bacterial|resistance genes|virulence genes|plasmids|identify the organism)/i.test(editor.value)) return;
+    if (!target || !needsBuiltInPreparation()) return;
     if (target.id === 'runButton') {
       if (flowWillHandle()) return;
       event.preventDefault();
@@ -168,12 +157,12 @@
 
   document.addEventListener('keydown', (event) => {
     if (bypass || !(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
-    if (!/(?:\.microbiology|bacterial|resistance genes|virulence genes|plasmids|identify the organism)/i.test(editor.value)) return;
-    if (flowWillHandle()) return;
+    if (!needsBuiltInPreparation() || flowWillHandle()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     waitForFlowAndRetry();
   }, true);
 
-  window.FigureLoomBioAddons = { compile };
+  window.FigureLoomBioCapabilities = { compile };
+  window.FigureLoomBioAddons = window.FigureLoomBioCapabilities;
 })();
