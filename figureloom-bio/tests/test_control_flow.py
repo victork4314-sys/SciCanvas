@@ -66,7 +66,7 @@ Count the reads.
             self.assertIn("Named result", rendered)
             self.assertIn("Decision", rendered)
             self.assertIn("The condition was true.", rendered)
-            self.assertIn("The filter removed a read.", rendered)
+            self.assertIn("The filter removed a read", rendered)
             self.assertIn("Sequences\n\n2", rendered)
 
     def test_sample_loop_recipe_check_and_automatic_names(self) -> None:
