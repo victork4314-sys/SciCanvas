@@ -16,6 +16,7 @@ The language uses normal sentences and normal periods. The difficult machinery s
 ## Current working commands
 
 ```text
+Run this program 10 times.
 Open the file samples.csv.
 Keep only rows marked treated under condition.
 Remove rows marked failed under status.
@@ -37,6 +38,8 @@ Say Starting the analysis.
 
 When one file is open, later instructions refer to it as **the file** or **the result**. When a workflow uses more than one file, the language uses the real filenames so the instructions remain obvious.
 
+`Run this program 10 times.` goes at the beginning. Everything after it runs ten times. Saved files are numbered automatically, such as `clean-samples-1.csv` through `clean-samples-10.csv`, so one run does not overwrite another.
+
 Combining a second table keeps the current rows and adds matching information from the other file. Rows without a match stay in the result with empty added values.
 
 ## Run the example
@@ -49,7 +52,7 @@ python -m pip install -e .
 flbio run examples/clean-samples.flbio
 ```
 
-The same table commands also run directly in the browser IDE at `figureloom.org/ide`.
+The same table and repeat commands also run directly in the browser IDE at `figureloom.org/ide`. The IDE includes a program builder that creates a real downloadable `.flbio` file from ordinary instruction forms.
 
 The result is shown in separate, spacious sections. Raw technical output is not mixed into the useful result.
 
@@ -57,6 +60,8 @@ The result is shown in separate, spacious sections. Raw technical output is not 
 
 - Reading `.flbio` instructions as full sentences.
 - Requiring a normal period after every instruction.
+- Repeating a complete program and numbering its saved outputs.
+- Building and downloading programs in the browser IDE.
 - Opening CSV and TSV files.
 - Keeping and removing matching rows.
 - Choosing and renaming columns.
