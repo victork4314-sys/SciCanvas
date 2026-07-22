@@ -43,10 +43,22 @@ for (const marker of [
   'ide-decisions.js',
   'ide-decisions.css',
   'microbiology-example.flbio',
+  'forward.fastq',
+  'reverse.fastq',
   'resistance-markers.fasta',
   'bacteria-reference.fasta',
+  'new DataTransfer()',
+  "new File([source], name",
+  "dispatchEvent(new Event('change'",
+  'waitForImport',
 ]) {
-  if (!examples.includes(marker)) fail(`Bio examples do not load or provide: ${marker}`);
+  if (!examples.includes(marker)) fail(`Bio examples do not load, provide, or restore: ${marker}`);
+}
+if (examples.includes('location.reload()')) {
+  fail('Bio examples must restore files through the live IDE importer without reloading.');
+}
+if (examples.includes("localStorage.setItem(FILES_KEY")) {
+  fail('Bio examples must not overwrite the IDE workspace directly in localStorage.');
 }
 
-console.log(`FigureLoom Bio flow runtime passed: ${combined.length.toLocaleString()} assembled characters across ${partNames.length} validated parts.`);
+console.log(`FigureLoom Bio flow runtime passed: ${combined.length.toLocaleString()} assembled characters across ${partNames.length} validated parts, with live example-file restoration.`);
