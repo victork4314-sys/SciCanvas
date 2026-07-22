@@ -1,12 +1,16 @@
 (() => {
   const STORAGE_KEY = 'figureloom-bio-ide-files-v1';
   const ACTIVE_KEY = 'figureloom-bio-ide-active-v1';
+  const RESULTS_KEY = 'figureloom-bio-ide-results-v1';
+  const RUN_STATUS_KEY = 'figureloom-bio-ide-run-status-v1';
 
   const editor = document.getElementById('programEditor');
   const activeFileLabel = document.getElementById('activeFileLabel');
   const programName = document.getElementById('programName');
   const saveButton = document.getElementById('saveButton');
   const saveStatus = document.getElementById('saveStatus');
+  const results = document.getElementById('results');
+  const runStatus = document.getElementById('runStatus');
 
   if (!editor || !activeFileLabel || !saveButton) return;
 
@@ -38,6 +42,38 @@
     }
   }
 
+  function persistResults() {
+    try {
+      if (results) localStorage.setItem(RESULTS_KEY, results.innerHTML);
+      if (runStatus) {
+        localStorage.setItem(RUN_STATUS_KEY, JSON.stringify({
+          text: runStatus.textContent || 'Ready',
+          className: runStatus.className || 'status-pill'
+        }));
+      }
+    } catch {}
+  }
+
+  function restoreResults() {
+    try {
+      const savedResults = localStorage.getItem(RESULTS_KEY);
+      if (results && savedResults && /(?:result-section|empty-results)/.test(savedResults)) {
+        results.innerHTML = savedResults;
+      }
+
+      const savedStatus = JSON.parse(localStorage.getItem(RUN_STATUS_KEY) || 'null');
+      if (runStatus && savedStatus && typeof savedStatus === 'object') {
+        runStatus.textContent = savedStatus.text || 'Ready';
+        runStatus.className = savedStatus.className || 'status-pill';
+      }
+    } catch {}
+  }
+
+  function persistWorkspace() {
+    persistCurrent();
+    persistResults();
+  }
+
   function exactDownloadName(name) {
     if (/\.flbio(?:\.txt)?$/i.test(name)) {
       return name.replace(/\.flbio(?:\.txt)?$/i, '.flbio');
@@ -56,7 +92,7 @@
   function downloadCurrent(event) {
     event.preventDefault();
     event.stopImmediatePropagation();
-    persistCurrent();
+    persistWorkspace();
 
     const filename = exactDownloadName(currentName());
     let file;
@@ -78,12 +114,30 @@
     if (saveStatus) saveStatus.textContent = `Saved as ${filename}`;
   }
 
+  restoreResults();
+
   editor.addEventListener('input', persistCurrent);
-  window.addEventListener('pagehide', persistCurrent);
-  window.addEventListener('beforeunload', persistCurrent);
+  window.addEventListener('pagehide', persistWorkspace);
+  window.addEventListener('beforeunload', persistWorkspace);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') persistCurrent();
+    if (document.visibilityState === 'hidden') persistWorkspace();
   });
+
+  if (results) {
+    new MutationObserver(persistResults).observe(results, {
+      childList:true,
+      subtree:true,
+      characterData:true
+    });
+  }
+  if (runStatus) {
+    new MutationObserver(persistResults).observe(runStatus, {
+      childList:true,
+      subtree:true,
+      characterData:true,
+      attributes:true
+    });
+  }
 
   saveButton.addEventListener('click', downloadCurrent, true);
   document.addEventListener('keydown', (event) => {
@@ -94,5 +148,5 @@
     downloadCurrent(event);
   }, true);
 
-  persistCurrent();
+  persistWorkspace();
 })();
