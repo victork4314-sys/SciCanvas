@@ -14,56 +14,40 @@ class Instruction:
 
 
 _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    (
-        "repeat_program",
-        re.compile(r"run this program ([1-9][0-9]*) times?", re.IGNORECASE),
-    ),
+    ("repeat_program", re.compile(r"run this program ([1-9][0-9]*) times?", re.IGNORECASE)),
+    ("open_pair", re.compile(r"open the files (.+?) and (.+?) as a pair", re.IGNORECASE)),
     ("open_file", re.compile(r"open the file (.+)", re.IGNORECASE)),
-    (
-        "keep_rows",
-        re.compile(r"keep only rows marked (.+) under ([^.,]+)", re.IGNORECASE),
-    ),
-    (
-        "remove_rows",
-        re.compile(r"remove rows marked (.+) under ([^.,]+)", re.IGNORECASE),
-    ),
-    (
-        "keep_columns",
-        re.compile(r"keep only the columns (.+)", re.IGNORECASE),
-    ),
-    (
-        "rename_column",
-        re.compile(r"rename the column (.+?) to (.+)", re.IGNORECASE),
-    ),
-    (
-        "order_rows",
-        re.compile(r"put the rows in order by (.+)", re.IGNORECASE),
-    ),
-    (
-        "largest_first",
-        re.compile(r"put the largest (.+) first", re.IGNORECASE),
-    ),
-    (
-        "smallest_first",
-        re.compile(r"put the smallest (.+) first", re.IGNORECASE),
-    ),
-    (
-        "remove_duplicates",
-        re.compile(r"remove duplicate rows using (.+)", re.IGNORECASE),
-    ),
-    (
-        "replace_empty",
-        re.compile(r"replace empty values under (.+?) with (.+)", re.IGNORECASE),
-    ),
-    (
-        "combine_file",
-        re.compile(r"combine it with (.+) using ([^.,]+)", re.IGNORECASE),
-    ),
-    (
-        "change_value",
-        re.compile(r"change (.+?) to (.+?) under ([^.,]+)", re.IGNORECASE),
-    ),
+    ("keep_rows", re.compile(r"keep only rows marked (.+) under ([^.,]+)", re.IGNORECASE)),
+    ("remove_rows", re.compile(r"remove rows marked (.+) under ([^.,]+)", re.IGNORECASE)),
+    ("keep_columns", re.compile(r"keep only the columns (.+)", re.IGNORECASE)),
+    ("rename_column", re.compile(r"rename the column (.+?) to (.+)", re.IGNORECASE)),
+    ("order_rows", re.compile(r"put the rows in order by (.+)", re.IGNORECASE)),
+    ("largest_first", re.compile(r"put the largest (.+) first", re.IGNORECASE)),
+    ("smallest_first", re.compile(r"put the smallest (.+) first", re.IGNORECASE)),
+    ("remove_duplicates", re.compile(r"remove duplicate rows using (.+)", re.IGNORECASE)),
+    ("replace_empty", re.compile(r"replace empty values under (.+?) with (.+)", re.IGNORECASE)),
+    ("combine_file", re.compile(r"combine it with (.+) using ([^.,]+)", re.IGNORECASE)),
+    ("change_value", re.compile(r"change (.+?) to (.+?) under ([^.,]+)", re.IGNORECASE)),
     ("count_rows", re.compile(r"count the rows", re.IGNORECASE)),
+    ("count_sequences", re.compile(r"count the sequences", re.IGNORECASE)),
+    ("keep_sequences_longer", re.compile(r"keep only sequences longer than ([1-9][0-9]*) bases?", re.IGNORECASE)),
+    ("remove_sequences_shorter", re.compile(r"remove sequences shorter than ([1-9][0-9]*) bases?", re.IGNORECASE)),
+    ("remove_sequences_containing", re.compile(r"remove sequences containing (.+)", re.IGNORECASE)),
+    ("keep_sequences_containing", re.compile(r"keep only sequences containing (.+)", re.IGNORECASE)),
+    ("use_sequence", re.compile(r"use the sequence named (.+)", re.IGNORECASE)),
+    ("dna_to_rna", re.compile(r"convert the DNA to RNA", re.IGNORECASE)),
+    ("rna_to_dna", re.compile(r"convert the RNA to DNA", re.IGNORECASE)),
+    ("reverse_complement", re.compile(r"find the reverse complement", re.IGNORECASE)),
+    ("translate_dna", re.compile(r"translate the DNA into protein", re.IGNORECASE)),
+    ("show_first_sequences", re.compile(r"show the first ([1-9][0-9]*) sequences?", re.IGNORECASE)),
+    ("check_quality", re.compile(r"check the quality(?: again)?", re.IGNORECASE)),
+    ("show_quality_report", re.compile(r"show the quality report", re.IGNORECASE)),
+    ("remove_low_quality", re.compile(r"remove reads with low quality", re.IGNORECASE)),
+    ("remove_reads_shorter", re.compile(r"remove reads shorter than ([1-9][0-9]*) bases?", re.IGNORECASE)),
+    ("remove_adapters", re.compile(r"remove adapter sequences", re.IGNORECASE)),
+    ("cut_start", re.compile(r"cut ([1-9][0-9]*) bases? from the beginning of each read", re.IGNORECASE)),
+    ("cut_end", re.compile(r"cut ([1-9][0-9]*) bases? from the end of each read", re.IGNORECASE)),
+    ("save_pair", re.compile(r"save the pair as (.+?) and (.+)", re.IGNORECASE)),
     ("show_result", re.compile(r"show the result", re.IGNORECASE)),
     ("show_file", re.compile(r"show the file", re.IGNORECASE)),
     ("save_result", re.compile(r"save the result as (.+)", re.IGNORECASE)),
@@ -73,29 +57,23 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 def _split_sentences(source: str) -> list[tuple[int, str]]:
     sentences: list[tuple[int, str]] = []
-
     for line_number, raw_line in enumerate(source.splitlines(), start=1):
         stripped = raw_line.strip()
         if not stripped or stripped.startswith("#"):
             continue
-
         if not stripped.endswith("."):
             raise FigureLoomBioError(
-                "This instruction needs a period at the end.\n\n"
-                f"I read: {stripped}",
+                "This instruction needs a period at the end.\n\n" f"I read: {stripped}",
                 line_number=line_number,
             )
-
         sentence = stripped[:-1].strip()
         if sentence:
             sentences.append((line_number, sentence))
-
     return sentences
 
 
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
-
     for line_number, sentence in _split_sentences(source):
         for action, pattern in _PATTERNS:
             match = pattern.fullmatch(sentence)
@@ -111,5 +89,4 @@ def parse(source: str) -> list[Instruction]:
                 "Open the file samples.csv.",
                 line_number=line_number,
             )
-
     return instructions
