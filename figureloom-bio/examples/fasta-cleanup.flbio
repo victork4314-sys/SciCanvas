@@ -1,0 +1,10 @@
+Say Starting the FASTA cleanup.
+
+Open the file sequences.fasta.
+Count the sequences.
+Remove sequences shorter than 100 bases.
+Remove sequences containing N.
+Show the first 10 sequences.
+Save the result as clean-sequences.fasta.
+
+Say The FASTA cleanup is finished.
