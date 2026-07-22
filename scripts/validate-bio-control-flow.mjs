@@ -33,14 +33,9 @@ for (const marker of [
 }
 
 const loader = read('ide/ide-control-flow-runtime.js');
-for (const file of partNames) {
-  const name = path.basename(file);
-  if (!loader.includes(name.replace('part', 'part${String(number).padStart(2,\'0\')}'))) {
-    // The loader constructs numbered names, so verify the common stem instead below.
-    break;
-  }
+if (!loader.includes('ide-control-flow-runtime.part')) {
+  fail('The browser flow loader does not load the runtime parts.');
 }
-if (!loader.includes('ide-control-flow-runtime.part')) fail('The browser flow loader does not load the runtime parts.');
 
 const examples = read('ide/ide-bio-examples.js');
 for (const marker of [
