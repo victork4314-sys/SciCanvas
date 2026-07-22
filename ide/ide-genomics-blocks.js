@@ -18,6 +18,21 @@
     { id:'splitSequences', label:'Split a large FASTA result', pattern:/^Split the sequences into files with ([1-9][0-9]*) sequences each as (.+)\.$/i, parts:['Split the sequences into files with ', field('count','1000',{type:'number',min:'1'}), ' sequences each as ', field('file','chunk.fasta'), '.'] }
   ];
 
+  function registerHighlighting() {
+    const api = window.FigureLoomApprovedBio;
+    if (!api?.registerHighlight || window.__figureloomGenomicsHighlights) return;
+    window.__figureloomGenomicsHighlights = true;
+    const rules = [
+      [/^(Merge the sequences with )(.+)(\.)$/i,['c','f','p']],
+      [/^((?:Calculate sequence statistics|Validate the sequences|Remove gaps from the sequences|Make duplicate sequence names unique|Remove sequences containing ambiguous bases))(\.)$/i,['c','p']],
+      [/^(Keep sequences with names containing )(.+)(\.)$/i,['c','v','p']],
+      [/^(Remove sequences with names containing )(.+)(\.)$/i,['c','v','p']],
+      [/^(Keep sequences with at most )([0-9]+)( ambiguous bases)(\.)$/i,['c','v','c','p']],
+      [/^(Split the sequences into files with )([0-9]+)( sequences each as )(.+)(\.)$/i,['c','v','c','f','p']]
+    ];
+    for (const rule of rules) api.registerHighlight(...rule);
+  }
+
   function dialog() { return document.getElementById('blockEditor'); }
   function defaultSentence(template) {
     return template.parts.map((part) => typeof part === 'string' ? part : part.placeholder).join('');
@@ -108,9 +123,10 @@
     document.head.append(style);
   }
 
-  const observer = new MutationObserver(() => { addPalette(); enhanceCustomBlocks(); });
+  const observer = new MutationObserver(() => { registerHighlighting(); addPalette(); enhanceCustomBlocks(); });
   observer.observe(document.body, { childList:true, subtree:true });
   installStyles();
+  registerHighlighting();
   addPalette();
   enhanceCustomBlocks();
 })();
