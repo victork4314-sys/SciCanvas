@@ -20,6 +20,7 @@ The sidebar keeps the full manual organized by editing, scientific tools, files,
 - The passive guide has 13 steps covering Projects, Settings, main workspaces, tools, the canvas, pages and layers, the canvas control bar, the inspector, Pro Tools, Loomy, sharing, Help, and export.
 - The guide remains passive. It does not open panels, move objects, change selections, or scroll the project.
 - A project can be connected to a compatible external assistant from **Settings → MCP & AI access**. Connections are project-specific, revocable, and can be read-only or full access.
+- The **VM** button opens the hosted FigureLoom Linux desktop for optional browser-based Linux and bioinformatics work.
 - The focused runtime checks cover light and dark desktop and phone layouts, Help opening, project-tab close placement, failed local scripts, page errors, and console errors.
 
 ## Find a topic
