@@ -29,6 +29,7 @@
         <a href="./wiki/#Start-Here" target="_blank" rel="noopener"><b>Start here</b><small>Create, save, back up, and export a first project</small></a>
         <a href="./wiki/#Quick-Task-Guides" target="_blank" rel="noopener"><b>Quick task guides</b><small>Short instructions for the thing you are doing right now</small></a>
         <a href="./wiki/#Visual-Interface-Guide" target="_blank" rel="noopener"><b>Visual interface guide</b><small>Annotated desktop, tablet, phone, and Help layouts</small></a>
+        <a href="./wiki/#Home:figureloom-linux-vm-tools-snapshot" target="_blank" rel="noopener"><b>FigureLoom Linux VM</b><small>VM access, guest login, session note, and tools snapshot</small></a>
       </div>
       <button class="figureloom-help-tour" type="button" data-help-tour><span>◎</span><span><b>Take the passive interface tour</b><small>Shows the main areas without changing your project</small></span></button>
       <p>The manual opens in a new tab so your canvas stays exactly where it is.</p>`;
