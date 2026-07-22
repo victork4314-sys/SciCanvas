@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from .addon_packages import addon_catalog, expand_addons, get_addon
+from .capabilities import capability_catalog, expand_capabilities, get_theme
 from .control_flow import run_flow_program, uses_control_flow
 from .errors import FigureLoomBioError
 from .parser import parse
@@ -28,7 +28,7 @@ def run_program(path: Path, *, allow_tools: bool = False) -> int:
         if uses_control_flow(source):
             output = run_flow_program(path, source, allow_tools=allow_tools)
         else:
-            instructions = expand_addons(parse(source))
+            instructions = expand_capabilities(parse(source))
             streaming_instructions = normalize_streaming_instructions(instructions)
             output = run_streaming_if_needed(path.resolve(), streaming_instructions)
             if output is None:
@@ -79,36 +79,32 @@ def translate_program(path: Path, target: str, output: Path | None) -> int:
     return 0
 
 
-def show_addons(name: str | None = None) -> int:
-    if name:
-        package = get_addon(name)
-        if package is None:
-            print(f"I could not find the {name} add-on.", file=sys.stderr)
+def show_sentences(theme_name: str | None = None) -> int:
+    if theme_name:
+        theme = get_theme(theme_name)
+        if theme is None:
+            print(f"I could not find the {theme_name} theme.", file=sys.stderr)
             return 1
-        print(f".{package.name} · {package.title}")
-        print(f"Status: {package.status}")
-        print(f"Version: {package.version}")
-        print(package.description)
-        if package.commands:
-            print("\nCommands:")
-            for command in package.commands:
-                print(f"- {command.label}")
-        elif package.status == "planned":
-            print("\nThis add-on has a reserved place in the catalog but is not ready yet.")
+        print(f"{theme.icon} {theme.title}")
+        print(theme.description)
+        if theme.commands:
+            print("\nBuilt-in sentences:")
+            for command in theme.commands:
+                print(f"- {command.example}")
         return 0
 
-    print("FigureLoom Bio add-ons\n")
-    for package in addon_catalog():
-        print(f".{package.name:<16} {package.status:<7} {package.title}")
-    print("\nUse a ready add-on inside a program with a sentence such as:")
-    print("Use .microbiology.")
+    print("FigureLoom Bio built-in sentence themes\n")
+    for theme in capability_catalog():
+        print(f"{theme.icon} {theme.title}")
+        print(f"  {theme.description}")
+    print("\nEverything listed above is part of the language. Nothing needs to be installed or enabled.")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flbio",
-        description="Run, translate, or inspect FigureLoom Bio programs and add-ons.",
+        description="Run, translate, or inspect FigureLoom Bio programs and built-in sentences.",
     )
     subcommands = parser.add_subparsers(dest="command")
 
@@ -117,7 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--allow-tools",
         action="store_true",
-        help="Allow explicit installed-tool and add-on workflow instructions to launch local tools.",
+        help="Allow explicit workflow instructions to launch installed local tools.",
     )
 
     translate = subcommands.add_parser(
@@ -128,8 +124,15 @@ def build_parser() -> argparse.ArgumentParser:
     translate.add_argument("--to", required=True, choices=tuple(TARGET_LABELS))
     translate.add_argument("--output", "-o", type=Path)
 
-    addons = subcommands.add_parser("addons", help="List add-ons or show one add-on.")
-    addons.add_argument("name", nargs="?", help="Add-on name, such as .microbiology")
+    sentences = subcommands.add_parser(
+        "sentences",
+        help="List built-in sentence themes or inspect one theme.",
+    )
+    sentences.add_argument("theme", nargs="?", help="Theme name, such as microbiology")
+
+    # Older scripts may still call this name. It now shows the built-in library.
+    legacy = subcommands.add_parser("addons", help=argparse.SUPPRESS)
+    legacy.add_argument("theme", nargs="?")
     return parser
 
 
@@ -140,8 +143,8 @@ def main() -> None:
         raise SystemExit(run_program(arguments.program, allow_tools=arguments.allow_tools))
     if arguments.command == "translate":
         raise SystemExit(translate_program(arguments.program, arguments.to, arguments.output))
-    if arguments.command == "addons":
-        raise SystemExit(show_addons(arguments.name))
+    if arguments.command in {"sentences", "addons"}:
+        raise SystemExit(show_sentences(arguments.theme))
     parser.print_help()
     raise SystemExit(0)
 
