@@ -145,6 +145,10 @@ def run_stable_ide(native_ide_module: Any, arguments: list[str] | None = None) -
         from .desktop_reliability import crash_report, simple_explanation
 
         report = crash_report("IDE", error)
+        active_arguments = list(arguments) if arguments is not None else sys.argv[1:]
+        if "--self-test" in active_arguments:
+            print(f"FigureLoom Bio self-test failed: {error}\nCrash report: {report}", file=sys.stderr)
+            return 1
         try:
             app = QApplication.instance() or QApplication(["FigureLoom Bio Desktop"])
             QMessageBox.critical(
