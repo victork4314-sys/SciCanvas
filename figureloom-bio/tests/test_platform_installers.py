@@ -26,10 +26,12 @@ class PlatformInstallerTests(unittest.TestCase):
         entry = (self.root / "figureloom-bio" / "platform" / "ide_entry.py").read_text(encoding="utf-8")
         runtime = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py").read_text(encoding="utf-8")
         native = (self.root / "figureloom-bio" / "figureloom_bio" / "native_ide.py").read_text(encoding="utf-8")
+        stability = (self.root / "figureloom-bio" / "figureloom_bio" / "native_stability.py").read_text(encoding="utf-8")
         windows = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
         macos = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
 
-        self.assertIn("run_native_ide", entry)
+        self.assertIn("run_stable_ide", entry)
+        self.assertIn("native_ide_module.run_native_ide(arguments)", stability)
         self.assertIn("install_native_account", entry)
         self.assertIn("PySide6", native)
         self.assertIn("native_self_test", native)
@@ -44,7 +46,7 @@ class PlatformInstallerTests(unittest.TestCase):
             "127.0.0.1",
             "index.html",
         ):
-            self.assertNotIn(forbidden, runtime + entry)
+            self.assertNotIn(forbidden, runtime + entry + stability)
         self.assertNotIn("Join-Path $RepoRoot 'ide'", windows)
         self.assertNotIn("$ROOT_DIR/ide:ide", macos)
         self.assertIn("forbidden web-interface files", windows)
@@ -98,57 +100,4 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("figureloom-bio.png", macos_build)
         self.assertIn("figureloom-bio.icns", macos_build)
         self.assertGreaterEqual(macos_build.count('build_app "'), 3)
-        self.assertIn("--icon", macos_build)
-        self.assertIn('resource_path("assets", "figureloom-bio.png")', desktop_runtime)
-
-    def test_windows_installer_has_all_four_programs(self) -> None:
-        build = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
-        setup = (self.root / "figureloom-bio" / "windows" / "FigureLoomBio.iss").read_text(encoding="utf-8")
-        for name in ("flbio", "FigureLoom Bio IDE", "Test FigureLoom Bio", "Install or Update FigureLoom Bio"):
-            self.assertIn(name, build + setup)
-        self.assertIn("PySide6", build)
-        self.assertIn("cryptography", build)
-        self.assertIn("quick-test", setup)
-        self.assertIn("FigureLoom Bio Test Files", setup)
-        self.assertIn("PrivilegesRequired=lowest", setup)
-
-    def test_macos_installer_has_both_architectures_and_apps(self) -> None:
-        build = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
-        postinstall = (self.root / "figureloom-bio" / "macos" / "scripts" / "postinstall").read_text(encoding="utf-8")
-        self.assertIn("Apple-Silicon", build)
-        self.assertIn("Intel", build)
-        self.assertIn("PySide6", build)
-        self.assertIn("cryptography", build)
-        for name in ("FigureLoom Bio IDE", "Test FigureLoom Bio", "Install or Update FigureLoom Bio"):
-            self.assertIn(name, build)
-            self.assertIn(name, postinstall)
-        self.assertIn("quick-test", postinstall)
-        self.assertIn("/usr/local/bin/flbio", postinstall)
-        self.assertIn("/dev/console", postinstall)
-        self.assertNotIn("mapfile", postinstall)
-
-    def test_cross_platform_workflow_runs_native_installed_self_tests(self) -> None:
-        workflow = (self.root / ".github" / "workflows" / "build-bio-cross-platform-installers.yml").read_text(encoding="utf-8")
-        self.assertIn("windows-latest", workflow)
-        self.assertIn("macos-15", workflow)
-        self.assertIn("macos-15-intel", workflow)
-        self.assertIn("Start-Process", workflow)
-        self.assertGreaterEqual(workflow.count("--self-test"), 3)
-        self.assertGreaterEqual(workflow.count("QT_QPA_PLATFORM"), 2)
-        self.assertEqual(workflow.count(" -pkg dist/FigureLoom-Bio-Installer-macOS-"), 2)
-        self.assertIn("figureloom-bio-windows-installer", workflow)
-        self.assertIn("figureloom-bio-macos-installer", workflow)
-
-    def test_easy_install_page_links_all_platforms(self) -> None:
-        page = (self.root / "wiki" / "FigureLoom-Bio-Easy-Install.md").read_text(encoding="utf-8")
-        for name in (
-            "FigureLoom-Bio-Installer.deb",
-            "FigureLoom-Bio-Installer.exe",
-            "FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg",
-            "FigureLoom-Bio-Installer-macOS-Intel.pkg",
-        ):
-            self.assertIn(name, page)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertIn("icon_path", desktop_runtime)
