@@ -20,6 +20,8 @@ jobs:
         run: |
           node --check ide/ide-control-flow-runtime.js
           node --check ide/ide-decisions.js
+          node --check ide/ide-addon-runtime.js
+          node --check ide/ide-addon-packages.js
           node --check scripts/validate-bio-control-flow.mjs
           node scripts/validate-bio-control-flow.mjs
 
