@@ -1,17 +1,33 @@
 from __future__ import annotations
 
 import argparse
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+import platform
+import shutil
 import sys
 
-from .capabilities import capability_catalog, expand_capabilities, get_theme
+from .capabilities import expand_capabilities
 from .control_flow import run_flow_program, uses_control_flow
 from .errors import FigureLoomBioError
+from .language_manifest import language_manifest
 from .parser import parse
 from .runtime import Runner
 from .streaming_fasta import run_streaming_if_needed
 from .translators import TARGET_LABELS, default_output_path, translate_source
 from .workflow_expansion import normalize_streaming_instructions
+
+
+OPTIONAL_TOOLS = (
+    "seqkit",
+    "fastp",
+    "spades.py",
+    "quast.py",
+    "prokka",
+    "abricate",
+    "kraken2",
+    "mob_recon",
+)
 
 
 def run_program(path: Path, *, allow_tools: bool = False) -> int:
@@ -80,31 +96,64 @@ def translate_program(path: Path, target: str, output: Path | None) -> int:
 
 
 def show_sentences(theme_name: str | None = None) -> int:
+    manifest = language_manifest()
     if theme_name:
-        theme = get_theme(theme_name)
+        wanted = theme_name.strip().casefold()
+        theme = next(
+            (
+                item
+                for item in manifest.themes
+                if item.id.casefold() == wanted or item.title.casefold() == wanted
+            ),
+            None,
+        )
         if theme is None:
-            print(f"I could not find the {theme_name} theme.", file=sys.stderr)
+            available = "\n".join(f"- {item.title}" for item in manifest.themes)
+            print(
+                f"I could not find the {theme_name} theme.\n\nAvailable themes:\n{available}",
+                file=sys.stderr,
+            )
             return 1
-        print(f"{theme.icon} {theme.title}")
-        print(theme.description)
-        if theme.commands:
-            print("\nBuilt-in sentences:")
-            for command in theme.commands:
-                print(f"- {command.example}")
+        print(theme.title)
+        print()
+        for command in manifest.commands_for_theme(theme.id):
+            print(command.example)
         return 0
 
     print("FigureLoom Bio built-in sentence themes\n")
-    for theme in capability_catalog():
-        print(f"{theme.icon} {theme.title}")
-        print(f"  {theme.description}")
-    print("\nEverything listed above is part of the language. Nothing needs to be installed or enabled.")
+    for theme in manifest.themes:
+        count = len(manifest.commands_for_theme(theme.id))
+        print(f"{theme.title} ({count})")
+    print(f"\n{len(manifest.commands)} canonical built-in entries are listed in the shared language manifest.")
+    print("Everything listed is part of one language. Nothing needs to be installed or enabled inside a program.")
+    return 0
+
+
+def doctor() -> int:
+    try:
+        installed_version = version("figureloom-bio")
+    except PackageNotFoundError:
+        installed_version = "source checkout"
+
+    manifest = language_manifest()
+    print("FigureLoom Bio is ready.")
+    print(f"Version: {installed_version}")
+    print(f"Python: {platform.python_version()}")
+    print(f"Package: {Path(__file__).resolve().parent}")
+    print(f"Language manifest: {manifest.version} ({len(manifest.commands)} entries)")
+    print("Translation targets: " + ", ".join(TARGET_LABELS[key] for key in TARGET_LABELS))
+    print("\nOptional installed tools:")
+    for tool in OPTIONAL_TOOLS:
+        location = shutil.which(tool)
+        print(f"- {tool}: {location or 'not installed'}")
+    print("\nMissing optional tools do not stop the built-in language. They are needed only for workflows that launch those tools.")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flbio",
-        description="Run, translate, or inspect FigureLoom Bio programs and built-in sentences.",
+        description="Run, translate, inspect, or verify FigureLoom Bio.",
     )
     subcommands = parser.add_subparsers(dest="command")
 
@@ -116,9 +165,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow explicit workflow instructions to launch installed local tools.",
     )
 
+    target_names = ", ".join(TARGET_LABELS[key] for key in TARGET_LABELS)
     translate = subcommands.add_parser(
         "translate",
-        help="Translate a .flbio file to Python, R, Bash, Snakemake, or Nextflow.",
+        help=f"Translate a .flbio file to {target_names}.",
     )
     translate.add_argument("program", type=Path)
     translate.add_argument("--to", required=True, choices=tuple(TARGET_LABELS))
@@ -126,11 +176,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     sentences = subcommands.add_parser(
         "sentences",
-        help="List built-in sentence themes or inspect one theme.",
+        help="List built-in sentence themes or print one theme.",
     )
-    sentences.add_argument("theme", nargs="?", help="Theme name, such as microbiology")
+    sentences.add_argument("theme", nargs="?", help="Theme name, such as Microbiology")
 
-    # Older scripts may still call this name. It now shows the built-in library.
+    subcommands.add_parser(
+        "doctor",
+        help="Verify the installation and show optional bioinformatics tools.",
+    )
+
+    # Older scripts may still call this name. It now shows the same built-in manifest.
     legacy = subcommands.add_parser("addons", help=argparse.SUPPRESS)
     legacy.add_argument("theme", nargs="?")
     return parser
@@ -145,6 +200,8 @@ def main() -> None:
         raise SystemExit(translate_program(arguments.program, arguments.to, arguments.output))
     if arguments.command in {"sentences", "addons"}:
         raise SystemExit(show_sentences(arguments.theme))
+    if arguments.command == "doctor":
+        raise SystemExit(doctor())
     parser.print_help()
     raise SystemExit(0)
 
