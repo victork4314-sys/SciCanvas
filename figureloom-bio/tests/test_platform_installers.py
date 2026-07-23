@@ -94,8 +94,8 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("class TestWindow(QMainWindow)", tools)
         self.assertIn("class ManagerWindow(QMainWindow)", tools)
         self.assertIn("def simple_error", tools)
-        self.assertIn('"What happened\\n{reason}', tools)
-        self.assertIn('"What to do\\n{next_step}', tools)
+        self.assertIn('"What happened\n{reason}', tools)
+        self.assertIn('"What to do\n{next_step}', tools)
         self.assertIn('if "--self-test" in sys.argv', tools)
         self.assertIn("install_platform_tool_safety", test_entry)
         self.assertIn("install_platform_tool_safety", manager_entry)
@@ -162,11 +162,18 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("macos-15", workflow)
         self.assertIn("macos-15-intel", workflow)
         self.assertIn("Start-Process", workflow)
-        self.assertGreaterEqual(workflow.count("--self-test"), 9)
-        self.assertGreaterEqual(workflow.count("QT_QPA_PLATFORM"), 6)
+        self.assertIn("function Record-DesktopSelfTest", workflow)
+        for name in (
+            "Native Windows IDE self-test",
+            "Windows test launcher self-test",
+            "Windows updater self-test",
+        ):
+            self.assertIn(f"Record-DesktopSelfTest '{name}'", workflow)
+        self.assertGreaterEqual(workflow.count("QT_QPA_PLATFORM=offscreen"), 6)
         self.assertGreaterEqual(workflow.count("Test FigureLoom Bio"), 6)
         self.assertGreaterEqual(workflow.count("Install or Update FigureLoom Bio"), 6)
         self.assertEqual(workflow.count(" -pkg dist/FigureLoom-Bio-Installer-macOS-"), 2)
+        self.assertIn("FigureLoom-Bio-Windows-Install-Trace", workflow)
         self.assertIn("figureloom-bio-windows-installer", workflow)
         self.assertIn("figureloom-bio-macos-installer", workflow)
 
