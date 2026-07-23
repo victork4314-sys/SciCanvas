@@ -82,6 +82,7 @@ def install_current_file_translation() -> None:
             plan.require("spades.py")
             plan.forward = None
             plan.reverse = None
+            plan.add('CURRENT="assembly/contigs.fasta"')
             plan.set_current("assembly/contigs.fasta", kind="fasta")
             return
 
