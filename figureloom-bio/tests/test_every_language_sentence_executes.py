@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import shutil
 import unittest
 
 from figureloom_bio import Runner
@@ -93,20 +93,21 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
         return self._try_source(source)
 
     def _exercise_instruction(self, sentence: str, *, action_hint: str = "", identity: str = "") -> str:
+        command_id = identity.removeprefix("wording:")
+        special = self._special_source(command_id, sentence, action_hint)
+        if special is not None:
+            return self._try_source(special)
+
         try:
             instructions = parse(sentence)
-        except Exception as error:  # the report must retain the exact rejected sentence
+        except Exception as error:
             return f"parse failed: {error}"
         if len(instructions) != 1:
             return f"parsed into {len(instructions)} instructions instead of one"
         action = action_hint or instructions[0].action
 
-        special = self._special_source(identity, sentence, action)
-        if special is not None:
-            return self._try_source(special)
-
         errors: list[str] = []
-        for prelude in self._candidate_preludes(action):
+        for prelude in self._candidate_preludes(action, command_id):
             source = "\n".join(part for part in (prelude, sentence) if part).rstrip() + "\n"
             error = self._try_source(source)
             if not error:
@@ -114,13 +115,12 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
             errors.append(error)
         compact: list[str] = []
         for error in errors:
-            first = error.splitlines()[0].strip()
-            if first and first not in compact:
-                compact.append(first)
+            one_line = " ".join(part.strip() for part in error.splitlines() if part.strip())
+            if one_line and one_line not in compact:
+                compact.append(one_line)
         return "; ".join(compact[:6]) or "execution failed without an error message"
 
-    def _special_source(self, identity: str, sentence: str, action: str) -> str | None:
-        command_id = identity.removeprefix("wording:")
+    def _special_source(self, command_id: str, sentence: str, action: str) -> str | None:
         lowered = sentence.casefold()
         if action == "repeat_program" or command_id == "repeat_program":
             return f"{sentence}\nSay The repeated program worked.\n"
@@ -138,28 +138,36 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
                 "    Open the sample.\n"
                 f"    {sentence}\n"
             )
+        if action == "call_result" or command_id == "call_result":
+            return f"Open the file sequences.fasta.\n{sentence}\n"
         if action == "use_result" or lowered.startswith("use the result "):
             name = sentence.rstrip(".").split("result", 1)[1].strip()
             return f"Open the file sequences.fasta.\nCall the result {name}.\n{sentence}\n"
         if action == "use_recipe" or lowered.startswith("use the recipe "):
             name = sentence.rstrip(".").split("recipe", 1)[1].strip()
             return f"Make a recipe called {name}:\n    Say The recipe worked.\n{sentence}\n"
+        if action == "open_all_files" or command_id == "open_all_files":
+            return sentence + "\n"
         if action == "open_sample" or lowered == "open the sample.":
             return (
                 "Open all FASTQ files as samples.\n"
                 "For every sample in samples:\n"
                 f"    {sentence}\n"
             )
+        if action == "make_sure" or command_id == "make_sure":
+            return f"Open the file reads.fastq.\n{sentence}\n"
+        if action == "show_warning" or command_id == "show_warning":
+            return sentence + "\n"
         if action == "mark_review" or command_id == "mark_review":
             return f"Open the file sequences.fasta.\n{sentence}\n"
         if action == "stop_program" or command_id == "stop_program":
             return sentence + "\n"
-        if sentence.endswith(":"):
-            return None
+        if command_id == "rename_column":
+            return f"Open the file rename-source.csv.\n{sentence}\n"
         return None
 
     @staticmethod
-    def _candidate_preludes(action: str) -> tuple[str, ...]:
+    def _candidate_preludes(action: str, command_id: str) -> tuple[str, ...]:
         targeted: dict[str, tuple[str, ...]] = {
             "save_pair": ("Open the files forward.fastq and reverse.fastq as a pair.",),
             "check_quality": ("Open the file reads.fastq.",),
@@ -179,6 +187,20 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
             "read_statistic": ("Open the file reads.fastq.",),
             "grouped_box_plot": ("Open the file samples.csv.",),
             "heat_map_columns": ("Open the file samples.csv.",),
+            "assemble_current_bacterial_genome": ("Open the file reads.fastq.",),
+            "annotate_current_file": ("Open the file sequences.fasta.",),
+            "find_resistance_current_file": ("Open the file sequences.fasta.",),
+            "find_virulence_current_file": ("Open the file sequences.fasta.",),
+            "identify_current_file": ("Open the file reads.fastq.",),
+            "find_plasmids_current_file": ("Open the file sequences.fasta.",),
+        }
+        command_targeted: dict[str, tuple[str, ...]] = {
+            "assemble_current_file": ("Open the file reads.fastq.",),
+            "annotate_current_file": ("Open the file sequences.fasta.",),
+            "find_resistance_current_file": ("Open the file sequences.fasta.",),
+            "find_virulence_current_file": ("Open the file sequences.fasta.",),
+            "identify_current_file": ("Open the file reads.fastq.",),
+            "find_plasmids_current_file": ("Open the file sequences.fasta.",),
         }
         generic = (
             "",
@@ -194,30 +216,100 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
             "Open the file sequences.fasta.\nBuild a phylogenetic tree.",
             "Open the file samples.csv.\nCall the result current result.",
         )
-        return targeted.get(action, ()) + generic
+        return targeted.get(action, ()) + command_targeted.get(command_id, ()) + generic
 
     def _try_source(self, source: str) -> str:
         with TemporaryDirectory() as folder:
             root = Path(folder)
             self._write_fixtures(root)
+            tool_folder = self._write_fake_tools(root)
             program = root / "audit.flbio"
             program.write_text(source, encoding="utf-8")
+            old_path = os.environ.get("PATH", "")
+            os.environ["PATH"] = str(tool_folder) + os.pathsep + old_path
             try:
                 if uses_control_flow(source):
-                    run_flow_program(program, source, allow_tools=False)
+                    run_flow_program(program, source, allow_tools=True)
                     return ""
                 instructions = expand_capabilities(parse(source))
                 streaming = normalize_streaming_instructions(instructions)
                 output = run_streaming_if_needed(program.resolve(), streaming)
                 if output is None:
                     runner = Runner(program.resolve())
-                    runner.allow_external_tools = False
+                    runner.allow_external_tools = True
                     runner.run(instructions)
                 return ""
             except FigureLoomBioError as error:
-                return error.plain_message()
+                location = f"Line {error.line_number}: " if error.line_number is not None else ""
+                return location + error.message
             except Exception as error:
                 return f"{type(error).__name__}: {error}"
+            finally:
+                os.environ["PATH"] = old_path
+
+    @staticmethod
+    def _write_fake_tools(root: Path) -> Path:
+        folder = root / "fake-tools"
+        folder.mkdir()
+        script = r'''#!/usr/bin/env python3
+from pathlib import Path
+import os
+import sys
+
+name = Path(sys.argv[0]).name
+args = sys.argv[1:]
+
+def value(flag, default=""):
+    try:
+        return args[args.index(flag) + 1]
+    except (ValueError, IndexError):
+        return default
+
+def fasta(path):
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(">contig-1\nATGGCCGCCGCCTAA\n>contig-2\nATGAAATAG\n", encoding="utf-8")
+
+if name in {"spades.py", "spades"}:
+    output = Path(value("-o", "assembly"))
+    output.mkdir(parents=True, exist_ok=True)
+    fasta(output / "contigs.fasta")
+    print("SPAdes assembly completed")
+elif name in {"quast.py", "quast"}:
+    output = Path(value("-o", "assembly-quality"))
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "report.tsv").write_text("Assembly\t# contigs\nassembly\t2\n", encoding="utf-8")
+    print("QUAST report completed")
+elif name == "prokka":
+    output = Path(value("--outdir", "annotation"))
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "PROKKA.gff").write_text("##gff-version 3\ncontig-1\tProkka\tgene\t1\t9\t.\t+\t.\tID=gene-1\n", encoding="utf-8")
+    print("Prokka annotation completed")
+elif name == "abricate":
+    print("#FILE\tSEQUENCE\tSTART\tEND\tGENE\t%COVERAGE\t%IDENTITY")
+    print("assembly.fasta\tcontig-1\t1\t9\ttest-gene\t100\t100")
+elif name == "kraken2":
+    report = Path(value("--report", "kraken-report.txt"))
+    output = Path(value("--output", "kraken-output.txt"))
+    report.write_text("100.00\t3\t3\tS\t562\tEscherichia coli\n", encoding="utf-8")
+    output.write_text("C\tread-01\t562\t160\t562:160\n", encoding="utf-8")
+    print("Kraken classification completed")
+elif name == "mob_recon":
+    output = Path(value("--outdir", "plasmids"))
+    output.mkdir(parents=True, exist_ok=True)
+    fasta(output / "plasmid_contigs.fasta")
+    (output / "contig_report.txt").write_text("contig_id\tmolecule_type\ncontig-1\tplasmid\n", encoding="utf-8")
+    print("MOB-recon completed")
+elif name == "seqkit":
+    print("file\tformat\ttype\tnum_seqs\tsum_len\nreads.fasta\tFASTA\tDNA\t5\t1000")
+else:
+    print(f"{name} completed")
+'''
+        for name in ("spades.py", "spades", "quast.py", "quast", "prokka", "abricate", "kraken2", "mob_recon", "seqkit"):
+            path = folder / name
+            path.write_text(script, encoding="utf-8")
+            path.chmod(0o755)
+        return folder
 
     @staticmethod
     def _write_fixtures(root: Path) -> None:
@@ -231,6 +323,10 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
         for name in ("samples.csv", "metadata.csv", "more-samples.csv"):
             (root / name).write_text(table, encoding="utf-8")
         (root / "samples.tsv").write_text(table.replace(",", "\t"), encoding="utf-8")
+        (root / "rename-source.csv").write_text(
+            "old_name,condition,status\nalpha,treated,passed\nbeta,control,failed\n",
+            encoding="utf-8",
+        )
 
         fasta = (
             f">sample-17 first sequence\n{DNA_LONG}\n"
@@ -250,6 +346,7 @@ class EveryLanguageSentenceExecutesTests(unittest.TestCase):
             "@read-01\n" + ("ACGT" * 40) + "\n+\n" + ("I" * 160) + "\n"
             "@read-02\n" + ("TGCA" * 30) + "\n+\n" + ("H" * 120) + "\n"
             "@read-03\nACGTNNNNACGT\n+\n!!!!!!!!!!!!\n"
+            "@read-04\n" + ("GATTACA" * 18) + "\n+\n" + ("I" * 126) + "\n"
         )
         for name in ("reads.fastq", "forward.fastq", "reverse.fastq", "sample-a.fastq", "sample-b.fastq"):
             (root / name).write_text(fastq, encoding="utf-8")
