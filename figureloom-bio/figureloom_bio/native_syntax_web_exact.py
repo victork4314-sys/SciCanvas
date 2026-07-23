@@ -15,6 +15,14 @@ class ExactWebSyntaxHighlighter(WebSyntaxHighlighter):
         re.IGNORECASE,
     )
 
+    def _accepted(self, stripped: str) -> bool:
+        try:
+            return super()._accepted(stripped)
+        except Exception:
+            # Coloring is only visual. A parser extension must never be able to
+            # close the entire IDE while Qt is repainting the editor.
+            return False
+
     def highlightBlock(self, text: str) -> None:  # noqa: N802 - Qt API name
         if not self.enabled or not text.strip():
             return
