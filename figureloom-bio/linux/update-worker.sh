@@ -47,35 +47,43 @@ ensure_bootstrap_piece() {
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$package"
 }
 
+install_apt_piece() {
+  local package="$1"
+  local progress="$2"
+  local message="$3"
+  if ! command -v apt-get >/dev/null 2>&1; then
+    echo "$message and apt-get is unavailable." >&2
+    exit 1
+  fi
+  echo "PROGRESS $progress Installing missing Linux piece: $package"
+  if [[ "$APT_UPDATED" != 1 ]]; then
+    apt-get update -qq
+    APT_UPDATED=1
+  fi
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$package"
+}
+
 APT_UPDATED=0
 ensure_bootstrap_piece git git
 ensure_bootstrap_piece python3 python3
 ensure_bootstrap_piece tar tar
 
-if ! python3 -c 'import venv' >/dev/null 2>&1; then
-  if ! command -v apt-get >/dev/null 2>&1; then
-    echo "Python venv support is missing and apt-get is unavailable." >&2
-    exit 1
-  fi
-  echo "PROGRESS 12 Installing missing Linux piece: python3-venv"
-  if [[ "$APT_UPDATED" != 1 ]]; then
-    apt-get update -qq
-    APT_UPDATED=1
-  fi
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3-venv
+VENV_PROBE="$TEMP_DIR/venv-probe"
+if ! python3 -m venv "$VENV_PROBE" >/dev/null 2>&1; then
+  rm -rf "$VENV_PROBE"
+  install_apt_piece python3-venv 12 "Python virtual-environment support is missing"
 fi
+rm -rf "$VENV_PROBE"
+
+VENV_PROBE="$TEMP_DIR/venv-final-check"
+if ! python3 -m venv "$VENV_PROBE" >/dev/null 2>&1; then
+  echo "Python still cannot create a virtual environment after installing python3-venv." >&2
+  exit 1
+fi
+rm -rf "$VENV_PROBE"
 
 if ! python3 -c 'import tkinter' >/dev/null 2>&1; then
-  if ! command -v apt-get >/dev/null 2>&1; then
-    echo "The installer window needs Python Tk and apt-get is unavailable." >&2
-    exit 1
-  fi
-  echo "PROGRESS 16 Installing the installer window support"
-  if [[ "$APT_UPDATED" != 1 ]]; then
-    apt-get update -qq
-    APT_UPDATED=1
-  fi
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3-tk
+  install_apt_piece python3-tk 16 "The installer window needs Python Tk"
 fi
 
 echo "PROGRESS 22 Downloading the current FigureLoom Bio files"
