@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const fail = (message) => { throw new Error(message); };
+const phase = process.argv[2] || 'all';
 
 class MockElement {
   constructor(tag = 'div', id = '') {
@@ -123,7 +124,6 @@ elements.programEditor.value = program;
 storage.set('figureloom-bio-ide-files-v1', JSON.stringify({ ...bundled }));
 storage.set('figureloom-bio-ide-active-v1', programName);
 
-// Load both early parsers, then press Run before the complete runtime exists.
 new vm.Script(read('ide/ide-addon-runtime.js'), { filename:'ide-addon-runtime.js' }).runInContext(context);
 new vm.Script(read('ide/ide-approved-common.js'), { filename:'ide-approved-common.js' }).runInContext(context);
 
@@ -134,6 +134,10 @@ if (!recognition?.('If the assembly has more than 4 contigs:\n    Say fragmented
 if (!recognition?.('For every sample in samples:\n    Open the sample.')) {
   fail('The editor did not recognize a sample loop before the runtime loaded.');
 }
+if (phase === 'recognition') {
+  console.log('FigureLoom Bio recognized decisions and loops before runtime loading.');
+  process.exit(0);
+}
 
 const firstClick = dispatchRunClick();
 if (!firstClick.prevented || !firstClick.stopped) fail('The early parser did not hold the advanced program while the runtime was loading.');
@@ -143,14 +147,17 @@ if (elements.runStatus.textContent !== 'Starting browser analysis') {
 if (elements.results.children.some((child) => String(child.className).includes('error'))) {
   fail('The basic parser rejected the decision before the complete runtime loaded.');
 }
+if (phase === 'waiting') {
+  console.log('FigureLoom Bio held the advanced program while runtime loading.');
+  process.exit(0);
+}
 
-// Reproduce the slow iPad timing: the complete runtime appears after Run was pressed.
 await new Promise((resolve) => setTimeout(resolve, 120));
 const combinedRuntime = [0, 1, 2, 3, 4]
   .map((number) => read(`ide/ide-control-flow-runtime.part${String(number).padStart(2, '0')}`))
   .join('');
 new vm.Script(combinedRuntime, { filename:'ide-control-flow-runtime.combined.js' }).runInContext(context);
-await new Promise((resolve) => setTimeout(resolve, 220));
+await new Promise((resolve) => setTimeout(resolve, 350));
 
 if (elements.runStatus.textContent !== 'Finished') {
   fail(`The delayed runtime did not finish the program. Status: ${elements.runStatus.textContent}`);
@@ -158,6 +165,11 @@ if (elements.runStatus.textContent !== 'Finished') {
 if (elements.results.children.some((child) => String(child.className).includes('error'))) {
   fail('The delayed runtime produced an error result.');
 }
+if (phase === 'finished') {
+  console.log('FigureLoom Bio finished after delayed runtime loading.');
+  process.exit(0);
+}
+
 const saved = JSON.parse(storage.get('figureloom-bio-ide-files-v1') || '{}');
 for (const name of [
   'clean-forward.fastq',
