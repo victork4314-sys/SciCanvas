@@ -1,0 +1,9 @@
+Say Starting the sequence test.
+Open the file sequences.fasta.
+Count the sequences.
+Count the bases.
+Calculate the GC content.
+Align the sequences.
+Create a phylogenetic tree.
+Save the tree as quick-tree.nwk.
+Say The sequence test is complete.
