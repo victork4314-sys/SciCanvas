@@ -126,6 +126,15 @@ storage.set('figureloom-bio-ide-active-v1', programName);
 // Load both early parsers, then press Run before the complete runtime exists.
 new vm.Script(read('ide/ide-addon-runtime.js'), { filename:'ide-addon-runtime.js' }).runInContext(context);
 new vm.Script(read('ide/ide-approved-common.js'), { filename:'ide-approved-common.js' }).runInContext(context);
+
+const recognition = windowObject.FigureLoomApprovedBio?.sourceNeedsAdvancedRuntime;
+if (!recognition?.('If the assembly has more than 4 contigs:\n    Say fragmented.')) {
+  fail('The editor did not recognize a decision block before the runtime loaded.');
+}
+if (!recognition?.('For every sample in samples:\n    Open the sample.')) {
+  fail('The editor did not recognize a sample loop before the runtime loaded.');
+}
+
 const firstClick = dispatchRunClick();
 if (!firstClick.prevented || !firstClick.stopped) fail('The early parser did not hold the advanced program while the runtime was loading.');
 if (elements.runStatus.textContent !== 'Starting browser analysis') {
