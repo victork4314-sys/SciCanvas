@@ -17,6 +17,7 @@ from .current_file_translation import install_current_file_translation
 from .translation_completion import install_translation_completion
 from .language_aliases import install_language_aliases
 from .language_alias_precedence import install_language_alias_precedence
+from .generated_file_language import install_generated_file_language
 
 install_runtime_extensions(Runner)
 install_repeat_reset(Runner)
@@ -34,6 +35,7 @@ install_current_file_translation()
 install_translation_completion()
 install_language_aliases(Runner)
 install_language_alias_precedence()
+install_generated_file_language(Runner)
 
 __version__ = "0.7.0"
 
