@@ -1,32 +1,20 @@
 # FigureLoom Bio Linux Installer
 
-FigureLoom Bio can be installed into the FigureLoom Linux or Kasm desktop with one command. After the first installation, a normal desktop window handles updates, repairs, tests, and opening the IDE.
+FigureLoom Bio is installed only when a user chooses to install it. It is **not preinstalled into the Kasm image**, and there is no server-side Kasm image-builder step.
+
+The same Linux installer works on a normal Ubuntu or Debian desktop and inside a running Kasm desktop session.
 
 The `.flbio` language still has one built-in capability list. The installer does not create add-ons, language packages, or activation steps.
 
-## Install into the Kasm image
+## Install on Ubuntu, Debian, or inside Kasm
 
-Run this in the Kasm server console. A workspace session does not need to be running.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-kasm-image.sh | sudo bash
-```
-
-The finished image is:
-
-```text
-kasmweb/ubuntu-noble-desktop:figureloom-linux-public-flbio
-```
-
-Use that exact value as the Kasm workspace **Docker Image**.
-
-## Install on Ubuntu or Debian
-
-Run:
+Open the Linux terminal and run:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
 ```
+
+Inside Kasm, run that command from the terminal in the workspace session. It installs FigureLoom Bio into that Linux environment only. It does not rebuild or replace the Kasm Docker image.
 
 The first command installs the local IDE, the language engine, the desktop test files, and the desktop installer.
 
@@ -71,11 +59,11 @@ The test folder includes `quick-test.flbio`, sample CSV, FASTA, and FASTQ files,
 
 ## Automatic verification
 
-The Linux and Kasm installation paths run:
+The user-run Linux installation path runs:
 
 ```bash
 flbio doctor
 flbio quick-test
 ```
 
-The Kasm image builder also checks that the updater, IDE launcher, test launcher, installer icon, and test files exist inside the finished image before it reports success.
+The repository test workflow also rehearses a clean Linux desktop installation and verifies the updater, IDE launcher, test launcher, desktop icons, and unzipped test files.
