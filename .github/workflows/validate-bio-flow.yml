@@ -54,17 +54,7 @@ jobs:
         run: node scripts/validate-bio-documentation.mjs
 
       - name: Reject unfinished runtime and translation placeholders
-        run: |
-          set -o pipefail
-          node scripts/validate-bio-no-placeholders.mjs 2>&1 | tee bio-placeholder-audit.log
-
-      - name: Upload no-placeholder audit output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bio-placeholder-audit-log
-          path: bio-placeholder-audit.log
-          if-no-files-found: error
+        run: node scripts/validate-bio-no-placeholders.mjs
 
       - name: Validate registered language handlers
         run: node scripts/validate-bio-statement-registry.mjs
