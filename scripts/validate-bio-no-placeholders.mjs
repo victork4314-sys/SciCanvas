@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -5,8 +6,10 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const fail = (message) => { throw new Error(message); };
 
+// These files are active runtime, catalog, and browser surfaces. The original
+// translators.py compiler is deliberately exercised through the installed
+// completion layer below instead of being judged by unreachable base strings.
 const runtimeFiles = [
-  'figureloom-bio/figureloom_bio/translators.py',
   'figureloom-bio/figureloom_bio/control_flow_translation.py',
   'figureloom-bio/figureloom_bio/translation_completion.py',
   'figureloom-bio/figureloom_bio/current_file_translation.py',
@@ -50,4 +53,51 @@ if (manifest.commands.some((command) => /TODO|placeholder|planned only/i.test(co
   fail('The canonical language catalog contains unfinished wording.');
 }
 
-console.log(`FigureLoom Bio runtime and translation placeholder audit passed across ${runtimeFiles.length} files and ${manifest.commands.length} commands.`);
+const pythonCheck = String.raw`
+from figureloom_bio.translators import TARGET_LABELS, translate_source
+
+fallback = '''Open the file sequences.fasta.
+Keep sequences with at most 2 ambiguous bases.
+Save the result as clean.fasta.
+'''
+flow = '''Open the file samples.csv.
+If the result is not empty:
+    Say Samples were found.
+Otherwise:
+    Say No samples were found.
+'''
+direct = '''Open the file samples.csv.
+Count the rows.
+Save the result as counts.csv.
+'''
+for source in (fallback, flow):
+    for target in TARGET_LABELS:
+        translated = translate_source(source, target, program_name='audit.flbio')
+        lowered = translated.content.casefold()
+        assert '# todo' not in lowered, (target, translated.content)
+        assert 'needs a target-specific helper' not in lowered, (target, translated.content)
+        assert 'preserved as a todo' not in lowered, (target, translated.content)
+        assert ':.' not in translated.content, (target, translated.content)
+        assert not translated.warnings, (target, translated.warnings)
+        assert 'flbio' in lowered, (target, translated.content)
+standalone = translate_source(direct, 'bash', program_name='direct.flbio')
+assert 'csvstat --count' in standalone.content
+assert 'flbio run' not in standalone.content
+assert '# TODO' not in standalone.content
+print(f'Generated-output audit passed for {len(TARGET_LABELS)} targets.')
+`;
+
+let generatedAudit;
+try {
+  generatedAudit = execFileSync('python3', ['-c', pythonCheck], {
+    cwd:path.join(root, 'figureloom-bio'),
+    encoding:'utf8',
+    stdio:['ignore', 'pipe', 'pipe'],
+  }).trim();
+} catch (error) {
+  const stdout = String(error.stdout || '').trim();
+  const stderr = String(error.stderr || '').trim();
+  fail(`Actual translation output failed the no-placeholder audit.\n${stdout}\n${stderr}`.trim());
+}
+
+console.log(`${generatedAudit} Static runtime audit passed across ${runtimeFiles.length} active files and ${manifest.commands.length} commands.`);
