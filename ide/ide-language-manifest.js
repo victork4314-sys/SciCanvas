@@ -3,7 +3,7 @@
 
   if (window.FigureLoomBioLanguageReady) return;
 
-  const source = '../figureloom-bio/figureloom_bio/language_manifest.json?v=1';
+  const source = '../figureloom-bio/figureloom_bio/language_manifest.json?v=2';
 
   function freezeManifest(payload) {
     const themes = Object.freeze(payload.themes.map((theme) => Object.freeze({ ...theme })));
@@ -30,30 +30,6 @@
     return manifest;
   }
 
-  function loadModule(id, src) {
-    const existing = document.getElementById(id);
-    if (existing) return Promise.resolve(existing);
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.id = id;
-      script.src = src;
-      script.defer = true;
-      script.addEventListener('load', () => resolve(script), { once:true });
-      script.addEventListener('error', () => reject(new Error(`Could not load ${src}`)), { once:true });
-      document.body.append(script);
-    });
-  }
-
-  async function loadCanonicalLanguageModules() {
-    await Promise.all([
-      loadModule('figureloomBioLanguageCatalogUi', './ide-language-catalog-ui.js?v=1'),
-      loadModule('figureloomBioLanguageBlocksUi', './ide-language-blocks-ui.js?v=1'),
-      loadModule('figureloomBioAnalysisLanguage', './ide-analysis-language.js?v=1'),
-    ]);
-    await loadModule('figureloomBioCompleteLanguage', './ide-complete-language.js?v=1');
-    await loadModule('figureloomBioCompleteLanguageBridge', './ide-complete-language-bridge.js?v=1');
-  }
-
   window.FigureLoomBioLanguageReady = fetch(source, { cache:'no-store' })
     .then((response) => {
       if (!response.ok) throw new Error(`Could not load the FigureLoom Bio language manifest (${response.status}).`);
@@ -74,19 +50,4 @@
       }
       throw error;
     });
-
-  const start = () => loadCanonicalLanguageModules().catch((error) => {
-    console.error('Could not load the completed FigureLoom Bio language', error);
-    const status = document.getElementById('runStatus');
-    if (status) {
-      status.textContent = 'Language runtime did not load';
-      status.className = 'status-pill error';
-    }
-  });
-
-  if (document.readyState === 'complete') {
-    queueMicrotask(start);
-  } else {
-    window.addEventListener?.('load', start, { once:true });
-  }
 })();
