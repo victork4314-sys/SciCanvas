@@ -133,4 +133,5 @@ pkgbuild \
 
 pkgutil --check-signature "$INSTALLER" || true
 pkgutil --payload-files "$INSTALLER" | grep 'Applications/FigureLoom Bio IDE.app' >/dev/null
+rm -rf "$BUILD_ROOT"
 printf '%s\n' "$INSTALLER"
