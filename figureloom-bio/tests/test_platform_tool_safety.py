@@ -27,6 +27,15 @@ class PlatformToolSafetyTests(unittest.TestCase):
         self.assertIn("test_window_self_test = painted_test_window_self_test", source)
         self.assertIn("manager_window_self_test = painted_manager_window_self_test", source)
 
+    def test_updater_closes_only_after_successful_installer_handoff(self) -> None:
+        source = SAFETY.read_text(encoding="utf-8")
+        self.assertIn("original_download_finished(self, success, message, path)", source)
+        self.assertIn('success and self.status.objectName() == "success"', source)
+        self.assertIn("_figureloom_close_after_installer = True", source)
+        self.assertIn("original_thread_finished(self)", source)
+        self.assertIn("QTimer.singleShot(0, self.close)", source)
+        self.assertIn("_figureloom_safe_installer_handoff = True", source)
+
 
 if __name__ == "__main__":
     unittest.main()
