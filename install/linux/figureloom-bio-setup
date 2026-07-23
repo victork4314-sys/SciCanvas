@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SETUP_PYTHON="${FIGURELOOM_BIO_SETUP_PYTHON:-/usr/share/figureloom-bio/setup/figureloom_bio_setup.py}"
+INSTALLER="${FIGURELOOM_BIO_INSTALLER:-/opt/figureloom-bio/source/install/figureloom-bio-linux.sh}"
+
+if [[ "${1:-}" == "--self-test" ]]; then
+    exec python3 "${SETUP_PYTHON}" --self-test
+fi
+
+if python3 - <<'PY' >/dev/null 2>&1
+import tkinter
+PY
+then
+    exec python3 "${SETUP_PYTHON}" "$@"
+fi
+
+if command -v zenity >/dev/null 2>&1; then
+    if ! zenity --question \
+        --title="FigureLoom Bio Setup" \
+        --width=520 \
+        --ok-label="Install / Update" \
+        --cancel-label="Cancel" \
+        --text="Install or update FigureLoom Bio, the local visual IDE, desktop launchers, and ready-to-run test files?\n\nMissing required packages are installed automatically. Existing bioinformatics tools are left alone."; then
+        exit 0
+    fi
+
+    run=(bash "${INSTALLER}")
+    if [[ "${EUID}" -ne 0 ]]; then
+        if command -v pkexec >/dev/null 2>&1; then
+            run=(pkexec bash "${INSTALLER}")
+        elif command -v sudo >/dev/null 2>&1; then
+            run=(sudo -E bash "${INSTALLER}")
+        fi
+    fi
+
+    log_file="$(mktemp -t figureloom-bio-setup-XXXXXX.log)"
+    if "${run[@]}" >"${log_file}" 2>&1 & then
+        installer_pid=$!
+        (
+            while kill -0 "${installer_pid}" 2>/dev/null; do
+                echo "# Installing FigureLoom Bio…"
+                sleep 0.4
+            done
+        ) | zenity --progress \
+            --title="FigureLoom Bio Setup" \
+            --text="Installing FigureLoom Bio…" \
+            --pulsate \
+            --auto-close \
+            --no-cancel \
+            --width=500 || true
+        wait "${installer_pid}"
+        status=$?
+    else
+        status=1
+    fi
+
+    if [[ "${status}" -eq 0 ]]; then
+        zenity --info \
+            --title="FigureLoom Bio is ready" \
+            --width=500 \
+            --text="The IDE, terminal command, desktop launchers, and test files are installed."
+        exit 0
+    fi
+
+    zenity --error \
+        --title="FigureLoom Bio setup stopped" \
+        --width=520 \
+        --text="The installer did not finish. The log is saved at:\n${log_file}"
+    exit "${status}"
+fi
+
+terminal=""
+for candidate in x-terminal-emulator xfce4-terminal gnome-terminal konsole; do
+    if command -v "${candidate}" >/dev/null 2>&1; then
+        terminal="${candidate}"
+        break
+    fi
+done
+
+if [[ -n "${terminal}" ]]; then
+    command_text="bash '${INSTALLER}'; status=\$?; echo; if [ \$status -eq 0 ]; then echo 'FigureLoom Bio is ready.'; else echo 'Setup stopped with an error.'; fi; echo 'Press Enter to close.'; read -r; exit \$status"
+    case "${terminal}" in
+        xfce4-terminal) exec "${terminal}" --hold -e "bash -lc \"${command_text}\"" ;;
+        gnome-terminal) exec "${terminal}" -- bash -lc "${command_text}" ;;
+        konsole) exec "${terminal}" --hold -e bash -lc "${command_text}" ;;
+        *) exec "${terminal}" -e bash -lc "${command_text}" ;;
+    esac
+fi
+
+echo "A graphical setup window is not available."
+echo "Run: sudo bash ${INSTALLER}"
+exit 1
