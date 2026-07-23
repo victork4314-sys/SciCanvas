@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE_DIR="${FIGURELOOM_BIO_TEST_SOURCE:-/usr/share/figureloom-bio/test-files}"
+DESKTOP_DIR="${XDG_DESKTOP_DIR:-${HOME}/Desktop}"
+TARGET_DIR="${DESKTOP_DIR}/FigureLoom Bio Test Files"
+
+mkdir -p "${DESKTOP_DIR}"
+rm -rf "${TARGET_DIR}"
+cp -a "${SOURCE_DIR}" "${TARGET_DIR}"
+
+echo "FigureLoom Bio test files were copied to:"
+echo "${TARGET_DIR}"
+
+if command -v xdg-open >/dev/null 2>&1; then
+    nohup xdg-open "${TARGET_DIR}" >/dev/null 2>&1 &
+fi
