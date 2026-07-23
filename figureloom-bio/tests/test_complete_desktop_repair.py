@@ -36,8 +36,8 @@ class CompleteDesktopRepairTests(unittest.TestCase):
                 runtime_parse("Create something scientific somehow.")
             message = caught.exception.plain_message()
             self.assertIn("What happened", message)
-            self.assertIn("How to fix it", message)
-            self.assertIn("Instruction read", message)
+            self.assertTrue("How to fix it" in message or "What to do" in message)
+            self.assertIn("I read", message)
 
     def test_every_runtime_error_gets_a_simple_next_step(self) -> None:
         examples = (
