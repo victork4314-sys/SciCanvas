@@ -1,48 +1,46 @@
-# FigureLoom Bio on Linux and Kasm
+# FigureLoom Bio Linux desktop installer
 
-## Kasm server: one pasted command
+FigureLoom Bio is **not preinstalled into the Kasm image**. There is no Kasm image-builder or server-side preinstallation step.
 
-Run this in the Kasm server console. No workspace session needs to be running.
+A user installs it only when they choose to, either on a normal Ubuntu or Debian desktop or from inside their own running Kasm desktop session.
+
+## One pasted command
+
+Run this in the Linux terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-kasm-image.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
 ```
 
-The installer builds and tests this image:
+Inside Kasm, open the terminal in the running workspace and use the same command. It installs FigureLoom Bio only into that Linux environment. It does not rebuild, replace, or modify the Kasm Docker image.
 
-```text
-kasmweb/ubuntu-noble-desktop:figureloom-linux-public-flbio
-```
+The first install adds:
 
-Use that exact value as the **Docker Image** for the FigureLoom Linux workspace in Kasm.
-
-The image contains:
-
-- FigureLoom Bio 0.8.0;
+- a desktop and application-menu icon named **Install or Update FigureLoom Bio**;
 - a desktop and application-menu icon named **FigureLoom Bio IDE**;
 - a desktop icon named **Test FigureLoom Bio**;
 - an unzipped desktop folder named **FigureLoom Bio Test Files**;
 - `flbio test-files` to recreate the folder;
 - `flbio quick-test` to run the automatic test.
 
-## Any normal Linux desktop: one pasted command
+After the first command, ordinary users can double-click **Install or Update FigureLoom Bio** instead of pasting commands again.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
-```
+## Installer window
 
-## Different Kasm image names
+The window can:
 
-```bash
-sudo bash install-kasm-image.sh EXISTING_IMAGE NEW_IMAGE
-```
+- install the current version;
+- update an existing installation;
+- repair missing launchers or desktop files;
+- install only missing basic Linux pieces such as Python venv or installer-window support;
+- run the real CSV, FASTA, FASTQ, figure, alignment, and tree test;
+- open the local IDE;
+- open the unzipped desktop test folder.
 
-Example:
+The language itself still has one built-in capability list. This installer does not add a package or add-on system to `.flbio`.
 
-```bash
-sudo bash install-kasm-image.sh \
-  kasmweb/ubuntu-noble-desktop:figureloom-linux-public-boot-fixed \
-  kasmweb/ubuntu-noble-desktop:figureloom-linux-public-flbio
-```
+## What the installer checks
 
-The Kasm installer runs `flbio doctor`, checks both desktop launchers, checks the unzipped test folder, and executes `flbio quick-test` inside the finished image before reporting success.
+Before reporting success, it checks the required Linux pieces, installs FigureLoom Bio in its isolated environment, copies the local IDE, creates all three desktop launchers, creates the test folder, runs `flbio doctor`, and executes `flbio quick-test`.
+
+A desktop browser is required for the local IDE window. Chromium, Google Chrome, Firefox, and Firefox ESR are supported. Optional external bioinformatics programs are not silently installed.
