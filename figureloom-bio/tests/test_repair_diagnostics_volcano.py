@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 from figureloom_bio import Runner
+from figureloom_bio import desktop_tools, native_core, parser as parser_module
 from figureloom_bio.desktop_tools import run_quick_test
 from figureloom_bio.errors import FigureLoomBioError
 from figureloom_bio.language_diagnostics import language_diagnostics_self_test
@@ -25,6 +26,18 @@ class RepairDiagnosticsVolcanoTests(unittest.TestCase):
         self.assertIn("What happened", message)
         self.assertIn("How to fix it", message)
         self.assertIn("Instruction read", message)
+
+    def test_real_ide_and_quick_test_use_the_final_diagnostic_parser(self) -> None:
+        self.assertIs(native_core.parse, parser_module.parse)
+        self.assertIs(desktop_tools.parse, parser_module.parse)
+        for runtime_parse in (native_core.parse, desktop_tools.parse):
+            with self.subTest(runtime=runtime_parse.__module__):
+                instructions = runtime_parse("Draw a vulcano plot from fold_change and p_value.")
+                self.assertEqual(len(instructions), 1)
+                with self.assertRaises(FigureLoomBioError) as caught:
+                    runtime_parse("Create something scientific somehow.")
+                self.assertIn("What happened", caught.exception.plain_message())
+                self.assertIn("How to fix it", caught.exception.plain_message())
 
     def test_runtime_errors_also_explain_the_fix(self) -> None:
         error = FigureLoomBioError("I could not find the column missing.", line_number=3)
@@ -67,7 +80,9 @@ class RepairDiagnosticsVolcanoTests(unittest.TestCase):
             self.assertIn("real thresholded volcano plot", report)
 
     def test_internal_self_tests(self) -> None:
-        self.assertTrue(language_diagnostics_self_test()["known_typo_resolved"])
+        diagnostics = language_diagnostics_self_test()
+        self.assertTrue(diagnostics["known_typo_resolved"])
+        self.assertTrue(diagnostics["runtime_references_routed"])
         self.assertTrue(volcano_self_test()["real_volcano_svg"])
 
 
