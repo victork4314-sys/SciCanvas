@@ -22,6 +22,8 @@ Calculate the median of score.
 Normalize the counts under count.
 Create a histogram of score.
 Save the file as quick-histogram.svg.
+Create a volcano plot using fold_change and p_value.
+Save the file as quick-volcano.svg.
 
 Open the file sequences.fasta.
 Align the sequences.
@@ -40,11 +42,13 @@ Count the reads.
 Say The FigureLoom Bio quick test is complete.
 """
 
-MEASUREMENTS = """sample,group,score,count
-sample-a,treated,10,100
-sample-b,treated,12,120
-sample-c,control,4,40
-sample-d,control,6,60
+MEASUREMENTS = """sample,group,score,count,gene,fold_change,p_value
+sample-a,treated,10,100,gene-a,2.4,0.0005
+sample-b,treated,12,120,gene-b,1.6,0.01
+sample-c,control,4,40,gene-c,-2.1,0.002
+sample-d,control,6,60,gene-d,-0.4,0.4
+sample-e,treated,8,80,gene-e,0.2,0.8
+sample-f,control,7,70,gene-f,-1.3,0.03
 """
 
 SEQUENCES = """>sample-one
@@ -82,6 +86,7 @@ Manual IDE check:
 3. Select quick-test.flbio and the three data files in this folder.
 4. Press Run.
 5. The results should appear in separate readable sections.
+6. The histogram and volcano plot should appear as visible figure previews.
 
 You can recreate this entire folder at any time with:
 
@@ -90,6 +95,7 @@ You can recreate this entire folder at any time with:
 
 EXPECTED_OUTPUTS = (
     "quick-histogram.svg",
+    "quick-volcano.svg",
     "quick-alignment.fasta",
     "quick-tree.nwk",
 )
@@ -134,6 +140,13 @@ def _check_output(path: Path) -> None:
         raise FigureLoomBioError(f"The quick test found placeholder text in {path.name}.")
     if path.suffix.casefold() == ".svg" and not text.lstrip().startswith("<svg"):
         raise FigureLoomBioError(f"The quick test did not create a real SVG in {path.name}.")
+    if path.name == "quick-volcano.svg":
+        required = ('data-significance="higher"', 'data-significance="lower"', "stroke-dasharray")
+        missing = [value for value in required if value not in text]
+        if missing:
+            raise FigureLoomBioError(
+                "The volcano plot SVG is missing significance groups or threshold lines: " + ", ".join(missing)
+            )
     if path.suffix.casefold() == ".nwk" and not text.strip().endswith(";"):
         raise FigureLoomBioError(f"The quick test did not create a valid-looking tree in {path.name}.")
 
@@ -155,6 +168,7 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         required_sections = (
             "Average of score",
             "Median of score",
+            "Volcano plot",
             "Alignment",
             "Phylogenetic tree",
             "Average read quality",
@@ -176,7 +190,7 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         "FIGURELOOM BIO QUICK TEST PASSED\n\n"
         "The language opened CSV, FASTA, and FASTQ data.\n"
         "It calculated statistics and read quality.\n"
-        "It created a real SVG figure, alignment, and phylogenetic tree.\n"
+        "It created a real histogram, a real thresholded volcano plot, an alignment, and a phylogenetic tree.\n"
         "No TODO or placeholder output was found.\n\n"
         f"Test folder: {folder}\n"
     )
