@@ -1,0 +1,10 @@
+Say Starting the read test.
+Open the file reads.fastq.
+Count the reads.
+Calculate the average quality.
+Calculate the median quality.
+Calculate the standard deviation of quality.
+Keep reads at least 100 bases.
+Show the quality report.
+Save the file as quick-clean-reads.fastq.
+Say The read test is complete.
