@@ -21,9 +21,12 @@
     [/^(Otherwise(?:,)? if )(.+)(:)$/i, ['c','v','p']],
     [/^(Otherwise)(:)$/i, ['c','p']],
     [/^(Make a recipe called )(.+)(:)$/i, ['c','v','p']],
-    [/^(For every )([a-z][\w-]*)(?: in )?([a-z][\w-]*)?(:)$/i, ['c','v','v','p']],
+    [/^(For every )([a-z][\w-]*)( in )([a-z][\w-]*)(:)$/i, ['c','v','w','v','p']],
+    [/^(For every )([a-z][\w-]*)(:)$/i, ['c','v','p']],
     [/^(Make sure )(.+)(\.)$/i, ['c','v','p']],
     [/^(Call the result )(.+)(\.)$/i, ['c','v','p']],
+    [/^(Use the result )(.+)(\.)$/i, ['c','v','p']],
+    [/^(Use the recipe )(.+)(\.)$/i, ['c','v','p']],
     [/^(Show a warning saying )(.+)(\.)$/i, ['c','v','p']],
   ];
   let target = results;
