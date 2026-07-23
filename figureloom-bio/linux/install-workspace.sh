@@ -229,17 +229,13 @@ install_desktop() {
   fi
 }
 
-if [[ -d /home/kasm-default-profile ]]; then
-  install_desktop /home/kasm-default-profile
-fi
-if [[ -d /home/kasm-user ]]; then
-  install_desktop /home/kasm-user kasm-user
-fi
 if [[ -n "$TARGET_USER" && "$TARGET_USER" != root ]]; then
   USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
   if [[ -n "$USER_HOME" ]]; then
     install_desktop "$USER_HOME" "$TARGET_USER"
   fi
+else
+  install_desktop /root
 fi
 
 echo "PROGRESS 78 Running a real language test"
