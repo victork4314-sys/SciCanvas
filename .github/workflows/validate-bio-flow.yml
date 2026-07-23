@@ -98,12 +98,12 @@ jobs:
       - name: Run completed terminal language tests
         run: |
           cd figureloom-bio
-          python3 -m unittest tests.test_complete_language -v
+          python3 -m unittest discover -s tests -p 'test_complete_language.py' -v
 
       - name: Run native terminal analysis tests
         run: |
           cd figureloom-bio
-          python3 -m unittest tests.test_analysis_language -v
+          python3 -m unittest discover -s tests -p 'test_analysis_language.py' -v
 
       - name: Run complete FigureLoom Bio tests
         run: |
