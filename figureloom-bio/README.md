@@ -13,35 +13,33 @@ Save the result as clean-samples.csv.
 
 The language uses normal sentences and normal periods. The difficult machinery stays underneath.
 
-## Add-ons for specialist biology
+## One built-in language
 
-The shared core stays small. Domain packages add specialist sentences, synonyms, blocks, documentation, and translation recipes.
+Specialist biology is part of FigureLoom Bio itself. There are no add-ons to install, enable, update, or declare inside a program.
 
 ```flbio
-Use .microbiology.
-
 Open the files forward.fastq and reverse.fastq as a pair.
 Prepare bacterial reads.
 Save the pair as clean-forward.fastq and clean-reverse.fastq.
 Assemble the bacterial genome from clean-forward.fastq and clean-reverse.fastq into assembly.
 ```
 
-The `.microbiology` package is the first ready add-on. It includes readable workflows for bacterial read preparation, isolate assembly, assembly quality, annotation, resistance genes, virulence genes, taxonomy, and plasmids. Its tool-backed sentences expand through the guarded installed-tool gateway, so they require explicit permission when run locally:
+Microbiology sentences currently cover bacterial read preparation, isolate assembly, assembly quality, annotation, resistance genes, virulence genes, taxonomy, and plasmids. Tool-backed sentences still require explicit permission when they launch installed local tools:
 
 ```bash
 flbio run examples/microbiology-bacterial-genome.flbio --allow-tools
 ```
 
-List the full package catalog or inspect one package:
+The IDE has one searchable **Sentences** library. It combines the full language into a single list and lets people search or browse by themes such as files, tables, DNA and RNA, FASTQ, microbiology, decisions, samples, recipes, and results.
+
+The command line can show the built-in themes or one theme:
 
 ```bash
-flbio addons
-flbio addons .microbiology
+flbio sentences
+flbio sentences microbiology
 ```
 
-The IDE includes a searchable Add-ons window, microbiology sentence blocks, and deterministic autocomplete. Type the beginning of a package sentence, use the arrow keys, and press Tab to complete it. Adding a package block also adds `Use .microbiology.` to the program when needed.
-
-`.genomics` is part of core. Names such as `.virology`, `.mycology`, `.metagenomics`, `.phylogenetics`, `.singlecell`, `.crispr`, `.nanopore`, `.16s`, and `.alphafold` are reserved in the catalog but stay marked planned until their commands, translations, documentation, and tests are ready.
+Older saved files containing `Use .microbiology.` still run. FigureLoom Bio quietly ignores that old declaration because it is no longer needed.
 
 ## Reusable programs
 
@@ -163,7 +161,7 @@ flbio run examples/clean-samples.flbio
 flbio run examples/clean-fastq.flbio
 ```
 
-The same table, FASTA, FASTQ, paired FASTQ, comparison, repeat, package, and translation commands run directly in the browser IDE at `figureloom.org/ide` when they do not require an installed system tool.
+The same table, FASTA, FASTQ, paired FASTQ, comparison, repeat, microbiology, decision, recipe, and translation sentences run directly in the browser IDE at `figureloom.org/ide` when they do not require an installed system tool.
 
 The result is shown in separate, spacious sections. Raw technical output is not mixed into the useful result.
 
@@ -181,7 +179,8 @@ The result is shown in separate, spacious sections. Raw technical output is not 
 - Converting DNA and RNA, reverse complements, and protein translation.
 - Calculating GC content and comparing named sequences.
 - Huge FASTA streaming, file merging, and workflow translation.
-- A trusted add-on registry with `.microbiology`, blocks, synonyms, and autocomplete.
+- Built-in microbiology workflows with no package declaration.
+- One searchable sentence library organized by theme.
 - Plain errors that point to the sentence that needs fixing.
 - Continuous line numbers and an immediately refreshed file panel in the IDE.
 
