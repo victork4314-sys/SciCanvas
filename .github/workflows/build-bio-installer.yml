@@ -47,7 +47,7 @@ jobs:
 
       - name: Install the exact downloaded package
         run: |
-          sudo --preserve-env=SUDO_USER env SUDO_USER="$USER" \
+          sudo env SUDO_USER="$USER" \
             apt-get install --no-install-recommends -y ./dist/FigureLoom-Bio-Installer.deb
           test -x /usr/local/bin/flbio
           test -x /usr/local/bin/figureloom-bio-installer
