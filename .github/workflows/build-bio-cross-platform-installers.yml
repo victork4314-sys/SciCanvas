@@ -42,6 +42,53 @@ jobs:
       - name: Install and test the exact Windows installer
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $trace = "$env:RUNNER_TEMP\figureloom-windows-installed-test.txt"
+          "FIGURELOOM BIO INSTALLED WINDOWS TEST`n" | Set-Content -Path $trace -Encoding utf8
+          $failures = [System.Collections.Generic.List[string]]::new()
+
+          function Record-DesktopSelfTest {
+            param(
+              [string]$Name,
+              [string]$Executable
+            )
+            "START: $Name`nExecutable: $Executable" | Add-Content -Path $trace -Encoding utf8
+            try {
+              $process = Start-Process -FilePath $Executable -ArgumentList '--self-test' -Wait -PassThru
+              "EXIT: $($process.ExitCode)`n" | Add-Content -Path $trace -Encoding utf8
+              Write-Host "$Name exit code: $($process.ExitCode)"
+              if ($process.ExitCode -ne 0) {
+                $script:failures.Add("$Name exited with $($process.ExitCode)")
+              }
+            } catch {
+              "START FAILURE: $($_.Exception.Message)`n" | Add-Content -Path $trace -Encoding utf8
+              $script:failures.Add("$Name could not start: $($_.Exception.Message)")
+            }
+          }
+
+          function Record-ConsoleCheck {
+            param(
+              [string]$Name,
+              [string]$Executable,
+              [string[]]$Arguments
+            )
+            "START: $Name`nExecutable: $Executable`nArguments: $($Arguments -join ' ')" | Add-Content -Path $trace -Encoding utf8
+            try {
+              $output = & $Executable @Arguments 2>&1
+              $exitCode = $LASTEXITCODE
+              $output | Out-String | Add-Content -Path $trace -Encoding utf8
+              "EXIT: $exitCode`n" | Add-Content -Path $trace -Encoding utf8
+              Write-Host "$Name exit code: $exitCode"
+              if ($exitCode -ne 0) {
+                $script:failures.Add("$Name exited with $exitCode")
+              }
+            } catch {
+              $_ | Out-String | Add-Content -Path $trace -Encoding utf8
+              "START FAILURE: $($_.Exception.Message)`n" | Add-Content -Path $trace -Encoding utf8
+              $script:failures.Add("$Name could not run: $($_.Exception.Message)")
+            }
+          }
+
           $installer = "$env:GITHUB_WORKSPACE\dist\FigureLoom-Bio-Installer.exe"
           Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
           $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
@@ -53,16 +100,32 @@ jobs:
           $forbidden = Get-ChildItem -Path $app -Recurse -File | Where-Object { $_.Extension -in '.html', '.htm', '.js', '.mjs' }
           if ($forbidden) { throw "Installed Windows app contains forbidden web files: $($forbidden.FullName -join ', ')" }
 
-          $native = Start-Process -FilePath "$app\FigureLoom Bio IDE.exe" -ArgumentList '--self-test' -Wait -PassThru
-          if ($native.ExitCode -ne 0) { throw "Native Windows IDE self-test failed with exit code $($native.ExitCode)" }
-          $testLauncher = Start-Process -FilePath "$app\Test FigureLoom Bio.exe" -ArgumentList '--self-test' -Wait -PassThru
-          if ($testLauncher.ExitCode -ne 0) { throw "Windows test launcher self-test failed with exit code $($testLauncher.ExitCode)" }
-          $managerLauncher = Start-Process -FilePath "$app\Install or Update FigureLoom Bio.exe" -ArgumentList '--self-test' -Wait -PassThru
-          if ($managerLauncher.ExitCode -ne 0) { throw "Windows updater self-test failed with exit code $($managerLauncher.ExitCode)" }
-          & "$app\flbio.exe" doctor
-          & "$app\flbio.exe" quick-test "$env:RUNNER_TEMP\figureloom-bio-windows-test"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows language quick test failed' }
-          if (-not (Test-Path "$env:USERPROFILE\Desktop\FigureLoom Bio Test Files\quick-test.flbio")) { throw 'Desktop test files were not installed' }
+          Record-DesktopSelfTest 'Native Windows IDE self-test' "$app\FigureLoom Bio IDE.exe"
+          Record-DesktopSelfTest 'Windows test launcher self-test' "$app\Test FigureLoom Bio.exe"
+          Record-DesktopSelfTest 'Windows updater self-test' "$app\Install or Update FigureLoom Bio.exe"
+          Record-ConsoleCheck 'Windows CLI doctor' "$app\flbio.exe" @('doctor')
+          Record-ConsoleCheck 'Windows language quick test' "$app\flbio.exe" @('quick-test', "$env:RUNNER_TEMP\figureloom-bio-windows-test")
+
+          $desktopProgram = "$env:USERPROFILE\Desktop\FigureLoom Bio Test Files\quick-test.flbio"
+          if (Test-Path $desktopProgram) {
+            "PASS: Desktop test files exist at $desktopProgram`n" | Add-Content -Path $trace -Encoding utf8
+          } else {
+            "FAIL: Desktop test files are missing from $desktopProgram`n" | Add-Content -Path $trace -Encoding utf8
+            $failures.Add('Desktop test files were not installed')
+          }
+
+          Get-Content -Path $trace | Write-Host
+          if ($failures.Count -gt 0) {
+            throw ("Installed Windows checks failed: " + ($failures -join '; '))
+          }
+
+      - name: Upload Windows install trace
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-Windows-Install-Trace
+          path: ${{ runner.temp }}/figureloom-windows-installed-test.txt
+          if-no-files-found: warn
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v6
