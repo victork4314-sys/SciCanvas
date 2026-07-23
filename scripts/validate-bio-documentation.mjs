@@ -61,7 +61,7 @@ for (const target of ['python','r','bash','snakemake','nextflow','julia','ruby',
 if (!/\['Scientific work','FigureLoom-Bio','FigureLoom Bio'\]/.test(files.wikiRuntime)) errors.push('The hosted Help center does not register the FigureLoom Bio manual.');
 if (!files.wikiRuntime.includes("fetch(`./${slug}.md`")) errors.push('The hosted Help center is not loading the canonical Markdown pages.');
 if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The GitHub wiki sync does not copy the canonical Markdown pages.');
-if (!files.wikiSync.includes('victork4314-sys/Figureloom.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
+if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
 
 if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
 console.log('FigureLoom Bio documentation matches the live graphical Linux and Kasm installer.');
