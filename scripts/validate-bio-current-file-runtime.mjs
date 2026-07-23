@@ -70,6 +70,7 @@ elements.runStatus.textContent = 'Ready';
 
 const document = {
   getElementById(id) { return elements[id] || null; },
+  querySelector() { return null; },
   createElement(tag) { return new MockElement(tag); },
   addEventListener(type, listener) { (documentListeners[type] ||= []).push(listener); },
   head: new MockElement('head'),
