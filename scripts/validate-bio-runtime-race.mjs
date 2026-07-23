@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const fail = (message) => { throw new Error(message); };
+const phase = process.argv[2] || 'all';
 
 class MockElement {
   constructor(tag = 'div', id = '') {
@@ -69,7 +70,10 @@ const windowObject = {
   location: { reload() {} },
 };
 
+let clickCount = 0;
+let lastClick = null;
 function dispatchRunClick() {
+  clickCount += 1;
   const event = {
     target: elements.runButton,
     prevented: false,
@@ -81,6 +85,7 @@ function dispatchRunClick() {
     if (event.stopped) break;
     listener(event);
   }
+  lastClick = event;
   return event;
 }
 elements.runButton.click = dispatchRunClick;
@@ -123,9 +128,21 @@ elements.programEditor.value = program;
 storage.set('figureloom-bio-ide-files-v1', JSON.stringify({ ...bundled }));
 storage.set('figureloom-bio-ide-active-v1', programName);
 
-// Load both early parsers, then press Run before the complete runtime exists.
 new vm.Script(read('ide/ide-addon-runtime.js'), { filename:'ide-addon-runtime.js' }).runInContext(context);
 new vm.Script(read('ide/ide-approved-common.js'), { filename:'ide-approved-common.js' }).runInContext(context);
+
+const recognition = windowObject.FigureLoomApprovedBio?.sourceNeedsAdvancedRuntime;
+if (!recognition?.('If the assembly has more than 4 contigs:\n    Say fragmented.')) {
+  fail('The editor did not recognize a decision block before the runtime loaded.');
+}
+if (!recognition?.('For every sample in samples:\n    Open the sample.')) {
+  fail('The editor did not recognize a sample loop before the runtime loaded.');
+}
+if (phase === 'recognition') {
+  console.log('FigureLoom Bio recognized decisions and loops before runtime loading.');
+  process.exit(0);
+}
+
 const firstClick = dispatchRunClick();
 if (!firstClick.prevented || !firstClick.stopped) fail('The early parser did not hold the advanced program while the runtime was loading.');
 if (elements.runStatus.textContent !== 'Starting browser analysis') {
@@ -134,21 +151,59 @@ if (elements.runStatus.textContent !== 'Starting browser analysis') {
 if (elements.results.children.some((child) => String(child.className).includes('error'))) {
   fail('The basic parser rejected the decision before the complete runtime loaded.');
 }
+if (phase === 'waiting') {
+  console.log('FigureLoom Bio held the advanced program while runtime loading.');
+  process.exit(0);
+}
 
-// Reproduce the slow iPad timing: the complete runtime appears after Run was pressed.
 await new Promise((resolve) => setTimeout(resolve, 120));
 const combinedRuntime = [0, 1, 2, 3, 4]
   .map((number) => read(`ide/ide-control-flow-runtime.part${String(number).padStart(2, '0')}`))
   .join('');
 new vm.Script(combinedRuntime, { filename:'ide-control-flow-runtime.combined.js' }).runInContext(context);
-await new Promise((resolve) => setTimeout(resolve, 220));
+
+if (!windowObject.FigureLoomBioFlow?.usesAdvancedRuntime?.(program)) {
+  fail('The complete runtime loaded but did not claim the microbiology program.');
+}
+if (phase === 'runtime-ready') {
+  console.log('The complete FigureLoom Bio runtime loaded and claimed the program.');
+  process.exit(0);
+}
+
+await new Promise((resolve) => setTimeout(resolve, 350));
+if (clickCount < 2) fail(`The waiting guard never retried Run. Click count: ${clickCount}`);
+if (!lastClick?.prevented || !lastClick?.stopped) fail('The retried Run click was not claimed by the complete runtime.');
+if (phase === 'retried') {
+  console.log('The waiting guard retried Run and the complete runtime claimed it.');
+  process.exit(0);
+}
+
+if (phase === 'left-waiting') {
+  if (elements.runStatus.textContent === 'Starting browser analysis') {
+    fail('The complete runtime claimed Run but never left the loading status.');
+  }
+  console.log(`FigureLoom Bio left the loading status: ${elements.runStatus.textContent}`);
+  process.exit(0);
+}
+
+const hasErrorResult = elements.results.children.some((child) => String(child.className).includes('error'));
+if (phase === 'no-error') {
+  if (elements.runStatus.textContent === 'Needs attention' || hasErrorResult) {
+    fail('The delayed runtime reached an error after claiming Run.');
+  }
+  console.log(`FigureLoom Bio completed the handoff without an error status: ${elements.runStatus.textContent}`);
+  process.exit(0);
+}
 
 if (elements.runStatus.textContent !== 'Finished') {
   fail(`The delayed runtime did not finish the program. Status: ${elements.runStatus.textContent}`);
 }
-if (elements.results.children.some((child) => String(child.className).includes('error'))) {
-  fail('The delayed runtime produced an error result.');
+if (hasErrorResult) fail('The delayed runtime produced an error result.');
+if (phase === 'finished') {
+  console.log('FigureLoom Bio finished after delayed runtime loading.');
+  process.exit(0);
 }
+
 const saved = JSON.parse(storage.get('figureloom-bio-ide-files-v1') || '{}');
 for (const name of [
   'clean-forward.fastq',
