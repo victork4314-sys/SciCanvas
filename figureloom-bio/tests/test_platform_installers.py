@@ -13,11 +13,12 @@ class PlatformInstallerTests(unittest.TestCase):
     def test_platform_and_native_entry_points_are_valid_python(self) -> None:
         files = [
             self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py",
+            self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py",
             *sorted((self.root / "figureloom-bio" / "figureloom_bio").glob("native_*.py")),
             *sorted((self.root / "figureloom-bio" / "platform").glob("*_entry.py")),
             self.root / "figureloom-bio" / "scripts" / "build-platform-icons.py",
         ]
-        self.assertGreaterEqual(len(files), 13)
+        self.assertGreaterEqual(len(files), 14)
         for path in files:
             with self.subTest(path=path.name):
                 py_compile.compile(path, doraise=True)
@@ -83,12 +84,30 @@ class PlatformInstallerTests(unittest.TestCase):
         for forbidden in ("QWebEngine", "QWebView", "WebView", "<html", "javascript:"):
             self.assertNotIn(forbidden, account + cloud + entry)
 
+    def test_test_and_updater_shortcuts_use_reliable_native_qt_windows(self) -> None:
+        tools = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py").read_text(encoding="utf-8")
+        test_entry = (self.root / "figureloom-bio" / "platform" / "test_entry.py").read_text(encoding="utf-8")
+        manager_entry = (self.root / "figureloom-bio" / "platform" / "manager_entry.py").read_text(encoding="utf-8")
+        self.assertIn("from PySide6", tools)
+        self.assertIn("class TestWindow(QMainWindow)", tools)
+        self.assertIn("class ManagerWindow(QMainWindow)", tools)
+        self.assertIn("def simple_error", tools)
+        self.assertIn('"What happened\\n{reason}', tools)
+        self.assertIn('"What to do\\n{next_step}', tools)
+        self.assertIn('if "--self-test" in sys.argv', tools)
+        self.assertIn("platform_qt_tools", test_entry)
+        self.assertIn("platform_qt_tools", manager_entry)
+        self.assertIn("raise SystemExit(show_test_window())", test_entry)
+        self.assertIn("raise SystemExit(show_manager_window())", manager_entry)
+        self.assertNotIn("platform_desktop", test_entry + manager_entry)
+        self.assertNotIn("tkinter", tools)
+
     def test_platform_icon_is_wired_into_windows_and_macos(self) -> None:
         icon = self.root / "figureloom-bio" / "linux" / "assets" / "figureloom-bio.png"
         windows_build = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
         windows_setup = (self.root / "figureloom-bio" / "windows" / "FigureLoomBio.iss").read_text(encoding="utf-8")
         macos_build = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
-        desktop_runtime = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py").read_text(encoding="utf-8")
+        desktop_runtime = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py").read_text(encoding="utf-8")
 
         self.assertTrue(icon.is_file())
         self.assertIn("figureloom-bio.png", windows_build)
@@ -127,14 +146,16 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("/dev/console", postinstall)
         self.assertNotIn("mapfile", postinstall)
 
-    def test_cross_platform_workflow_runs_native_installed_self_tests(self) -> None:
+    def test_cross_platform_workflow_runs_every_installed_native_self_test(self) -> None:
         workflow = (self.root / ".github" / "workflows" / "build-bio-cross-platform-installers.yml").read_text(encoding="utf-8")
         self.assertIn("windows-latest", workflow)
         self.assertIn("macos-15", workflow)
         self.assertIn("macos-15-intel", workflow)
         self.assertIn("Start-Process", workflow)
-        self.assertGreaterEqual(workflow.count("--self-test"), 3)
-        self.assertGreaterEqual(workflow.count("QT_QPA_PLATFORM"), 2)
+        self.assertGreaterEqual(workflow.count("--self-test"), 9)
+        self.assertGreaterEqual(workflow.count("QT_QPA_PLATFORM"), 8)
+        self.assertGreaterEqual(workflow.count("Test FigureLoom Bio"), 9)
+        self.assertGreaterEqual(workflow.count("Install or Update FigureLoom Bio"), 9)
         self.assertEqual(workflow.count(" -pkg dist/FigureLoom-Bio-Installer-macOS-"), 2)
         self.assertIn("figureloom-bio-windows-installer", workflow)
         self.assertIn("figureloom-bio-macos-installer", workflow)
