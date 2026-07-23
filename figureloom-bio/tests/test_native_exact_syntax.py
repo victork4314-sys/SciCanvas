@@ -22,6 +22,13 @@ class NativeExactSyntaxTests(unittest.TestCase):
             self.assertIn(layer, source)
         self.assertLess(entry.index("install_web_parity(native_ide)"), entry.index("install_exact_web_syntax()"))
 
+    def test_visual_syntax_check_cannot_close_the_ide_on_an_unexpected_parser_error(self) -> None:
+        source = SYNTAX.read_text(encoding="utf-8")
+        self.assertIn("def _accepted(self, stripped: str) -> bool", source)
+        self.assertIn("return super()._accepted(stripped)", source)
+        self.assertIn("except Exception", source)
+        self.assertIn("return False", source)
+
 
 if __name__ == "__main__":
     unittest.main()
