@@ -1,0 +1,2 @@
+Diagnostic rebuild trigger for the corrected native FigureLoom Bio installers.
+This file exists only to run the full Windows, Apple Silicon, and Intel installer checks before publishing.
