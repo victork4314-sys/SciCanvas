@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import tempfile
 from typing import Any, Callable
 
@@ -44,6 +45,10 @@ def install_runtime_fixes(account_module: Any) -> None:
     account_module.ProjectsDialog._task = _task
 
     def native_account_self_test() -> dict[str, Any]:
+        from PySide6.QtWidgets import QApplication
+
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        app = QApplication.instance() or QApplication(["FigureLoom Bio native account self-test"])
         folder = Path(tempfile.mkdtemp(prefix="figureloom-native-account-test-"))
         try:
             workspace = NativeWorkspace(folder / "workspace.json")
@@ -61,6 +66,7 @@ def install_runtime_fixes(account_module: Any) -> None:
                 **crypto,
             }
             dialog.close()
+            app.processEvents()
             return report
         finally:
             import shutil
