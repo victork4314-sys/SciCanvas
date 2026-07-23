@@ -80,7 +80,10 @@ class FinalFourDesktopGapTests(unittest.TestCase):
         manager = (ROOT / "platform" / "manager_entry.py").read_text(encoding="utf-8")
         test = (ROOT / "platform" / "test_entry.py").read_text(encoding="utf-8")
         for source in (manager, test):
-            self.assertLess(source.index("install_platform_tool_safety"), source.index("install_final_platform_gaps"))
+            self.assertLess(
+                source.index("install_platform_tool_safety(platform_qt_tools)"),
+                source.index("install_final_platform_gaps(platform_qt_tools)"),
+            )
 
 
 if __name__ == "__main__":
