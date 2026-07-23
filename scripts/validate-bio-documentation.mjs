@@ -5,6 +5,7 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const normalized = (value) => String(value).replace(/\\\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
 const containsTodoLine = (value) => /^\s*#\s*TODO\b/im.test(String(value));
+const containsInvalidOtherwiseLine = (value) => /^\s*Otherwise:\.\s*$/im.test(String(value));
 const errors = [];
 const requireText = (name, content, value) => {
   if (!content.includes(value)) errors.push(`${name} is missing ${value}`);
@@ -34,7 +35,7 @@ for (const [name, content] of Object.entries({
   wiki:files.wiki,
 })) {
   for (const value of requiredEverywhere) requireText(name, content, value);
-  if (content.includes('Otherwise:.')) errors.push(`${name} documents the invalid Otherwise:. ending.`);
+  if (containsInvalidOtherwiseLine(content)) errors.push(`${name} contains an actual invalid Otherwise:. instruction.`);
   if (containsTodoLine(content)) errors.push(`${name} contains an actual TODO placeholder line.`);
 }
 
