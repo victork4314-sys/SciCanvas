@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .desktop_tools import run_quick_test
+from .desktop_tools import create_test_files, run_quick_test
 
 
 APP_NAME = "FigureLoom Bio"
@@ -380,6 +380,8 @@ class TestWindow(QMainWindow):
 
     def open_files(self) -> None:
         try:
+            if not self._folder.exists():
+                self._folder = create_test_files(self._folder)
             open_path(self._folder)
         except Exception as error:
             QMessageBox.critical(self, APP_NAME, simple_error("Opening the test files", error))
@@ -620,6 +622,8 @@ class ManagerWindow(QMainWindow):
     def open_files(self) -> None:
         folder = test_folder()
         try:
+            if not folder.exists():
+                folder = create_test_files(folder)
             open_path(folder)
         except Exception as error:
             QMessageBox.critical(self, APP_NAME, simple_error("Opening the test files", error))
