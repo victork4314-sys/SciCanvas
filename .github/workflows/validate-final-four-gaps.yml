@@ -1,0 +1,47 @@
+name: Validate final desktop gaps
+
+on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/validate-final-four-gaps.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/validate-final-four-gaps.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run focused final-gap tests
+        run: |
+          cd figureloom-bio
+          python3 -m unittest discover -s tests -p 'test_final_four_desktop_gaps.py' -v 2>&1 | tee "$RUNNER_TEMP/final-gap-tests.log"
+
+      - name: Run complete FigureLoom Bio suite
+        run: |
+          cd figureloom-bio
+          python3 -m unittest discover -s tests -v > "$RUNNER_TEMP/all-bio-tests.log" 2>&1 || {
+            tail -n 180 "$RUNNER_TEMP/all-bio-tests.log"
+            exit 1
+          }
+          tail -n 30 "$RUNNER_TEMP/all-bio-tests.log"
+
+      - name: Upload exact test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: final-desktop-gap-test-reports
+          path: |
+            ${{ runner.temp }}/final-gap-tests.log
+            ${{ runner.temp }}/all-bio-tests.log
+          if-no-files-found: warn
