@@ -51,6 +51,16 @@ class NativeWebParityTests(unittest.TestCase):
         parity_position = entry.index("install_web_parity(native_ide)")
         self.assertLess(account_position, parity_position)
 
+    def test_web_palette_keeps_the_line_number_painter_compatibility_key(self) -> None:
+        entry = ENTRY.read_text(encoding="utf-8")
+        light_alias = 'native_widgets.LIGHT.setdefault("panel_2", native_widgets.LIGHT["editor_gutter"])'
+        dark_alias = 'native_widgets.DARK.setdefault("panel_2", native_widgets.DARK["editor_gutter"])'
+        syntax_install = entry.index("install_exact_web_syntax()")
+        self.assertIn(light_alias, entry)
+        self.assertIn(dark_alias, entry)
+        self.assertLess(entry.index(light_alias), syntax_install)
+        self.assertLess(entry.index(dark_alias), syntax_install)
+
 
 if __name__ == "__main__":
     unittest.main()
