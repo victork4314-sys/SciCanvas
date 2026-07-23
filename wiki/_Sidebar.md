@@ -17,6 +17,7 @@
 ### Scientific work
 
 - [FigureLoom Bio](FigureLoom-Bio)
+- [Complete Bio command reference](FigureLoom-Bio-Command-Reference)
 - [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)
 - [Illustrations and maps](Scientific-Illustrations-and-Maps)
 - [Data, tables, and charts](Data-Tables-and-Charts)
