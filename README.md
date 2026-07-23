@@ -72,21 +72,28 @@ The browser IDE at [figureloom.org/ide](https://figureloom.org/ide/) provides te
 
 The command-line engine translates `.flbio` programs to Python, R, Bash, Snakemake, Nextflow, Julia, Ruby, Perl, and PowerShell. Direct target rules are used where exact translation is possible. More complex programs become runnable wrappers around the embedded `.flbio` source rather than placeholder code.
 
-### Install FigureLoom Bio
+### Install FigureLoom Bio on Linux or Kasm
 
-There is not a PyPI release yet. The pinned command installs the tested 0.7.0 code snapshot with `pipx`:
-
-```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version:
+The easiest installation is one command:
 
 ```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
-flbio doctor
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/install/figureloom-bio-linux.sh | sudo bash
 ```
+
+That installs or updates all of these together:
+
+- the `flbio` terminal command;
+- a local FigureLoom Bio IDE that opens as its own app window;
+- an **Install or Update FigureLoom Bio** desktop launcher;
+- a **FigureLoom Bio IDE** desktop launcher;
+- an already-unzipped **FigureLoom Bio Test Files** folder;
+- a **Run FigureLoom Bio Quick Test** desktop launcher.
+
+After the first installation, double-click **Install or Update FigureLoom Bio**. The setup window checks Python, Git, graphical support, the local browser, the engine, the IDE, the test files, and optional bioinformatics tools. Press **Install**, **Update / Repair**, **Open IDE**, **Open Test Files**, or **Run Quick Test** without following a long terminal guide.
+
+The installer only requests missing required system packages. It does not reinstall the large bioinformatics tool collection already present in FigureLoom Linux. In a Kasm image build it also writes the launchers and unzipped tests into the default profile so every new workspace receives them.
+
+Manual `pipx` installation remains available for Windows, macOS, development environments, and command-line-only setups in [`figureloom-bio/README.md`](figureloom-bio/README.md).
 
 Run or translate a program:
 
@@ -102,7 +109,7 @@ Tool-backed microbiology workflows require explicit permission:
 flbio run bacterial-analysis.flbio --allow-tools
 ```
 
-The complete Windows, macOS, Linux, update, uninstall, optional-tool, troubleshooting, and language guide is in [`figureloom-bio/README.md`](figureloom-bio/README.md) and the [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio).
+The complete installation, update, Kasm, optional-tool, troubleshooting, and language guide is in [`figureloom-bio/README.md`](figureloom-bio/README.md), the [easy-install guide](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install), and the [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio).
 
 ## Desktop, tablet, and phone
 
@@ -240,6 +247,7 @@ Pull requests run syntax and browser checks for the parts of the app they touch.
 - The canonical 161-command language catalog
 - Translation punctuation and all nine targets
 - Alignment, variants, genes, protein regions, PCR primers, Newick trees, statistics, and real SVG figures
+- Linux/Kasm installation, graphical setup checks, desktop launchers, bundled quick tests, and local IDE startup
 
 ## Contributing
 
@@ -260,6 +268,7 @@ Outside asset packs keep their own licenses and attribution requirements. Read [
 ## More documentation
 
 - [FigureLoom Bio package guide](figureloom-bio/README.md)
+- [Easy FigureLoom Bio installation](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install)
 - [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio)
 - [Hosted manual and tutorials](https://figureloom.org/wiki/#Home)
 - [MCP and AI access](https://figureloom.org/wiki/#MCP-and-AI-Access)
