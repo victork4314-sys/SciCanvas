@@ -1,8 +1,10 @@
 from figureloom_bio import platform_qt
+from figureloom_bio.desktop_reliability import install_updater_handoff
 from figureloom_bio.platform_qt_guard import install_platform_qt_guard
 
 
 install_platform_qt_guard(platform_qt)
+install_updater_handoff(platform_qt)
 
 
 if __name__ == "__main__":
