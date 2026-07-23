@@ -3,9 +3,9 @@
   "description": "Accepted natural forms that map to the built-in FigureLoom Bio language. Patterns omit final punctuation and are matched case-insensitively.",
   "rules": [
     {"id":"print_message","action":"say","pattern":"print (.+)","canonical":"Say $1.","examples":["Print The analysis is starting."]},
-    {"id":"warn_message","action":"show_warning","pattern":"(?:warn|show a warning)[: ]+(.+)","canonical":"Show a warning saying $1.","examples":["Warn This sample needs review.","Show a warning: This sample needs review."]},
+    {"id":"warn_message","action":"show_warning","pattern":"(?:warn[: ]+|show a warning:[ ]*)(.+)","canonical":"Show a warning saying $1.","examples":["Warn This sample needs review.","Show a warning: This sample needs review."]},
 
-    {"id":"open_short","action":"open_file","pattern":"open (?!the files )(.+\\.(?:csv|tsv|fa|fasta|fna|ffn|faa|frn|fq|fastq))","canonical":"Open the file $1.","examples":["Open samples.csv.","Open reads.fastq."]},
+    {"id":"open_short","action":"open_file","pattern":"open (?!the files? )(.+\\.(?:csv|tsv|fa|fasta|fna|ffn|faa|frn|fq|fastq))","canonical":"Open the file $1.","examples":["Open samples.csv.","Open reads.fastq."]},
     {"id":"show_current_file","action":"show_file","pattern":"(?:show|display) the current file","canonical":"Show the file.","examples":["Show the current file.","Display the current file."]},
     {"id":"show_current_result","action":"show_result","pattern":"display the result","canonical":"Show the result.","examples":["Display the result."]},
     {"id":"save_current_file","action":"save_file","pattern":"save the current file as (.+)","canonical":"Save the file as $1.","examples":["Save the current file as output.fasta."]},
