@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE_DIR="${FIGURELOOM_BIO_TEST_SOURCE:-/usr/share/figureloom-bio/test-files}"
+WORK_ROOT="${HOME}/FigureLoom Bio Quick Test"
+RESULT_FILE="${WORK_ROOT}/Quick Test Results.txt"
+
+rm -rf "${WORK_ROOT}"
+mkdir -p "${WORK_ROOT}"
+cp -a "${SOURCE_DIR}/." "${WORK_ROOT}/"
+
+{
+    echo "FigureLoom Bio Quick Test"
+    echo "========================="
+    echo
+    flbio doctor
+    echo
+    for program in \
+        "01-table-and-figure.flbio" \
+        "02-sequences.flbio" \
+        "03-reads.flbio"
+    do
+        echo
+        echo "Running ${program}"
+        echo "------------------------"
+        (
+            cd "${WORK_ROOT}"
+            flbio run "${program}"
+        )
+    done
+    echo
+    echo "EVERY QUICK TEST PASSED."
+} 2>&1 | tee "${RESULT_FILE}"
+
+if command -v xdg-open >/dev/null 2>&1; then
+    nohup xdg-open "${RESULT_FILE}" >/dev/null 2>&1 &
+fi
