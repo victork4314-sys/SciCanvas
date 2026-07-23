@@ -128,7 +128,7 @@
         runButton.click();
         return;
       }
-      if (attempts < 30) setTimeout(retry, 50);
+      if (attempts < 60) setTimeout(retry, 50);
       else {
         retryingRun = false;
         showError(new Error('The browser analysis layer did not load. Refresh FigureLoom Bio and try again.'));
@@ -137,19 +137,25 @@
     setTimeout(retry, 0);
   }
 
-  const needsBuiltInPreparation = () => /(?:\.(?:microbiology|genomics)|bacterial|resistance genes|virulence genes|plasmids|identify the organism|classify .+ using)/i.test(editor.value);
+  const hasMicrobiology = () => /(?:\.(?:microbiology|genomics)|bacterial|resistance genes|virulence genes|plasmids|identify the organism|classify .+ using)/i.test(editor.value);
+  const hasProgramFlow = () => /(^|\n)\s*(?:If .+:|Otherwise(?:,)?(?: if .+)?:|For every .+:|Make a recipe called .+:)/im.test(editor.value)
+    || /\b(?:Call the result|Make sure|Show a warning|Open all (?:FASTQ|FASTA|CSV|TSV) files|Continue with the next sample|Skip this sample|Mark the sample for review|Stop the program|Save the (?:result|sequences|reads) using the sample name)\b/i.test(editor.value);
+  const needsAdvancedRun = () => hasMicrobiology() || hasProgramFlow();
 
   window.addEventListener('click', (event) => {
     if (bypass) return;
     const target = event.target instanceof Element ? event.target.closest('#runButton,#translateProgramButton') : null;
-    if (!target || !needsBuiltInPreparation()) return;
+    if (!target) return;
+
     if (target.id === 'runButton') {
-      if (flowWillHandle()) return;
+      if (!needsAdvancedRun() || flowWillHandle()) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       waitForFlowAndRetry();
       return;
     }
+
+    if (!hasMicrobiology()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     rerunTranslation(target);
@@ -157,12 +163,17 @@
 
   document.addEventListener('keydown', (event) => {
     if (bypass || !(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
-    if (!needsBuiltInPreparation() || flowWillHandle()) return;
+    if (!needsAdvancedRun() || flowWillHandle()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     waitForFlowAndRetry();
   }, true);
 
-  window.FigureLoomBioCapabilities = { compile };
+  window.FigureLoomBioCapabilities = {
+    compile,
+    hasMicrobiology,
+    hasProgramFlow,
+    needsAdvancedRun
+  };
   window.FigureLoomBioAddons = window.FigureLoomBioCapabilities;
 })();
