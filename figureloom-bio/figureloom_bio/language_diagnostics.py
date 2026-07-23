@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from difflib import SequenceMatcher
 import re
 import sys
 from typing import Any
@@ -57,45 +56,20 @@ def _line_text(source: str, line_number: int | None) -> str:
     return next((line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")), "")
 
 
-def _closest(sentence: str, limit: int = 3) -> list[str]:
-    wanted = _clean(sentence)
-    ranked = sorted(
-        ((SequenceMatcher(None, wanted, _clean(candidate)).ratio(), candidate) for candidate in _known_sentences()),
-        reverse=True,
-    )
-    return [candidate for score, candidate in ranked[:limit] if score >= 0.48]
-
-
-def _diagnostic_error(source: str, error: FigureLoomBioError) -> FigureLoomBioError:
+def _exact_handler_error(source: str, error: FigureLoomBioError) -> FigureLoomBioError | None:
     sentence = _line_text(source, error.line_number)
-    exact = next((candidate for candidate in _known_sentences() if _clean(candidate) == _clean(sentence)), None)
-    if exact:
-        message = (
-            "FigureLoom Bio knows this sentence, but its language handler did not load.\n\n"
-            "What happened\n"
-            "The sentence is present in the built-in list. Your wording is not the problem.\n\n"
-            "How to fix it\n"
-            "Save the program, close FigureLoom Bio, and open it again. If the same line still fails, open the updater and press Repair. Repair keeps your saved workspace.\n\n"
-            f"Instruction\n{sentence or exact}"
-        )
-        return FigureLoomBioError(message, line_number=error.line_number)
-
-    suggestions = _closest(sentence)
-    if suggestions:
-        options = "\n".join(f"• {candidate}" for candidate in suggestions)
-        fix = (
-            "Use one of these closest built-in sentences. Change only its filename, column name, value, or number:\n"
-            f"{options}"
-        )
-    else:
-        fix = "Open Sentences and search for the action. Insert a built-in sentence, then change only its filename, column, value, or number."
+    normalized_sentence = _line_text(_safe_normalize(sentence), 1)
+    wanted = _clean(normalized_sentence or sentence)
+    exact = next((candidate for candidate in _known_sentences() if _clean(candidate) == wanted), None)
+    if exact is None:
+        return None
     message = (
-        "FigureLoom Bio could not match this complete instruction.\n\n"
+        "FigureLoom Bio knows this sentence, but its language handler did not load.\n\n"
         "What happened\n"
-        "Some words may exist in the language, but this exact sentence structure did not match a safe built-in action. FigureLoom Bio stopped instead of guessing.\n\n"
+        "The sentence is present in the built-in list. Your wording is not the problem.\n\n"
         "How to fix it\n"
-        f"{fix}\n\n"
-        f"Instruction read\n{sentence or '(empty line)'}"
+        "Save the program, close FigureLoom Bio, and open it again. If the same line still fails, open the updater and press Repair. Repair keeps your saved workspace.\n\n"
+        f"Instruction\n{sentence or exact}"
     )
     return FigureLoomBioError(message, line_number=error.line_number)
 
@@ -139,7 +113,13 @@ def install_language_diagnostics() -> None:
                 except FigureLoomBioError as normalized_error:
                     if not _is_unknown(normalized_error):
                         raise
-            raise _diagnostic_error(source, error) from error
+            exact_error = _exact_handler_error(source, error)
+            if exact_error is not None:
+                raise exact_error from error
+            # The base parser already gives two approved detailed explanations:
+            # one for a recognized command word with the wrong sentence shape,
+            # and one for an unknown first word. Preserve those exact messages.
+            raise
 
     parser_module.parse = parse_with_diagnostics
     parser_module._language_diagnostics_routed_modules = _route_existing_parse_imports(original_parse, parse_with_diagnostics)
@@ -152,7 +132,7 @@ def language_diagnostics_self_test() -> dict[str, bool]:
         parser_module.parse("Create something scientific somehow.")
     except FigureLoomBioError as error:
         message = error.plain_message()
-        if "What happened" not in message or "How to fix it" not in message:
+        if "What happened" not in message or not ("How to fix it" in message or "What to do" in message):
             raise RuntimeError("The unknown-instruction explanation is incomplete.")
     else:
         raise RuntimeError("An unknown instruction was accepted.")
