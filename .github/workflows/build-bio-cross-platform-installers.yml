@@ -77,7 +77,8 @@ jobs:
 
       - name: Install and test the exact Apple Silicon package
         run: |
-          sudo env SUDO_USER="$USER" installer -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
+          printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
+          sudo installer -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
           test -x /usr/local/bin/flbio
           test -d '/Applications/FigureLoom Bio IDE.app'
           test -d '/Applications/Test FigureLoom Bio.app'
@@ -111,7 +112,8 @@ jobs:
 
       - name: Install and test the exact Intel package
         run: |
-          sudo env SUDO_USER="$USER" installer -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
+          printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
+          sudo installer -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
           test -x /usr/local/bin/flbio
           test -d '/Applications/FigureLoom Bio IDE.app'
           test -d '/Applications/Test FigureLoom Bio.app'
