@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Run FigureLoom Bio Quick Test
+Comment=Check the command-line engine with bundled data
+Exec=/usr/local/bin/figureloom-bio-quick-test
+Icon=/opt/figureloom-bio/source/favicon.ico
+Terminal=true
+Categories=Development;Science;Education;
+StartupNotify=true
