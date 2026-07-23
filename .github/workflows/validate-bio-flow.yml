@@ -43,6 +43,7 @@ jobs:
           node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-language-manifest.mjs
           node --check scripts/validate-bio-language-aliases.mjs
+          node --check scripts/validate-bio-language-aliases-detailed.mjs
           node --check scripts/validate-bio-statement-registry.mjs
           node --check scripts/validate-bio-analysis-language.mjs
           node --check scripts/validate-bio-complete-language.mjs
@@ -58,7 +59,7 @@ jobs:
       - name: Validate every accepted browser wording and execution family
         run: |
           set -o pipefail
-          node scripts/validate-bio-language-aliases.mjs 2>&1 | tee language-alias-browser.log
+          node scripts/validate-bio-language-aliases-detailed.mjs 2>&1 | tee language-alias-browser.log
 
       - name: Upload exhaustive browser vocabulary output
         if: always()
