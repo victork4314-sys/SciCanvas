@@ -78,8 +78,7 @@ for (const required of [
   'Check the quality.',
   'Show the quality report.',
   'Save the pair as clean-reads-forward.fastq and clean-reads-reverse.fastq.',
-  'Save the pair as .figureloom-current-forward.fastq and .figureloom-current-reverse.fastq.',
-  'Assemble the bacterial genome from .figureloom-current-forward.fastq and .figureloom-current-reverse.fastq into assembly.',
+  'Assemble the bacterial genome from clean-reads-forward.fastq and clean-reads-reverse.fastq into assembly.',
   'Check the assembly assembly/contigs.fasta into assembly-quality.',
   'Annotate the bacterial genome assembly/contigs.fasta into annotation.',
   'Find resistance genes in assembly/contigs.fasta using resistance-markers.',
@@ -89,6 +88,14 @@ for (const required of [
   'Show the file.',
 ]) {
   if (!normalized.includes(required)) fail(`The current-file workflow did not create: ${required}\n\n${normalized}`);
+}
+
+const automatic = api.normalizeSource(`Open the files forward.fastq and reverse.fastq as a pair.\nPrepare bacterial reads.\nAssemble the bacterial genome.\n`);
+for (const required of [
+  'Save the pair as .figureloom-current-forward.fastq and .figureloom-current-reverse.fastq.',
+  'Assemble the bacterial genome from .figureloom-current-forward.fastq and .figureloom-current-reverse.fastq into assembly.',
+]) {
+  if (!automatic.includes(required)) fail(`The unsaved current pair did not create ${required}`);
 }
 
 const table = api.normalizeSource(`Open the file samples.csv.\nCheck the file.\nCount the file.\nSave the file as clean.csv.\n`);
