@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=FigureLoom Bio IDE
+Comment=Write and run plain-English biology programs
+Exec=/usr/local/bin/figureloom-bio-ide
+Icon=/opt/figureloom-bio/source/favicon.ico
+Terminal=false
+Categories=Development;Science;Education;
+StartupNotify=true
+StartupWMClass=FigureLoomBioIDE
