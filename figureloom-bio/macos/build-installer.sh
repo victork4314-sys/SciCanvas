@@ -100,9 +100,22 @@ mkdir -p \
   "$PKG_ROOT/Applications" \
   "$PKG_ROOT/usr/local/libexec/figureloom-bio" \
   "$PKG_ROOT/usr/local/bin"
-cp -R "$APP_BUILD/FigureLoom Bio IDE.app" "$PKG_ROOT/Applications/"
-cp -R "$APP_BUILD/Test FigureLoom Bio.app" "$PKG_ROOT/Applications/"
-cp -R "$APP_BUILD/Install or Update FigureLoom Bio.app" "$PKG_ROOT/Applications/"
+
+stage_app() {
+  local name="$1"
+  local source="$APP_BUILD/$name.app"
+  local destination="$PKG_ROOT/Applications/$name.app"
+  rm -rf "$destination"
+  cp -RL "$source" "$destination"
+  test -d "$destination"
+  test ! -L "$destination"
+  test -x "$destination/Contents/MacOS/$name"
+  codesign --force --deep --sign - "$destination"
+}
+
+stage_app "FigureLoom Bio IDE"
+stage_app "Test FigureLoom Bio"
+stage_app "Install or Update FigureLoom Bio"
 install -m 0755 "$APP_BUILD/flbio" "$PKG_ROOT/usr/local/libexec/figureloom-bio/flbio"
 ln -s ../libexec/figureloom-bio/flbio "$PKG_ROOT/usr/local/bin/flbio"
 
