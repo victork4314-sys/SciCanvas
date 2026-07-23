@@ -70,7 +70,10 @@ const windowObject = {
   location: { reload() {} },
 };
 
+let clickCount = 0;
+let lastClick = null;
 function dispatchRunClick() {
+  clickCount += 1;
   const event = {
     target: elements.runButton,
     prevented: false,
@@ -82,6 +85,7 @@ function dispatchRunClick() {
     if (event.stopped) break;
     listener(event);
   }
+  lastClick = event;
   return event;
 }
 elements.runButton.click = dispatchRunClick;
@@ -157,7 +161,22 @@ const combinedRuntime = [0, 1, 2, 3, 4]
   .map((number) => read(`ide/ide-control-flow-runtime.part${String(number).padStart(2, '0')}`))
   .join('');
 new vm.Script(combinedRuntime, { filename:'ide-control-flow-runtime.combined.js' }).runInContext(context);
+
+if (!windowObject.FigureLoomBioFlow?.usesAdvancedRuntime?.(program)) {
+  fail('The complete runtime loaded but did not claim the microbiology program.');
+}
+if (phase === 'runtime-ready') {
+  console.log('The complete FigureLoom Bio runtime loaded and claimed the program.');
+  process.exit(0);
+}
+
 await new Promise((resolve) => setTimeout(resolve, 350));
+if (clickCount < 2) fail(`The waiting guard never retried Run. Click count: ${clickCount}`);
+if (!lastClick?.prevented || !lastClick?.stopped) fail('The retried Run click was not claimed by the complete runtime.');
+if (phase === 'retried') {
+  console.log('The waiting guard retried Run and the complete runtime claimed it.');
+  process.exit(0);
+}
 
 if (elements.runStatus.textContent !== 'Finished') {
   fail(`The delayed runtime did not finish the program. Status: ${elements.runStatus.textContent}`);
