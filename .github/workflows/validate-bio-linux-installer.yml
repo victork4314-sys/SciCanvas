@@ -1,0 +1,64 @@
+name: Validate FigureLoom Bio Linux installer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux_installer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check installer syntax and files
+        run: |
+          bash -n install/figureloom-bio-linux.sh
+          bash -n install/linux/figureloom-bio-ide
+          bash -n install/linux/figureloom-bio-copy-tests
+          bash -n install/linux/figureloom-bio-quick-test
+          node scripts/validate-bio-linux-installer.mjs
+
+      - name: Install from the checked-out repository
+        run: |
+          mkdir -p /tmp/figureloom-test/{applications,bin,home,kasm-profile,share,skel}
+          sudo env \
+            FIGURELOOM_BIO_SOURCE_OVERRIDE="$GITHUB_WORKSPACE" \
+            FIGURELOOM_BIO_INSTALL_ROOT=/tmp/figureloom-test/opt \
+            FIGURELOOM_BIO_SHARE_DIR=/tmp/figureloom-test/share \
+            FIGURELOOM_BIO_APPLICATIONS_DIR=/tmp/figureloom-test/applications \
+            FIGURELOOM_BIO_BIN_DIR=/tmp/figureloom-test/bin \
+            FIGURELOOM_BIO_SKEL_DIR=/tmp/figureloom-test/skel \
+            FIGURELOOM_BIO_KASM_PROFILE_DIR=/tmp/figureloom-test/kasm-profile \
+            FIGURELOOM_BIO_HOME_ROOT=/tmp/figureloom-test/home \
+            bash install/figureloom-bio-linux.sh
+
+      - name: Run the installed command and bundled tests
+        run: |
+          export PATH="/tmp/figureloom-test/bin:$PATH"
+          export HOME=/tmp/figureloom-test/user
+          export FIGURELOOM_BIO_TEST_SOURCE=/tmp/figureloom-test/share/test-files
+          mkdir -p "$HOME/Desktop"
+          flbio doctor
+          figureloom-bio-copy-tests
+          figureloom-bio-quick-test
+          grep -q "EVERY QUICK TEST PASSED" "$HOME/FigureLoom Bio Quick Test/Quick Test Results.txt"
+
+      - name: Start the local visual IDE
+        run: |
+          export HOME=/tmp/figureloom-test/user
+          export FIGURELOOM_BIO_APP_ROOT=/tmp/figureloom-test/opt/source
+          export FIGURELOOM_BIO_BROWSER=true
+          export FIGURELOOM_BIO_IDE_PORT=4315
+          /tmp/figureloom-test/bin/figureloom-bio-ide
+          python3 - <<'PY'
+          import urllib.request
+          body = urllib.request.urlopen("http://127.0.0.1:4315/ide/", timeout=2).read().decode()
+          assert "FigureLoom Bio IDE" in body
+          print("Local FigureLoom Bio IDE opened successfully.")
+          PY
