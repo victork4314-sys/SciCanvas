@@ -59,7 +59,9 @@ class ShellPlan:
         message = f"{sentence}: {reason}"
         if message not in self.warnings:
             self.warnings.append(message)
-        self.lines.append(f"# TODO: {message}")
+        failure = f"FigureLoom Bio runtime required: {message}"
+        self.lines.append(f"printf '%s\\n' {_q(failure)} >&2")
+        self.lines.append("exit 2")
 
     def temp(self, extension: str | None = None) -> str:
         self.step += 1
@@ -241,7 +243,7 @@ class ShellCompiler:
         elif action == "remove_ambiguous_sequences":
             self._seqkit_transform("grep -s -v -r -p '[^ACGTUacgtu]'")
         elif action == "keep_max_ambiguous":
-            self.plan.warn(sentence, "the exact ambiguous-base count needs a small target-specific helper")
+            self.plan.warn(sentence, "the exact ambiguous-base count requires the FigureLoom Bio runtime")
         elif action == "split_sequences":
             count, requested = values
             folder = self.plan.temp("-split")
@@ -259,13 +261,13 @@ class ShellCompiler:
             self.plan.add("seqkit stats -T \"$CURRENT\"")
             self.plan.require("seqkit")
         elif action == "compare_sequences":
-            self.plan.warn(sentence, "named sequence comparison needs a target-specific helper")
+            self.plan.warn(sentence, "named sequence comparison requires the FigureLoom Bio runtime")
         elif action in {"save_result", "save_sequences"}:
             self._save(values[0])
         elif action == "save_pair":
             self._save_pair(values[0], values[1])
         else:
-            self.plan.warn(sentence, "this command does not have a translator rule yet")
+            self.plan.warn(sentence, "this command requires the FigureLoom Bio runtime")
 
     def _input(self, name: str) -> None:
         if name not in self.plan.inputs:
