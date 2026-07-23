@@ -13,6 +13,19 @@ class Instruction:
     values: tuple[str, ...] = ()
 
 
+_KNOWN_COMMAND_WORDS = {
+    "align", "annotate", "assemble", "ask", "build", "calculate", "call",
+    "change", "check", "clear", "close", "combine", "compare", "convert",
+    "copy", "correct", "count", "create", "cut", "delete", "download",
+    "draw", "export", "filter", "find", "for", "group", "identify", "if",
+    "import", "include", "join", "keep", "load", "make", "map", "merge",
+    "move", "name", "normalize", "open", "otherwise", "plot", "put", "read",
+    "record", "remove", "rename", "repeat", "replace", "restore", "reverse-complement",
+    "run", "save", "say", "select", "show", "sort", "split", "stop", "summarize",
+    "test", "translate", "trim", "use", "write",
+}
+
+
 _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "repeat_program",
@@ -204,6 +217,28 @@ def _split_sentences(source: str) -> list[tuple[int, str]]:
     return sentences
 
 
+def _unknown_instruction_message(sentence: str) -> str:
+    first_match = re.match(r"[^\s]+", sentence.strip())
+    first_word = first_match.group(0) if first_match else ""
+    if first_word.casefold() in _KNOWN_COMMAND_WORDS:
+        return (
+            f"I recognize the command word {first_word}, but I could not match the whole sentence.\n\n"
+            "What happened\n"
+            "The words may be valid, but this exact wording or word order is not a complete FigureLoom Bio instruction.\n\n"
+            "What to do\n"
+            "Open Sentences and choose the closest instruction. Keep its word order, then replace only the file name, column name, number, or value.\n\n"
+            f"I read\n{sentence}."
+        )
+    return (
+        "I could not match this instruction.\n\n"
+        "What happened\n"
+        f"The first word {first_word or '(empty)'} is not a FigureLoom Bio command word.\n\n"
+        "What to do\n"
+        "Start the sentence with a command such as Open, Keep, Remove, Count, Show, Create, Calculate, or Save.\n\n"
+        f"I read\n{sentence}."
+    )
+
+
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
 
@@ -219,10 +254,7 @@ def parse(source: str) -> list[Instruction]:
                 break
         else:
             raise FigureLoomBioError(
-                "I do not understand this instruction yet.\n\n"
-                f"I read: {sentence}.\n\n"
-                "Try writing it as one plain instruction, such as:\n"
-                "Open the file samples.csv.",
+                _unknown_instruction_message(sentence),
                 line_number=line_number,
             )
 
