@@ -7,7 +7,13 @@ import subprocess
 from tempfile import TemporaryDirectory
 import unittest
 
-from figureloom_bio.desktop_tools import EXPECTED_OUTPUTS, create_test_files, run_quick_test
+from figureloom_bio.desktop_tools import (
+    EXPECTED_OUTPUTS,
+    MEASUREMENTS,
+    QUICK_PROGRAM,
+    create_test_files,
+    run_quick_test,
+)
 
 
 DOWNLOAD_URL = (
@@ -27,11 +33,18 @@ class DesktopToolsTests(unittest.TestCase):
             self.assertTrue((folder / "README.txt").is_file())
             self.assertFalse(any(path.suffix.casefold() == ".zip" for path in folder.iterdir()))
 
+    def test_quick_test_includes_and_proves_a_real_volcano_plot(self) -> None:
+        self.assertIn("Create a volcano plot using effect and p_value.", QUICK_PROGRAM)
+        self.assertIn("Save the file as quick-volcano.svg.", QUICK_PROGRAM)
+        self.assertIn("effect,p_value", MEASUREMENTS.splitlines()[0])
+        self.assertIn("quick-volcano.svg", EXPECTED_OUTPUTS)
+
     def test_quick_test_runs_real_language_and_outputs(self) -> None:
         with TemporaryDirectory() as temporary:
             success, report, folder = run_quick_test(Path(temporary) / "test-files")
             self.assertTrue(success, report)
             self.assertIn("QUICK TEST PASSED", report)
+            self.assertIn("volcano plot", report.casefold())
             self.assertTrue((folder / "TEST-RESULT.txt").is_file())
             for name in EXPECTED_OUTPUTS:
                 with self.subTest(name=name):
@@ -40,6 +53,7 @@ class DesktopToolsTests(unittest.TestCase):
                     self.assertGreater(path.stat().st_size, 0)
                     self.assertNotIn("TODO", path.read_text(encoding="utf-8").upper())
             self.assertTrue((folder / "quick-histogram.svg").read_text(encoding="utf-8").lstrip().startswith("<svg"))
+            self.assertTrue((folder / "quick-volcano.svg").read_text(encoding="utf-8").lstrip().startswith("<svg"))
             self.assertTrue((folder / "quick-tree.nwk").read_text(encoding="utf-8").strip().endswith(";"))
 
     def test_linux_install_scripts_have_valid_bash_syntax(self) -> None:
