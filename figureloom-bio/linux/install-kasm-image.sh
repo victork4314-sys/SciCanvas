@@ -50,7 +50,7 @@ echo "[2/3] Testing the finished image..."
 docker run --rm \
   --entrypoint /bin/bash \
   "$OUTPUT_IMAGE" \
-  -lc 'flbio doctor && test -x /usr/local/bin/figureloom-bio-ide && test -f "/home/kasm-default-profile/Desktop/FigureLoom Bio IDE.desktop" && test -f "/home/kasm-default-profile/Desktop/Test FigureLoom Bio.desktop" && test -f "/home/kasm-default-profile/Desktop/FigureLoom Bio Test Files/quick-test.flbio" && flbio quick-test /tmp/figureloom-image-test'
+  -lc 'flbio doctor && test -x /usr/local/bin/figureloom-bio-installer && test -x /usr/local/libexec/figureloom-bio-update && test -x /usr/local/bin/figureloom-bio-ide && test -f "/home/kasm-default-profile/Desktop/Install or Update FigureLoom Bio.desktop" && test -f "/home/kasm-default-profile/Desktop/FigureLoom Bio IDE.desktop" && test -f "/home/kasm-default-profile/Desktop/Test FigureLoom Bio.desktop" && test -f "/home/kasm-default-profile/Desktop/FigureLoom Bio Test Files/quick-test.flbio" && flbio quick-test /tmp/figureloom-image-test'
 
 echo "[3/3] The Kasm image is ready."
 echo
