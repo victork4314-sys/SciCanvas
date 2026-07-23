@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 QT_TOOLS = ROOT / "figureloom_bio" / "platform_qt.py"
 QT_GUARD = ROOT / "figureloom_bio" / "platform_qt_guard.py"
+RELIABILITY = ROOT / "figureloom_bio" / "desktop_reliability.py"
 STABILITY = ROOT / "figureloom_bio" / "native_stability.py"
 MANAGER_ENTRY = ROOT / "platform" / "manager_entry.py"
 TEST_ENTRY = ROOT / "platform" / "test_entry.py"
@@ -18,7 +19,7 @@ MAC_BUILD = ROOT / "macos" / "build-installer.sh"
 
 class DesktopToolEntrypointTests(unittest.TestCase):
     def test_new_desktop_modules_are_valid_python(self) -> None:
-        for path in (QT_TOOLS, QT_GUARD, STABILITY, MANAGER_ENTRY, TEST_ENTRY, IDE_ENTRY):
+        for path in (QT_TOOLS, QT_GUARD, RELIABILITY, STABILITY, MANAGER_ENTRY, TEST_ENTRY, IDE_ENTRY):
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 
     def test_updater_and_test_app_use_qt_not_tkinter(self) -> None:
@@ -31,6 +32,7 @@ class DesktopToolEntrypointTests(unittest.TestCase):
         self.assertIn("platform_qt.run_test_app", test)
         self.assertIn("install_platform_qt_guard", manager)
         self.assertIn("install_platform_qt_guard", test)
+        self.assertIn("install_updater_handoff", manager)
         self.assertNotIn("platform_desktop", manager)
         self.assertNotIn("platform_desktop", test)
 
@@ -51,6 +53,16 @@ class DesktopToolEntrypointTests(unittest.TestCase):
         self.assertIn("Quick test passed", source)
         self.assertIn("_run_visible_window_smoke_test", source)
         self.assertIn("_run_test_worker_smoke_test", source)
+
+    def test_updater_releases_itself_and_internal_failures_are_plain(self) -> None:
+        source = RELIABILITY.read_text(encoding="utf-8")
+        ide = IDE_ENTRY.read_text(encoding="utf-8")
+        self.assertIn("QTimer.singleShot(150, window.close)", source)
+        self.assertIn("install_native_worker_explanations", ide)
+        self.assertIn("What happened", source)
+        self.assertIn("How to fix it", source)
+        self.assertIn("Crash report", source)
+        self.assertNotIn("traceback.format_exc", source)
 
     def test_all_three_desktop_apps_have_real_package_self_tests(self) -> None:
         windows = WINDOWS_BUILD.read_text(encoding="utf-8")
