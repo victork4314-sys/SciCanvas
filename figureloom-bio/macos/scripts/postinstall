@@ -7,47 +7,19 @@ valid_user() {
   /usr/bin/id "$candidate" >/dev/null 2>&1
 }
 
-normal_user() {
-  local candidate="${1:-}"
-  valid_user "$candidate" && [[ "$candidate" != root ]]
-}
-
+TARGET_HINT="/var/tmp/figureloom-bio-target-user"
 TARGET_USER=""
-CONSOLE_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
-WHO_USER="$(/usr/bin/who 2>/dev/null | /usr/bin/awk '$2 == "console" { print $1; exit }' || true)"
-
-for candidate in \
-  "${FIGURELOOM_TARGET_USER:-}" \
-  "${SUDO_USER:-}" \
-  "$CONSOLE_USER" \
-  "$WHO_USER" \
-  runner; do
-  if normal_user "$candidate"; then
-    TARGET_USER="$candidate"
-    break
-  fi
-done
-
-if [[ -z "$TARGET_USER" ]]; then
-  desktop_user_count=0
-  only_desktop_user=""
-  for home in /Users/*; do
-    [[ -d "$home" ]] || continue
-    candidate="$(/usr/bin/basename "$home")"
-    case "$candidate" in
-      Shared|Guest) continue ;;
-    esac
-    if normal_user "$candidate"; then
-      desktop_user_count=$((desktop_user_count + 1))
-      only_desktop_user="$candidate"
-    fi
-  done
-  if [[ $desktop_user_count -eq 1 ]]; then
-    TARGET_USER="$only_desktop_user"
-  fi
+if [[ -f "$TARGET_HINT" ]]; then
+  TARGET_USER="$(/bin/cat "$TARGET_HINT" 2>/dev/null || true)"
+  /bin/rm -f "$TARGET_HINT"
 fi
-
-if [[ -z "$TARGET_USER" ]]; then
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
+fi
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
+fi
+if ! valid_user "$TARGET_USER"; then
   TARGET_USER="root"
 fi
 
