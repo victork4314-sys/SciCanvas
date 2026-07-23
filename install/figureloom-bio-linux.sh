@@ -22,21 +22,50 @@ if [[ "${EUID}" -ne 0 ]]; then
     exit 1
 fi
 
-missing_commands=()
-for command in git python3; do
-    command -v "${command}" >/dev/null 2>&1 || missing_commands+=("${command}")
-done
+has_browser() {
+    local candidate
+    for candidate in chromium chromium-browser google-chrome google-chrome-stable; do
+        command -v "${candidate}" >/dev/null 2>&1 && return 0
+    done
+    return 1
+}
 
-if ((${#missing_commands[@]})); then
-    if command -v apt-get >/dev/null 2>&1; then
-        apt-get update
-        DEBIAN_FRONTEND=noninteractive apt-get install -y git python3 python3-venv ca-certificates
+install_missing_requirements() {
+    local packages=()
+
+    command -v git >/dev/null 2>&1 || packages+=(git)
+    command -v python3 >/dev/null 2>&1 || packages+=(python3)
+    command -v update-ca-certificates >/dev/null 2>&1 || packages+=(ca-certificates)
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c 'import venv' >/dev/null 2>&1 || packages+=(python3-venv)
+        python3 -c 'import tkinter' >/dev/null 2>&1 || packages+=(python3-tk)
     else
-        echo "Missing required commands: ${missing_commands[*]}"
-        echo "Install Git, Python 3, and the Python venv module, then run this again."
-        exit 1
+        packages+=(python3-venv python3-tk)
     fi
-fi
+
+    command -v zenity >/dev/null 2>&1 || packages+=(zenity)
+
+    if ((${#packages[@]})); then
+        if ! command -v apt-get >/dev/null 2>&1; then
+            echo "Missing required packages: ${packages[*]}"
+            echo "Install them with this system's package manager, then run setup again."
+            exit 1
+        fi
+        apt-get update
+        DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}"
+    fi
+
+    if ! has_browser && command -v apt-get >/dev/null 2>&1; then
+        echo "No supported local browser was found. Trying to install Chromium."
+        apt-get update
+        if ! DEBIAN_FRONTEND=noninteractive apt-get install -y chromium; then
+            DEBIAN_FRONTEND=noninteractive apt-get install -y chromium-browser || true
+        fi
+    fi
+}
+
+install_missing_requirements
 
 if [[ -n "${SOURCE_OVERRIDE}" ]]; then
     rm -rf "${SOURCE_DIR}"
