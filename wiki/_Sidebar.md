@@ -17,7 +17,7 @@
 ### Scientific work
 
 - [FigureLoom Bio](FigureLoom-Bio)
-- [FigureLoom Bio Linux installer](FigureLoom-Bio-Linux-Installer)
+- [FigureLoom Bio installation](FigureLoom-Bio#install-the-terminal-engine)
 - [Illustrations and maps](Scientific-Illustrations-and-Maps)
 - [Data, tables, and charts](Data-Tables-and-Charts)
 - [Equations, code, and notation](Equations-Code-and-Scientific-Notation)
