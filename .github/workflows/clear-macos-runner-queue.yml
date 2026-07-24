@@ -21,9 +21,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          # These runs used the older threaded self-test implementations.
+          # Superseded independent publishers. Run 4 (30095038489) is current.
           gh run cancel 30092415672 --repo "$GITHUB_REPOSITORY" || true
           gh run cancel 30093844734 --repo "$GITHUB_REPOSITORY" || true
+          gh run cancel 30094561750 --repo "$GITHUB_REPOSITORY" || true
 
           for workflow in \
             build-bio-cross-platform-installers.yml \
@@ -41,4 +42,4 @@ jobs:
               done
           done
 
-          echo 'The newest 4dff001 independent Mac publisher was left untouched.'
+          echo 'Current bounded Mac publisher 30095038489 was left untouched.'
