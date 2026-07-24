@@ -1,0 +1,38 @@
+name: Report FigureLoom Bio release status
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/report-bio-release-status.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  issues: write
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report live desktop release runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow build-bio-cross-platform-installers.yml \
+            --branch main \
+            --limit 10 \
+            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url,workflowName \
+            > /tmp/figureloom-bio-release-runs.json
+          {
+            echo 'Live production release runs:'
+            echo
+            echo '```json'
+            cat /tmp/figureloom-bio-release-runs.json
+            echo '```'
+          } > /tmp/figureloom-bio-release-status.md
+          gh issue comment 225 --repo "$GITHUB_REPOSITORY" --body-file /tmp/figureloom-bio-release-status.md
