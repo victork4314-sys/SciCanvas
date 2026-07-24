@@ -1,4 +1,5 @@
 name: Publish proven FigureLoom Bio macOS installers
+# Manual release trigger: 2026-07-24
 
 on:
   pull_request:
