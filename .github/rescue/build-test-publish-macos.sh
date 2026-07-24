@@ -42,7 +42,7 @@ test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
 shasum -a 256 "$pkg"
 
 tag='figureloom-bio-macos-installer'
-target='e23b6c162ca6b09fb2a3fbedc1b0f4d95635bd05'
+target='66b99a4bfcaf5d18654cffb2491af7ef51a630b8'
 title='FigureLoom Bio macOS Installers'
 notes='Choose Apple Silicon for M-series Macs or Intel for Intel Macs. These native desktop packages passed installation, IDE startup and paint, syntax coloring, Test, Updater, CLI doctor, Desktop test files, language quick tests, and the real volcano-plot test. They contain no bundled HTML or browser interface.'
 
