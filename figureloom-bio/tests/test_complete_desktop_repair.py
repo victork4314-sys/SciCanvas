@@ -118,9 +118,11 @@ class CompleteDesktopRepairTests(unittest.TestCase):
         self.assertIn("update_downloads_folder", reliability)
         self.assertIn("close_when_idle", reliability)
         self.assertIn("Crash report", reliability)
-        self.assertIn("finish_and_exit_headless", macos_test_safety)
+        self.assertIn("gui_thread_offscreen_test", macos_test_safety)
         self.assertIn('QT_QPA_PLATFORM", ""', macos_test_safety)
-        self.assertIn("app.quit", macos_test_safety)
+        self.assertIn("app.exit", macos_test_safety)
+        self.assertNotIn("TestWindow._test_finished =", macos_test_safety)
+        self.assertNotIn("TestWindow._thread_finished =", macos_test_safety)
 
     def test_internal_self_tests(self) -> None:
         diagnostics = language_diagnostics_self_test()
