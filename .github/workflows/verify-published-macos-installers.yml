@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/verify-published-macos-installers.yml'
       - '.github/scripts/test-installed-macos-package.sh'
+  pull_request:
+    paths:
+      - '.github/validation/run-published-macos-check'
   workflow_dispatch:
   issues:
     types: [edited]
@@ -26,6 +29,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Report Apple Silicon validation start
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh issue comment 226 --repo "$GITHUB_REPOSITORY" --body "Apple Silicon exact-release validation started. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
@@ -54,7 +58,7 @@ jobs:
         run: bash .github/scripts/test-installed-macos-package.sh
 
       - name: Report Apple Silicon validation result
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ job.status }}
@@ -67,6 +71,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Report Intel validation start
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh issue comment 226 --repo "$GITHUB_REPOSITORY" --body "Intel exact-release validation started. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
@@ -95,7 +100,7 @@ jobs:
         run: bash .github/scripts/test-installed-macos-package.sh
 
       - name: Report Intel validation result
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ job.status }}
