@@ -1,0 +1,40 @@
+name: Clear redundant FigureLoom Bio macOS queue
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/clear-macos-runner-queue.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  clear:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel redundant queued release and install-cycle runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for workflow in \
+            build-bio-cross-platform-installers.yml \
+            audit-bio-install-cycles.yml; do
+            gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow "$workflow" \
+              --status queued \
+              --limit 100 \
+              --json databaseId \
+              --jq '.[].databaseId' \
+            | while read -r run_id; do
+                [[ -n "$run_id" ]] || continue
+                echo "Cancelling redundant queued run $run_id from $workflow"
+                gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
+              done
+          done
+
+          echo 'The independent publish-fixed-macos-installers.yml run was intentionally left untouched.'
