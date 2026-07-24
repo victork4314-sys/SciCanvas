@@ -14,6 +14,7 @@ COMPONENT_PLIST="$BUILD_ROOT/components.plist"
 ICON_PNG="$ROOT_DIR/figureloom-bio/linux/assets/figureloom-bio.png"
 ICONSET="$BUILD_ROOT/figureloom-bio.iconset"
 ICON_ICNS="$BUILD_ROOT/figureloom-bio.icns"
+CRYPTOGRAPHY_VERSION="${FIGURELOOM_CRYPTOGRAPHY_VERSION:-44.0.3}"
 VERSION="${FIGURELOOM_VERSION:-$(python3 - "$ROOT_DIR/figureloom-bio/pyproject.toml" <<'PY'
 from pathlib import Path
 import sys
@@ -33,7 +34,23 @@ rm -rf "$BUILD_ROOT"
 mkdir -p "$APP_BUILD" "$WORK_ROOT" "$SPEC_ROOT" "$PKG_ROOT" "$SCRIPTS_ROOT" "$OUTPUT_DIR" "$ICONSET"
 
 python3 -m pip install --disable-pip-version-check --upgrade pip
-python3 -m pip install --disable-pip-version-check pyinstaller PySide6 cryptography "$ROOT_DIR/figureloom-bio"
+python3 -m pip install \
+  --disable-pip-version-check \
+  --only-binary=cryptography \
+  pyinstaller \
+  PySide6 \
+  "cryptography==$CRYPTOGRAPHY_VERSION" \
+  "$ROOT_DIR/figureloom-bio"
+python3 - <<'PY'
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+key = AESGCM.generate_key(bit_length=128)
+cipher = AESGCM(key)
+nonce = b"figureloom12"
+message = b"FigureLoom Bio macOS encryption check"
+encrypted = cipher.encrypt(nonce, message, None)
+assert cipher.decrypt(nonce, encrypted, None) == message
+PY
 
 make_icon() {
   local size="$1"

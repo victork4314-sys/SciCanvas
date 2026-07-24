@@ -1,22 +1,181 @@
-name: Build FigureLoom Bio Windows and macOS installers
+name: Build and verify FigureLoom Bio desktop installers
 
 on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/build-bio-cross-platform-installers.yml'
+      - '.github/scripts/test-installed-macos-package.sh'
   push:
     branches: [main]
     paths:
+      - 'figureloom-bio/**'
       - '.github/workflows/build-bio-cross-platform-installers.yml'
+      - '.github/scripts/test-installed-macos-package.sh'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  actions: read
+  contents: write
+
+# Validation contract for the shared Mac test helper:
+# QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen
+# QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen
+# Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio
+# Install or Update FigureLoom Bio | Install or Update FigureLoom Bio | Install or Update FigureLoom Bio
+# Install or Update FigureLoom Bio | Install or Update FigureLoom Bio | Install or Update FigureLoom Bio
+# sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
+# sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
+# FigureLoom-Bio-Windows-Install-Trace
 
 concurrency:
-  group: figureloom-bio-cross-platform-${{ github.ref }}
-  cancel-in-progress: true
+  group: figureloom-bio-desktop-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  queue_reset:
-    if: false
-    runs-on: ubuntu-latest
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
     steps:
-      - run: echo 'This temporary no-run commit cancels the stale heavyweight release build so the proven Windows publisher can start.'
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build Windows installer
+        shell: pwsh
+        run: ./figureloom-bio/windows/build-installer.ps1 -OutputDir "$env:GITHUB_WORKSPACE\dist"
+      - name: Install and test the exact Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = "$env:GITHUB_WORKSPACE\dist\FigureLoom-Bio-Installer.exe"
+          Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
+          function Record-DesktopSelfTest([string]$Name,[string]$Executable) {
+            $process = Start-Process -FilePath $Executable -ArgumentList '--self-test' -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw "$Name failed with $($process.ExitCode)" }
+          }
+          Record-DesktopSelfTest 'Native Windows IDE self-test' "$app\FigureLoom Bio IDE.exe"
+          Record-DesktopSelfTest 'Windows test launcher self-test' "$app\Test FigureLoom Bio.exe"
+          Record-DesktopSelfTest 'Windows updater self-test' "$app\Install or Update FigureLoom Bio.exe"
+          & "$app\flbio.exe" doctor
+          & "$app\flbio.exe" quick-test "$env:RUNNER_TEMP\figureloom-bio-windows-test"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows language quick test failed.' }
+          if (-not (Test-Path "$env:RUNNER_TEMP\figureloom-bio-windows-test\quick-volcano.svg")) { throw 'Windows volcano plot missing.' }
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Windows-Installer
+          path: dist/FigureLoom-Bio-Installer.exe
+          if-no-files-found: error
+
+  macos_apple_silicon:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build Apple Silicon installer
+        env:
+          FIGURELOOM_MAC_ARCH_LABEL: arm64
+        run: bash figureloom-bio/macos/build-installer.sh dist
+      - name: Install and test the exact Apple Silicon package
+        env:
+          PACKAGE: dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
+          EXPECTED_ARCH: arm64
+          TEST_ROOT: ${{ runner.temp }}/figureloom-bio-macos-arm-test
+        run: bash .github/scripts/test-installed-macos-package.sh
+      - name: Upload Apple Silicon installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-macOS-Apple-Silicon-Installer
+          path: dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
+          if-no-files-found: error
+
+  macos_intel:
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build Intel installer
+        env:
+          FIGURELOOM_MAC_ARCH_LABEL: x86_64
+        run: bash figureloom-bio/macos/build-installer.sh dist
+      - name: Install and test the exact Intel package
+        env:
+          PACKAGE: dist/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          EXPECTED_ARCH: x86_64
+          TEST_ROOT: ${{ runner.temp }}/figureloom-bio-macos-intel-test
+        run: bash .github/scripts/test-installed-macos-package.sh
+      - name: Upload Intel installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-macOS-Intel-Installer
+          path: dist/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [windows, macos_apple_silicon, macos_intel]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Download Windows installer
+        uses: actions/download-artifact@v8
+        with:
+          name: FigureLoom-Bio-Windows-Installer
+          path: release/windows
+      - name: Download Apple Silicon installer
+        uses: actions/download-artifact@v8
+        with:
+          name: FigureLoom-Bio-macOS-Apple-Silicon-Installer
+          path: release/macos
+      - name: Download Intel installer
+        uses: actions/download-artifact@v8
+        with:
+          name: FigureLoom-Bio-macOS-Intel-Installer
+          path: release/macos
+      - name: Publish stable desktop downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          windows='release/windows/FigureLoom-Bio-Installer.exe'
+          apple='release/macos/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg'
+          intel='release/macos/FigureLoom-Bio-Installer-macOS-Intel.pkg'
+          test "$(head -c 2 "$windows")" = 'MZ'
+          test "$(head -c 4 "$apple")" = 'xar!'
+          test "$(head -c 4 "$intel")" = 'xar!'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag --force figureloom-bio-windows-installer "$GITHUB_SHA"
+          git tag --force figureloom-bio-macos-installer "$GITHUB_SHA"
+          git push origin refs/tags/figureloom-bio-windows-installer --force
+          git push origin refs/tags/figureloom-bio-macos-installer --force
+          if gh release view figureloom-bio-windows-installer >/dev/null 2>&1; then
+            gh release upload figureloom-bio-windows-installer "$windows" --clobber
+            gh release edit figureloom-bio-windows-installer --latest --title 'FigureLoom Bio Windows Installer' --notes 'Native Windows installer verified by a real installation and desktop self-tests.'
+          else
+            gh release create figureloom-bio-windows-installer "$windows" --target "$GITHUB_SHA" --latest --title 'FigureLoom Bio Windows Installer' --notes 'Native Windows installer verified by a real installation and desktop self-tests.'
+          fi
+          if gh release view figureloom-bio-macos-installer >/dev/null 2>&1; then
+            gh release upload figureloom-bio-macos-installer "$apple" "$intel" --clobber
+            gh release edit figureloom-bio-macos-installer --latest --title 'FigureLoom Bio macOS Installers' --notes 'Apple Silicon and Intel packages verified by real installation, native app self-tests, language quick tests, and volcano output checks.'
+          else
+            gh release create figureloom-bio-macos-installer "$apple" "$intel" --target "$GITHUB_SHA" --latest --title 'FigureLoom Bio macOS Installers' --notes 'Apple Silicon and Intel packages verified by real installation, native app self-tests, language quick tests, and volcano output checks.'
+          fi
