@@ -32,12 +32,12 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     steps:
-      - name: Cancel only stale FigureLoom repair and rescue runs
+      - name: Force-cancel the explicitly known stale FigureLoom runs
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $ErrorActionPreference = 'Stop'
+          $ErrorActionPreference = 'Continue'
           $repository = $env:GITHUB_REPOSITORY
           $currentRun = [long]$env:GITHUB_RUN_ID
           $protected = [System.Collections.Generic.HashSet[long]]::new()
@@ -45,47 +45,47 @@ jobs:
           [void]$protected.Add(30056632823) # Current separate macOS 14 Apple Silicon run.
           [void]$protected.Add($currentRun)
 
-          $statuses = @('queued', 'in_progress', 'pending', 'waiting')
-          $targets = [System.Collections.Generic.Dictionary[long,string]]::new()
+          $knownStale = @(
+            30053143137, 30053143154, 30053143158, 30053143147,
+            30053799205, 30053799247, 30053799251, 30053799276, 30053799284, 30053799274,
+            30054188887, 30054188912, 30054188927, 30054188919, 30054188921, 30054188893,
+            30054512334, 30054512345, 30054512336, 30054512335, 30054512392, 30054512354,
+            30055370222, 30055445423, 30055563438, 30055834225,
+            30056085423, 30056085445, 30056085421,
+            30056199798, 30056199792,
+            30056632757, 30056632761,
+            30058217498
+          )
 
-          foreach ($status in $statuses) {
-            $payload = gh api "repos/$repository/actions/runs?status=$status&per_page=100" | ConvertFrom-Json
-            if ($LASTEXITCODE -ne 0) { throw "Could not list $status Actions runs." }
-            foreach ($run in $payload.workflow_runs) {
-              $id = [long]$run.id
-              if ($protected.Contains($id)) { continue }
-
-              $name = [string]$run.name
-              $branch = [string]$run.head_branch
-              $isOldRepairBranch = $branch -match '^(fix/(desktop-repair-final-verified|finish-bio-installer-publish|windows-native-ide-self-test)|rescue/publish-proven-windows)$'
-              $isRescueValidation = $branch.StartsWith('rescue/') -and $name -in @('Validate FigureLoom', 'Validate FigureLoom Bio flow')
-              $isOldCrossPlatform = $name -eq 'Build FigureLoom Bio Windows and macOS installers' -and $id -lt 30056199791
-              $isOldWindowsPublisher = $name -eq 'Publish proven FigureLoom Bio Windows installer'
-              $isSupersededMacRescue = $id -eq 30056085421
-
-              if ($isOldRepairBranch -or $isRescueValidation -or $isOldCrossPlatform -or $isOldWindowsPublisher -or $isSupersededMacRescue) {
-                $targets[$id] = "$name on $branch"
-              }
+          $cancelled = 0
+          foreach ($id in $knownStale) {
+            if ($protected.Contains([long]$id)) { continue }
+            $run = gh api "repos/$repository/actions/runs/$id" 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or -not $run) {
+              Write-Host "$id is unavailable; skipping."
+              continue
             }
-          }
+            Write-Host "$id before cancellation: status=$($run.status), conclusion=$($run.conclusion), name=$($run.name), branch=$($run.head_branch)"
+            if ($run.status -eq 'completed') { continue }
 
-          Write-Host "Stale runs selected: $($targets.Count)"
-          foreach ($entry in $targets.GetEnumerator()) {
-            $id = $entry.Key
-            Write-Host "Cancelling $id - $($entry.Value)"
             gh api --method POST "repos/$repository/actions/runs/$id/cancel" *> $null
             if ($LASTEXITCODE -ne 0) {
               gh api --method POST "repos/$repository/actions/runs/$id/force-cancel" *> $null
-              if ($LASTEXITCODE -ne 0) {
-                Write-Warning "GitHub did not cancel run $id; it may have completed between listing and cancellation."
-              }
+            }
+            if ($LASTEXITCODE -eq 0) {
+              $cancelled += 1
+              Write-Host "Cancellation accepted for $id."
+            } else {
+              Write-Warning "GitHub refused both cancellation endpoints for $id."
             }
           }
 
-          Start-Sleep -Seconds 5
-          foreach ($entry in $targets.GetEnumerator()) {
-            $id = $entry.Key
-            $run = gh api "repos/$repository/actions/runs/$id" | ConvertFrom-Json
-            if ($LASTEXITCODE -ne 0) { continue }
-            Write-Host "$id now reports status=$($run.status), conclusion=$($run.conclusion)"
+          Start-Sleep -Seconds 8
+          Write-Host "Cancellation requests accepted: $cancelled"
+          foreach ($id in $knownStale) {
+            if ($protected.Contains([long]$id)) { continue }
+            $run = gh api "repos/$repository/actions/runs/$id" 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0 -and $run) {
+              Write-Host "$id after cancellation: status=$($run.status), conclusion=$($run.conclusion)"
+            }
           }
