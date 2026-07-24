@@ -51,3 +51,5 @@ jobs:
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
+
+# live refresh after the GUI-thread repair
