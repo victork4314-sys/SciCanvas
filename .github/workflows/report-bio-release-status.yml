@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: write
+  actions: read
   issues: write
   contents: read
 
@@ -16,42 +16,28 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Keep newest Mac publisher and report it
+      - name: Verify published Mac release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run list \
+          tag='figureloom-bio-macos-installer'
+          gh release view "$tag" \
             --repo "$GITHUB_REPOSITORY" \
-            --workflow publish-fixed-macos-installers.yml \
-            --branch main \
-            --limit 20 \
-            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url \
-            > /tmp/runs.json
-          newest="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
-          test -n "$newest"
+            --json tagName,name,isLatest,url,assets \
+            > /tmp/release.json
 
-          jq -r --arg newest "$newest" \
-            '.[] | select((.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting") and (.databaseId|tostring) != $newest) | .databaseId' \
-            /tmp/runs.json \
-          | while read -r run_id; do
-              [[ -n "$run_id" ]] || continue
-              gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
-            done
+          jq -e '.assets | map(.name) | index("FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg") != null' /tmp/release.json >/dev/null
+          jq -e '.assets | map(.name) | index("FigureLoom-Bio-Installer-macOS-Intel.pkg") != null' /tmp/release.json >/dev/null
+          jq -e '.assets[] | select(.name == "FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg") | .size > 0' /tmp/release.json >/dev/null
+          jq -e '.assets[] | select(.name == "FigureLoom-Bio-Installer-macOS-Intel.pkg") | .size > 0' /tmp/release.json >/dev/null
 
-          sleep 5
-          gh run view "$newest" \
-            --repo "$GITHUB_REPOSITORY" \
-            --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
-            > /tmp/newest.json
           {
-            echo 'Newest direct Mac release publisher:'
+            echo 'Published FigureLoom Bio macOS release:'
             echo '```json'
-            cat /tmp/newest.json
+            cat /tmp/release.json
             echo '```'
           } > /tmp/status.md
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
-
-# refresh after final Qt-thread-safe source commit
