@@ -54,4 +54,4 @@ jobs:
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
 
-# activate deterministic Test-app release proof
+# activate Qt-thread-safe Test app proof
