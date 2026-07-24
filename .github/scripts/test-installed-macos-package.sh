@@ -26,15 +26,20 @@ QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/F
 QT_QPA_PLATFORM=offscreen '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
 QT_QPA_PLATFORM=offscreen '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
 /usr/local/bin/flbio doctor
-/usr/local/bin/flbio quick-test "$TEST_ROOT"
-grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$TEST_ROOT/TEST-RESULT.txt"
-test -s "$TEST_ROOT/quick-volcano.svg"
-grep -q 'data-significance="higher"' "$TEST_ROOT/quick-volcano.svg"
-grep -q 'data-significance="lower"' "$TEST_ROOT/quick-volcano.svg"
+
+# The installed Test app self-test already runs /usr/local/bin/flbio quick-test
+# with a hard two-minute timeout and applies the real result to its native Qt
+# window. Verify those exact saved outputs instead of launching the same heavy
+# quick test a second time with no timeout.
+app_test_root="$HOME/Desktop/FigureLoom Bio Test Files"
+grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$app_test_root/TEST-RESULT.txt"
+test -s "$app_test_root/quick-volcano.svg"
+grep -q 'data-significance="higher"' "$app_test_root/quick-volcano.svg"
+grep -q 'data-significance="lower"' "$app_test_root/quick-volcano.svg"
 
 language_dir="${TEST_ROOT}-known-language"
 mkdir -p "$language_dir"
-cp "$HOME/Desktop/FigureLoom Bio Test Files/measurements.csv" "$language_dir/measurements.csv"
+cp "$app_test_root/measurements.csv" "$language_dir/measurements.csv"
 printf '%s\n' \
   'Open the file measurements.csv.' \
   'Draw a vulcano chart from effect and p_value.' \
