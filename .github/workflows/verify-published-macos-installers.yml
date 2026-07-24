@@ -1,0 +1,73 @@
+name: Verify published FigureLoom Bio macOS installers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-published-macos-installers.yml'
+      - '.github/scripts/test-installed-macos-package.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-published-figureloom-bio-macos-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  apple_silicon:
+    name: Verify published Apple Silicon installer
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout validation script
+        uses: actions/checkout@v6
+
+      - name: Download exact published Apple Silicon package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release
+          gh release download figureloom-bio-macos-installer \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg' \
+            --dir release \
+            --clobber
+          test -s release/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
+          test "$(head -c 4 release/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg)" = 'xar!'
+
+      - name: Install and test the exact published Apple Silicon package
+        env:
+          PACKAGE: release/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
+          EXPECTED_ARCH: arm64
+          TEST_ROOT: ${{ runner.temp }}/published-figureloom-bio-apple-test
+        run: bash .github/scripts/test-installed-macos-package.sh
+
+  intel:
+    name: Verify published Intel installer
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - name: Checkout validation script
+        uses: actions/checkout@v6
+
+      - name: Download exact published Intel package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release
+          gh release download figureloom-bio-macos-installer \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'FigureLoom-Bio-Installer-macOS-Intel.pkg' \
+            --dir release \
+            --clobber
+          test -s release/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          test "$(head -c 4 release/FigureLoom-Bio-Installer-macOS-Intel.pkg)" = 'xar!'
+
+      - name: Install and test the exact published Intel package
+        env:
+          PACKAGE: release/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          EXPECTED_ARCH: x86_64
+          TEST_ROOT: ${{ runner.temp }}/published-figureloom-bio-intel-test
+        run: bash .github/scripts/test-installed-macos-package.sh
