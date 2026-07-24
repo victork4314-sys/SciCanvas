@@ -1,0 +1,46 @@
+name: Report published macOS validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/report-published-macos-validation.yml'
+  workflow_run:
+    workflows: ['Verify published FigureLoom Bio macOS installers']
+    types: [requested, in_progress, completed]
+
+permissions:
+  actions: read
+  issues: write
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report exact published-package validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow verify-published-macos-installers.yml \
+              --limit 1 \
+              --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
+              > /tmp/validation.json
+            if test "$(cat /tmp/validation.json)" != '[]'; then
+              break
+            fi
+            sleep 5
+          done
+          {
+            echo 'Exact published macOS installer validation:'
+            echo '```json'
+            cat /tmp/validation.json
+            echo '```'
+          } > /tmp/status.md
+          gh api --method PATCH \
+            "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
+            -f "body=$(cat /tmp/status.md)"
