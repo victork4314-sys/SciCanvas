@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: publish-proven-figureloom-bio-windows
+  group: publish-proven-figureloom-bio-windows-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
