@@ -50,15 +50,22 @@ fi
 run_checked 'Native IDE self-test' 120 \
   env QT_QPA_PLATFORM=offscreen \
   '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
-run_checked 'Native Test app real self-test' 180 \
+
+# Launch the installed Test app exactly as a user does. On macOS its normal
+# offscreen path runs the real quick test in a clean worker process, updates the
+# native window on the GUI thread, and exits after the result appears. The outer
+# deadline guarantees the release job can never hang indefinitely.
+app_test_root="$HOME/Desktop/FigureLoom Bio Test Files"
+rm -rf "$app_test_root"
+run_checked 'Native Test app real automatic test' 180 \
   env QT_QPA_PLATFORM=offscreen MPLBACKEND=Agg \
-  '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
+  '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio'
+
 run_checked 'Native Updater self-test' 120 \
   env QT_QPA_PLATFORM=offscreen \
   '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
 run_checked 'Installed CLI doctor' 60 /usr/local/bin/flbio doctor
 
-app_test_root="$HOME/Desktop/FigureLoom Bio Test Files"
 grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$app_test_root/TEST-RESULT.txt"
 test -s "$app_test_root/quick-volcano.svg"
 grep -q 'data-significance="higher"' "$app_test_root/quick-volcano.svg"
