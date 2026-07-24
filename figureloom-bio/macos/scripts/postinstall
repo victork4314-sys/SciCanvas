@@ -32,6 +32,8 @@ fi
 TARGET_GROUP="$(/usr/bin/id -gn "$TARGET_USER" 2>/dev/null || printf '%s' wheel)"
 DESKTOP="$TARGET_HOME/Desktop"
 TEST_FOLDER="$DESKTOP/FigureLoom Bio Test Files"
+CHOWN="/usr/sbin/chown"
+CHMOD="/bin/chmod"
 
 echo "FigureLoom Bio desktop user: $TARGET_USER"
 echo "FigureLoom Bio desktop folder: $DESKTOP"
@@ -48,9 +50,15 @@ echo "FigureLoom Bio desktop folder: $DESKTOP"
 /usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
   /usr/local/bin/flbio quick-test "$TEST_FOLDER"
 
-/bin/chown -h "$TARGET_USER:$TARGET_GROUP" \
+# macOS installs chown in /usr/sbin, not /bin. The old path was hidden behind
+# `|| true`, leaving the Desktop test files owned by root and unusable by the
+# person who installed the app. Ownership and write access are now mandatory.
+"$CHOWN" "$TARGET_USER:$TARGET_GROUP" "$DESKTOP"
+"$CHOWN" -h "$TARGET_USER:$TARGET_GROUP" \
   "$DESKTOP/FigureLoom Bio IDE.app" \
   "$DESKTOP/Test FigureLoom Bio.app" \
-  "$DESKTOP/Install or Update FigureLoom Bio.app" 2>/dev/null || true
-/bin/chown -R "$TARGET_USER:$TARGET_GROUP" "$TEST_FOLDER" 2>/dev/null || true
+  "$DESKTOP/Install or Update FigureLoom Bio.app"
+"$CHOWN" -R "$TARGET_USER:$TARGET_GROUP" "$TEST_FOLDER"
+"$CHMOD" -R u+rwX "$TEST_FOLDER"
+
 exit 0
