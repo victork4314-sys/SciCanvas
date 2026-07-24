@@ -148,6 +148,10 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("Intel", build)
         self.assertIn("PySide6", build)
         self.assertIn("cryptography", build)
+        self.assertIn("CRYPTOGRAPHY_VERSION", build)
+        self.assertIn("44.0.3", build)
+        self.assertIn("--only-binary=cryptography", build)
+        self.assertIn("AESGCM.generate_key", build)
         for name in ("FigureLoom Bio IDE", "Test FigureLoom Bio", "Install or Update FigureLoom Bio"):
             self.assertIn(name, build)
             self.assertIn(name, postinstall)
