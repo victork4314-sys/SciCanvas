@@ -1,0 +1,70 @@
+name: Publish proven FigureLoom Bio Windows installer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-proven-windows-installer.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-proven-figureloom-bio-windows
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download the exact already-tested Windows installer artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p rescue/windows
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts/8582215395/zip" \
+            > rescue/windows-artifact.zip
+          unzip -o rescue/windows-artifact.zip -d rescue/windows
+          installer="$(find rescue/windows -type f -name 'FigureLoom-Bio-Installer.exe' -print -quit)"
+          test -n "$installer"
+          test "$(head -c 2 "$installer")" = 'MZ'
+          cp "$installer" rescue/FigureLoom-Bio-Installer.exe
+          sha256sum rescue/FigureLoom-Bio-Installer.exe
+
+      - name: Replace the stable Windows download and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag='figureloom-bio-windows-installer'
+          target='e23b6c162ca6b09fb2a3fbedc1b0f4d95635bd05'
+          asset='rescue/FigureLoom-Bio-Installer.exe'
+          title='FigureLoom Bio Windows Installer'
+          notes='Download the EXE and follow the normal installer. This is the native desktop build that passed installation, IDE startup and paint, syntax coloring, Test, Updater, CLI doctor, Desktop test files, language quick tests, and the real volcano-plot test. It contains no bundled HTML or browser interface.'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag --force "$tag" "$target"
+          git push origin "refs/tags/$tag" --force
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$asset" --clobber
+            gh release edit "$tag" --latest --title "$title" --notes "$notes"
+          else
+            gh release create "$tag" "$asset" --target "$target" --latest --title "$title" --notes "$notes"
+          fi
+
+          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
+          test "$remote_sha" = "$target"
+          gh release view "$tag" --json assets --jq '.assets[].name' | grep -Fx 'FigureLoom-Bio-Installer.exe'
