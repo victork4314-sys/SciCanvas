@@ -7,17 +7,20 @@ on:
       - '.github/workflows/verify-published-macos-installers.yml'
       - '.github/scripts/test-installed-macos-package.sh'
   workflow_dispatch:
+  issues:
+    types: [edited]
 
 permissions:
   contents: read
   issues: write
 
 concurrency:
-  group: verify-published-figureloom-bio-macos-${{ github.sha }}
+  group: verify-published-figureloom-bio-macos-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
   apple_silicon:
+    if: github.event_name != 'issues' || github.event.issue.number == 226
     name: Verify published Apple Silicon installer
     runs-on: macos-15
     timeout-minutes: 30
@@ -58,6 +61,7 @@ jobs:
         run: gh issue comment 226 --repo "$GITHUB_REPOSITORY" --body "Apple Silicon exact-release validation: **$RESULT**. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
   intel:
+    if: github.event_name != 'issues' || github.event.issue.number == 226
     name: Verify published Intel installer
     runs-on: macos-15-intel
     timeout-minutes: 30
