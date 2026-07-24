@@ -13,31 +13,56 @@ permissions:
   contents: read
 
 jobs:
-  report:
+  verify-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify published Mac release assets
+      - name: Download and verify both published Mac packages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag='figureloom-bio-macos-installer'
+          apple='FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg'
+          intel='FigureLoom-Bio-Installer-macOS-Intel.pkg'
+
           gh release view "$tag" \
             --repo "$GITHUB_REPOSITORY" \
-            --json tagName,name,isLatest,url,assets \
+            --json tagName,name,isDraft,isPrerelease,publishedAt,url,assets \
             > /tmp/release.json
 
-          jq -e '.assets | map(.name) | index("FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg") != null' /tmp/release.json >/dev/null
-          jq -e '.assets | map(.name) | index("FigureLoom-Bio-Installer-macOS-Intel.pkg") != null' /tmp/release.json >/dev/null
-          jq -e '.assets[] | select(.name == "FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg") | .size > 0' /tmp/release.json >/dev/null
-          jq -e '.assets[] | select(.name == "FigureLoom-Bio-Installer-macOS-Intel.pkg") | .size > 0' /tmp/release.json >/dev/null
+          test "$(jq --arg name "$apple" '[.assets[] | select(.name == $name)] | length' /tmp/release.json)" -eq 1
+          test "$(jq --arg name "$intel" '[.assets[] | select(.name == $name)] | length' /tmp/release.json)" -eq 1
+
+          mkdir -p /tmp/published
+          gh release download "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'FigureLoom-Bio-Installer-macOS-*.pkg' \
+            --dir /tmp/published \
+            --clobber
+
+          test -s "/tmp/published/$apple"
+          test -s "/tmp/published/$intel"
+          test "$(head -c 4 "/tmp/published/$apple")" = 'xar!'
+          test "$(head -c 4 "/tmp/published/$intel")" = 'xar!'
+
+          apple_size="$(stat -c '%s' "/tmp/published/$apple")"
+          intel_size="$(stat -c '%s' "/tmp/published/$intel")"
+          apple_sha="$(sha256sum "/tmp/published/$apple" | awk '{print $1}')"
+          intel_sha="$(sha256sum "/tmp/published/$intel" | awk '{print $1}')"
 
           {
-            echo 'Published FigureLoom Bio macOS release:'
+            echo 'Both fixed FigureLoom Bio Mac installers are published and verified.'
+            echo
             echo '```json'
-            cat /tmp/release.json
+            jq '{tagName,name,isDraft,isPrerelease,publishedAt,url,assets:[.assets[]|{name,size,url}]}' /tmp/release.json
             echo '```'
+            echo
+            echo "Apple Silicon bytes: $apple_size"
+            echo "Apple Silicon SHA-256: $apple_sha"
+            echo "Intel bytes: $intel_size"
+            echo "Intel SHA-256: $intel_sha"
           } > /tmp/status.md
+
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
