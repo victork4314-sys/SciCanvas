@@ -36,11 +36,12 @@ jobs:
             sleep 5
           done
           {
-            echo 'Exact published macOS installer validation:'
+            echo 'This checks the exact Apple Silicon and Intel packages currently published in the stable macOS release.'
+            echo
             echo '```json'
             cat /tmp/validation.json
             echo '```'
           } > /tmp/status.md
-          gh api --method PATCH \
-            "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
-            -f "body=$(cat /tmp/status.md)"
+          gh issue edit 226 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file /tmp/status.md
