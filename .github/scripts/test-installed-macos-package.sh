@@ -5,6 +5,31 @@ set -euo pipefail
 : "${EXPECTED_ARCH:?EXPECTED_ARCH is required}"
 : "${TEST_ROOT:?TEST_ROOT is required}"
 
+run_checked() {
+  local label="$1"
+  local seconds="$2"
+  shift 2
+  /usr/bin/python3 - "$label" "$seconds" "$@" <<'PY'
+import subprocess
+import sys
+
+label = sys.argv[1]
+timeout = int(sys.argv[2])
+command = sys.argv[3:]
+print(f"START: {label}", flush=True)
+print("COMMAND: " + " ".join(command), flush=True)
+try:
+    completed = subprocess.run(command, timeout=timeout, check=False)
+except subprocess.TimeoutExpired:
+    print(f"FAIL: {label} exceeded {timeout} seconds.", file=sys.stderr, flush=True)
+    raise SystemExit(124)
+if completed.returncode != 0:
+    print(f"FAIL: {label} exited with {completed.returncode}.", file=sys.stderr, flush=True)
+    raise SystemExit(completed.returncode)
+print(f"PASS: {label}", flush=True)
+PY
+}
+
 printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
 sudo installer -verboseR -pkg "$PACKAGE" -target /
 
@@ -22,15 +47,17 @@ if find '/Applications/FigureLoom Bio IDE.app' -type f \( -iname '*.html' -o -in
   exit 1
 fi
 
-QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
-QT_QPA_PLATFORM=offscreen '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
-QT_QPA_PLATFORM=offscreen '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
-/usr/local/bin/flbio doctor
+run_checked 'Native IDE self-test' 120 \
+  env QT_QPA_PLATFORM=offscreen \
+  '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+run_checked 'Native Test app real self-test' 180 \
+  env QT_QPA_PLATFORM=offscreen MPLBACKEND=Agg \
+  '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
+run_checked 'Native Updater self-test' 120 \
+  env QT_QPA_PLATFORM=offscreen \
+  '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
+run_checked 'Installed CLI doctor' 60 /usr/local/bin/flbio doctor
 
-# The installed Test app self-test already runs /usr/local/bin/flbio quick-test
-# with a hard two-minute timeout and applies the real result to its native Qt
-# window. Verify those exact saved outputs instead of launching the same heavy
-# quick test a second time with no timeout.
 app_test_root="$HOME/Desktop/FigureLoom Bio Test Files"
 grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$app_test_root/TEST-RESULT.txt"
 test -s "$app_test_root/quick-volcano.svg"
@@ -44,7 +71,11 @@ printf '%s\n' \
   'Open the file measurements.csv.' \
   'Draw a vulcano chart from effect and p_value.' \
   > "$language_dir/known-language.flbio"
-(cd "$language_dir" && /usr/local/bin/flbio run known-language.flbio > known-language-result.txt)
+(
+  cd "$language_dir"
+  run_checked 'Known valid vulcano wording' 60 \
+    /usr/local/bin/flbio run known-language.flbio
+) > "$language_dir/known-language-result.txt"
 test -s "$language_dir/volcano-plot.svg"
 grep -q 'Volcano plot' "$language_dir/known-language-result.txt"
 
