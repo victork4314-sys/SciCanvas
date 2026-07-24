@@ -16,28 +16,45 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel superseded Mac publishers and report final run
+      - name: Keep only newest Mac publisher and report it
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow publish-fixed-macos-installers.yml \
+            --branch main \
+            --limit 20 \
+            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url \
+            > /tmp/runs.json
 
-          # Run 6 (30095516492, commit 32ea461) is the fully bounded final run.
-          # Runs 4 and 5 are superseded and must not keep either Mac runner.
-          gh run cancel 30095038489 --repo "$GITHUB_REPOSITORY" || true
-          gh run cancel 30095454327 --repo "$GITHUB_REPOSITORY" || true
+          newest="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
+          test -n "$newest"
+
+          jq -r --arg newest "$newest" \
+            '.[] | select((.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting") and (.databaseId|tostring) != $newest) | .databaseId' \
+            /tmp/runs.json > /tmp/older-active.txt
+
+          while read -r run_id; do
+            [[ -n "$run_id" ]] || continue
+            echo "Cancelling superseded Mac publisher $run_id"
+            gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
+          done < /tmp/older-active.txt
 
           sleep 5
-          gh run view 30095516492 \
+          gh run view "$newest" \
             --repo "$GITHUB_REPOSITORY" \
             --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
-            > /tmp/final.json
+            > /tmp/newest.json
+
           {
-            echo 'Final bounded Mac publisher:'
+            echo 'Newest Mac publisher only:'
             echo '```json'
-            cat /tmp/final.json
+            cat /tmp/newest.json
             echo '```'
           } > /tmp/status.md
+
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
